@@ -33,6 +33,9 @@ logging.basicConfig(
 logger = logging.getLogger("qds.main")
 
 
+from app.core.database import init_db
+
+
 # ── Lifespan ─────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,10 +45,15 @@ async def lifespan(app: FastAPI):
     logger.info("  Module 3: Distributed Node API Framework")
     logger.info("  Version: %s", settings.APP_VERSION)
     logger.info("=" * 60)
+    
+    # Initialize PostgreSQL Database
+    await init_db()
+
     logger.info("Swagger docs available at: http://localhost:8000/docs")
     logger.info("ReDoc available at: http://localhost:8000/redoc")
     yield
     logger.info("Shutting down QDS API...")
+
 
 
 # ── FastAPI App ──────────────────────────────────────────────────────

@@ -4,7 +4,8 @@ Centralizes all settings for CORS, API versioning, and app metadata.
 """
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List
+from typing import List, Optional
+
 
 
 class Settings(BaseSettings):
@@ -40,7 +41,26 @@ class Settings(BaseSettings):
     DEFAULT_ALPHA: float = 1e-6
     DEFAULT_CHSH_MINIMUM: float = 2.0
 
+    # ── Database (PostgreSQL) ──────────────────────────────────────────
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_PORT: str = "5432"
+    POSTGRES_DB: str = "qds_db"
+    DATABASE_URL: Optional[str] = None
+
+    @property
+    def async_database_url(self) -> str:
+        """Construct async PostgreSQL database connection URL."""
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+        return (
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
+
     # ── Telemetry ─────────────────────────────────────────────────────
+
     TELEMETRY_MAX_ENTRIES: int = 10000
 
     # ── Session ───────────────────────────────────────────────────────
