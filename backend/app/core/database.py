@@ -41,13 +41,21 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def init_db() -> None:
-    """Initialize database tables on application startup."""
+    """Initialize database tables on application startup and hydrate active sessions."""
     global engine, AsyncSessionLocal
+
+    # Import ORM models to ensure metadata registration before create_all
+    import app.models.db_models  # noqa: F401
 
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        logger.info("Database initialized successfully at %s", settings.async_database_url)
+        logger.info("PostgreSQL database initialized successfully at %s (Tables: %s)",
+                    settings.async_database_url, list(Base.metadata.tables.keys()))
+        
+        # Hydrate sessions from database into memory
+        from app.services.session_service import session_service
+        session_service.load_sessions_from_db()
     except Exception as exc:
         logger.warning(
             "Could not connect to PostgreSQL at %s (%s). "

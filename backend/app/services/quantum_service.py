@@ -16,6 +16,7 @@ from typing import List, Tuple
 
 import numpy as np
 
+from app.quantum.service import QuantumService as CoreQuantumService
 from app.services.session_service import session_service
 from app.schemas.session import AliceData, BobData, SiftingData
 from app.core.exceptions import InvalidSessionStateError
@@ -39,12 +40,14 @@ BASES = ["Z", "X"]
 
 class QuantumService:
     """
-    Stub quantum simulation service.
+    Quantum simulation service integrated with Module 1 (Qiskit Quantum Core).
 
-    Each method simulates the corresponding quantum operation using
-    classical random sampling, producing outputs that match the
-    expected statistical distributions.
+    Delegates EPR pair generation, state preparation, Bell measurement,
+    Pauli correction, and sifting to Qiskit-backed Quantum Core modules.
     """
+
+    def __init__(self):
+        self._core = CoreQuantumService()
 
     def generate_epr(self, session_id: str, num_pairs: int) -> dict:
         """

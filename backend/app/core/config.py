@@ -19,7 +19,9 @@ class Settings(BaseSettings):
         "Security, and Attack endpoints as independent logical nodes."
     )
     APP_VERSION: str = "1.0.0"
+    VERSION: str = "1.0.0"
     API_PREFIX: str = "/api/v1"
+    DECOY_ERROR_DISCREPANCY_THRESHOLD: float = 0.05
 
     # ── CORS ──────────────────────────────────────────────────────────
     CORS_ORIGINS: List[str] = [

@@ -111,6 +111,8 @@ app.add_middleware(TelemetryMiddleware)
 register_exception_handlers(app)
 
 
+from app.api import arbitrator, alice, bob, security, attacks, sessions, engine_routes
+
 # ── API Routers ──────────────────────────────────────────────────────
 app.include_router(arbitrator.router, prefix=settings.API_PREFIX)
 app.include_router(alice.router, prefix=settings.API_PREFIX)
@@ -118,6 +120,7 @@ app.include_router(bob.router, prefix=settings.API_PREFIX)
 app.include_router(security.router, prefix=settings.API_PREFIX)
 app.include_router(attacks.router, prefix=settings.API_PREFIX)
 app.include_router(sessions.router, prefix=settings.API_PREFIX)
+app.include_router(engine_routes.router)
 
 
 # ── Root & Health ────────────────────────────────────────────────────

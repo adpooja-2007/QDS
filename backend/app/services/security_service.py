@@ -18,6 +18,10 @@ from typing import List, Tuple, Optional
 
 import numpy as np
 
+from app.engine.xor_evaluator import evaluate_xor_matches
+from app.engine.qber import calculate_qber as engine_calculate_qber
+from app.engine.hoeffding import calculate_hoeffding_threshold as engine_hoeffding
+from app.engine.chsh import evaluate_chsh_score as engine_chsh
 from app.services.session_service import session_service
 from app.schemas.session import SecurityResult
 from app.core.exceptions import InvalidSessionStateError, InsufficientDataError
@@ -28,7 +32,7 @@ logger = logging.getLogger("qds.security")
 
 class SecurityService:
     """
-    Deterministic statistical security analysis service.
+    Deterministic statistical security analysis service integrated with Module 2 (Threat Detection Engine).
 
     All calculations are mathematical — zero AI/ML dependencies.
     This makes the security decisions explainable and auditable.

@@ -83,6 +83,32 @@ class SessionService:
         except Exception as exc:
             logger.debug("Database sync persist note: %s", exc)
 
+    def load_sessions_from_db(self) -> int:
+        """Hydrate in-memory cache with persisted sessions from PostgreSQL."""
+        try:
+            from sqlalchemy import create_engine, select
+            sync_url = settings.async_database_url.replace(
+                "postgresql+asyncpg://", "postgresql://"
+            ).replace("sqlite+aiosqlite://", "sqlite://")
+            sync_engine = create_engine(sync_url, pool_pre_ping=True)
+            with SyncSession(sync_engine) as db:
+                db_sessions = db.scalars(select(SessionModel)).all()
+                loaded_count = 0
+                for db_item in db_sessions:
+                    try:
+                        pydantic_dict = db_item.to_pydantic_dict()
+                        session = QuantumSession(**pydantic_dict)
+                        self._sessions[session.session_id] = session
+                        loaded_count += 1
+                    except Exception as err:
+                        logger.warning("Could not hydrate session %s: %s", db_item.session_id, err)
+                if loaded_count > 0:
+                    logger.info("Successfully hydrated %d session(s) from PostgreSQL into memory cache.", loaded_count)
+                return loaded_count
+        except Exception as exc:
+            logger.debug("Database session hydration note: %s", exc)
+            return 0
+
     def create(
         self,
         num_pairs: int = 1000,

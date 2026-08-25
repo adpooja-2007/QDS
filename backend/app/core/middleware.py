@@ -103,6 +103,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
             )
 
             telemetry_store.append(entry)
+            self._save_telemetry_to_db(entry)
 
             # Log the telemetry entry
             logger.info(
@@ -134,6 +135,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
             )
 
             telemetry_store.append(entry)
+            self._save_telemetry_to_db(entry)
 
             logger.error(
                 "%s %s ERROR %.1fms %s — %s",
@@ -157,3 +159,30 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
             if part.startswith("QKD-"):
                 return part
         return None
+
+    @staticmethod
+    def _save_telemetry_to_db(entry: TelemetryEntry) -> None:
+        """Persist telemetry record to PostgreSQL database synchronously."""
+        try:
+            from sqlalchemy.orm import Session as SyncSession
+            from sqlalchemy import create_engine
+            from app.models.db_models import TelemetryModel
+            sync_url = settings.async_database_url.replace(
+                "postgresql+asyncpg://", "postgresql://"
+            ).replace("sqlite+aiosqlite://", "sqlite://")
+            sync_engine = create_engine(sync_url, pool_pre_ping=True)
+            with SyncSession(sync_engine) as db:
+                log_item = TelemetryModel(
+                    request_id=entry.request_id,
+                    endpoint=entry.endpoint,
+                    method=entry.method,
+                    timestamp=entry.timestamp,
+                    execution_time_ms=entry.execution_time_ms,
+                    status_code=entry.status_code,
+                    session_id=entry.session_id,
+                    error=entry.error,
+                )
+                db.add(log_item)
+                db.commit()
+        except Exception as exc:
+            logger.debug("Telemetry DB save note: %s", exc)

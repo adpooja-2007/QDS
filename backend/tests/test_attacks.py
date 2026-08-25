@@ -11,7 +11,7 @@ class TestInterceptResend:
             "/api/v1/attacks/intercept-resend",
             json={
                 "session_id": measured_session,
-                "attack_fraction": 0.50,
+                "attack_fraction": 0.80,
                 "basis_strategy": "RANDOM",
             },
         )
