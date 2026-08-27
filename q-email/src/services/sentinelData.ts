@@ -430,13 +430,13 @@ export const HISTORICAL_SERIES: HistoricalPoint[] = [
 
 // ─── Telemetry Logs ───────────────────────────────────────────────────────────
 export const DEFAULT_TELEMETRY_LOGS: TelemetryLog[] = [
-  { id: 'LOG-94821', timestamp: '01:38:16.204', subsystem: 'THREAT_ENGINE', event_type: 'VERDICT_EVALUATED', latency_ms: 6.2, status_code: 200, message: 'Verdict: ACCEPT | QBER: 2.4% (Threshold: 5.6%) | CHSH: 2.76' },
-  { id: 'LOG-94820', timestamp: '01:38:15.801', subsystem: 'BOB_NODE', event_type: 'MEASUREMENT_SIFTED', latency_ms: 14.5, status_code: 200, message: 'Basis reconciliation completed with Alice. Sifted bits: 3,912' },
-  { id: 'LOG-94819', timestamp: '01:38:14.310', subsystem: 'BOB_NODE', event_type: 'PAULI_CORRECTION_APPLIED', latency_ms: 1.8, status_code: 200, message: 'Applied σ_z gate on receiver state based on BSM feed-forward' },
-  { id: 'LOG-94818', timestamp: '01:38:13.620', subsystem: 'ARBITRATOR', event_type: 'BELL_MEASUREMENT_DONE', latency_ms: 4.8, status_code: 200, message: 'BSM outcome recorded | Projection: |Ψ⁻⟩ state' },
-  { id: 'LOG-94817', timestamp: '01:38:12.980', subsystem: 'QUANTUM_CORE', event_type: 'EPR_DISTRIBUTED', latency_ms: 8.6, status_code: 200, message: '8,192 EPR photon pairs transmitted over entangled channels' },
-  { id: 'LOG-94816', timestamp: '01:38:12.110', subsystem: 'ALICE_NODE', event_type: 'STATE_PREPARED', latency_ms: 12.4, status_code: 200, message: 'Modulated random quantum bases for document hash digest' },
-  { id: 'LOG-94815', timestamp: '01:38:11.890', subsystem: 'DATABASE', event_type: 'SESSION_PERSISTED', latency_ms: 3.1, status_code: 201, message: 'Quantum session QDS-2026-SES-9482 created in PostgreSQL session store' },
+  { id: 'LOG-94821', timestamp: '01:38:16.204', subsystem: 'THREAT_ENGINE', event_type: 'VERDICT_EVALUATED', latency_ms: 6.2, status_code: 200, message: 'Alice sent file [defense_telemetry_manifest_09.sig] — Verdict: ACCEPT | QBER: 1.85%' },
+  { id: 'LOG-94820', timestamp: '01:38:15.801', subsystem: 'BOB_NODE', event_type: 'MEASUREMENT_SIFTED', latency_ms: 14.5, status_code: 200, message: 'Alice sent text "CLASSIFIED DEFENSE TELEMETRY" — Basis reconciliation completed with Alice' },
+  { id: 'LOG-94819', timestamp: '01:38:14.310', subsystem: 'BOB_NODE', event_type: 'PAULI_CORRECTION_APPLIED', latency_ms: 1.8, status_code: 200, message: 'Alice sent file [qds_text_payload.sig] — Applied σ_z gate on receiver state' },
+  { id: 'LOG-94818', timestamp: '01:38:13.620', subsystem: 'ARBITRATOR', event_type: 'BELL_MEASUREMENT_DONE', latency_ms: 4.8, status_code: 200, message: 'Alice sent text "CONFIDENTIAL: Defense Quantum" — BSM outcome recorded' },
+  { id: 'LOG-94817', timestamp: '01:38:12.980', subsystem: 'QUANTUM_CORE', event_type: 'EPR_DISTRIBUTED', latency_ms: 8.6, status_code: 200, message: 'Alice sent file [cert_authority_root_key_rotation.pem] — 8,192 EPR photon pairs transmitted' },
+  { id: 'LOG-94816', timestamp: '01:38:12.110', subsystem: 'ALICE_NODE', event_type: 'STATE_PREPARED', latency_ms: 12.4, status_code: 200, message: 'Alice sent text "OTP-TOKEN: 0x8F92A1BC" — Modulated random quantum bases' },
+  { id: 'LOG-94815', timestamp: '01:38:11.890', subsystem: 'DATABASE', event_type: 'SESSION_PERSISTED', latency_ms: 3.1, status_code: 201, message: 'Alice sent file [telecom_infrastructure_routing.bin] — Quantum session created' },
 ];
 
 // ─── System Performance ───────────────────────────────────────────────────────

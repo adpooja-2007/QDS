@@ -178,13 +178,17 @@ export const TransferPage: React.FC<TransferPageProps> = ({
       : selectedFile?.content.slice(0, 200) || 'Document Content';
 
     try {
+      const payloadLogTag = transferMode === 'file' && selectedFile
+        ? `Alice sent file [${selectedFile.name}]`
+        : `Alice sent text "${textInput.trim().slice(0, 10)}"`;
+
       // Step 1: Alice state prep
-      sentinelService.pushDemonstrationEvent(1, isEveActive, undefined, `Alice preparing quantum payload for [${docName}]...`);
+      sentinelService.pushDemonstrationEvent(1, isEveActive, undefined, `${payloadLogTag} — Modulating quantum bases for [${docName}]...`);
       await new Promise((r) => setTimeout(r, 600));
       setTransmitStep(2);
 
       // Step 2: Arbitrator EPR & BSM
-      sentinelService.pushDemonstrationEvent(3, isEveActive, undefined, 'Arbitrator evaluating Joint Bell State Measurement & Hoeffding bounds...');
+      sentinelService.pushDemonstrationEvent(3, isEveActive, undefined, `${payloadLogTag} — Arbitrator evaluating Joint BSM & Hoeffding bounds...`);
       
       // Call live backend FastAPI API if available
       let backendRes: any = null;

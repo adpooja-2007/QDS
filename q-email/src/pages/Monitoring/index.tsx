@@ -2426,7 +2426,11 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
 
                         // Extract file name or first 10 characters of Alice's text payload
                         const rawMsg = log.message || '';
-                        const fileMatch = rawMsg.match(/\[?([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin))\]?/i);
+                        const fileMatch = rawMsg.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin))\]/i) ||
+                                         rawMsg.match(/file \[([^\]]+)\]/i);
+
+                        const textMatch = rawMsg.match(/text "([^"]+)"/i) || 
+                                         rawMsg.match(/"([^"]+)"/);
 
                         let payloadDisplay = null;
 
@@ -2437,13 +2441,22 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                               📄 {fileMatch[1]}
                             </span>
                           );
-                        } else {
+                        } else if (textMatch) {
                           // If Alice sent text: show FIRST 10 CHARACTERS!
-                          const cleanText = rawMsg.replace(/^["']|["']$/g, '').trim();
-                          const first10 = cleanText.slice(0, 10);
+                          const textStr = textMatch[1].trim();
+                          const first10 = textStr.slice(0, 10);
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
-                              💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                              💬 "{first10}{textStr.length > 10 ? '...' : ''}"
+                            </span>
+                          );
+                        } else {
+                          // General telemetry event: take first 10 chars of message string
+                          const cleanMsg = rawMsg.replace(/^(Alice preparing|Arbitrator evaluating|Bob applying|Verdict:|\s)+/i, '').trim();
+                          const first10 = cleanMsg.slice(0, 10);
+                          payloadDisplay = (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#F1F5F9] border border-[#CBD5E1] text-[#334155] font-mono text-[11px] font-medium">
+                              💬 "{first10}{cleanMsg.length > 10 ? '...' : ''}"
                             </span>
                           );
                         }
