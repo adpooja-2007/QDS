@@ -2413,8 +2413,8 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                       <tr className="border-b border-[#E2E8F0] bg-[#FBF8FA]">
                         <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-36 uppercase tracking-wider">Timestamp</th>
                         <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-40 uppercase tracking-wider">Subsystem</th>
-                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-48 uppercase tracking-wider">Event</th>
-                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] uppercase tracking-wider">Transmitted Payload / File</th>
+                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-44 uppercase tracking-wider">Event</th>
+                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] uppercase tracking-wider">Transferred Text / Message Content</th>
                         <th className="py-2.5 px-4 text-right font-mono text-[10.5px] font-medium text-[#75777D] w-24 uppercase tracking-wider">Latency</th>
                         <th className="py-2.5 px-4 text-right font-mono text-[10.5px] font-medium text-[#75777D] w-24 uppercase tracking-wider">Status</th>
                       </tr>
@@ -2424,57 +2424,8 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                         const isError = log.status_code >= 400 || log.is_error || log.subsystem === 'ERR DETECT';
                         const isSelected = selectedItem.id === log.id;
 
-                        // Smart Payload Extractor: Extract exact file name or start of text payload
-                        const fileMatch = log.message?.match(/\[?([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin))\]?/i) || 
-                                         log.event_type?.match(/([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin))/i);
-
-                        const textMatch = log.message?.match(/"([^"]+)"/) || 
-                                         log.message?.match(/for \[(.*?)\]/) ||
-                                         (log.message && !fileMatch ? [null, log.message] : null);
-
-                        let payloadBadge = (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#F1F5F9] border border-[#CBD5E1] text-[#334155] font-mono text-[11px] font-medium">
-                            💬 TEXT: "Quantum payload stream..."
-                          </span>
-                        );
-
-                        if (fileMatch) {
-                          payloadBadge = (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
-                              📄 FILE: {fileMatch[1]}
-                            </span>
-                          );
-                        } else if (textMatch && textMatch[1]) {
-                          const cleanText = textMatch[1].trim();
-                          const isFileInText = cleanText.match(/^[a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin)$/i);
-                          if (isFileInText) {
-                            payloadBadge = (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
-                                📄 FILE: {cleanText}
-                              </span>
-                            );
-                          } else {
-                            payloadBadge = (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
-                                💬 TEXT: "{cleanText.slice(0, 28)}{cleanText.length > 28 ? '...' : ''}"
-                              </span>
-                            );
-                          }
-                        } else {
-                          // Assign realistic fallback document based on log index
-                          const defaultDocs = [
-                            'defense_telemetry_manifest_09.sig',
-                            'cert_authority_root_key_rotation.pem',
-                            'telecom_infrastructure_routing.bin',
-                            'qds_text_payload.sig'
-                          ];
-                          const fallbackDoc = defaultDocs[log.id.length % defaultDocs.length];
-                          payloadBadge = (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
-                              📄 FILE: {fallbackDoc}
-                            </span>
-                          );
-                        }
+                        // Display the exact transferred text / message string
+                        const transferredText = log.message || 'Quantum One-Time-Pad state vector transmitted over 1550nm channel.';
 
                         return (
                           <tr 
@@ -2507,8 +2458,8 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                             <td className={`py-2 px-4 ${isError ? 'text-[#BA1A1A]' : 'text-[#1B1B1D]'}`}>
                               {log.event_type}
                             </td>
-                            <td className="py-2 px-4">
-                              {payloadBadge}
+                            <td className={`py-2 px-4 ${isError ? 'text-[#BA1A1A] font-semibold' : 'text-[#334155]'}`}>
+                              {transferredText}
                             </td>
                             <td className="py-2 px-4 text-right text-[#1B1B1D]">
                               {log.latency_ms}ms
