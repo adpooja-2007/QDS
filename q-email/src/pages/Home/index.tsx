@@ -607,6 +607,18 @@ export const HomePage: React.FC<HomePageProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={(e) => {
+                      if (e.ctrlKey || e.metaKey) window.open('/transfer', '_blank');
+                      else onNavigate('transfer');
+                    }}
+                    className="hover:border-[#10B981] hover:text-[#10B981] text-[10.5px] font-bold"
+                    title="Open Real-Time Quantum Transfer Console (Ctrl+Click to open in new tab)"
+                  >
+                    REAL-TIME TRANSFER (/transfer)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
                       if (e.ctrlKey || e.metaKey) window.open('/attack-sandbox', '_blank');
                       else onNavigate('attack-sandbox');
                     }}

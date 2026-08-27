@@ -18,6 +18,7 @@ Click any specification guide below for an exhaustive, component-by-component fu
 | **`/attack-sandbox`** | **Attack Sandbox** | [**`03_ATTACK_SANDBOX_PAGE_SPECIFICATION.md`**](file:///c:/Users/Viki/OneDrive/Desktop/DIGSIGN/docs/pages/03_ATTACK_SANDBOX_PAGE_SPECIFICATION.md) |
 | **`/monitoring`** | **SOC Dashboard** | [**`04_MONITORING_PAGE_SPECIFICATION.md`**](file:///c:/Users/Viki/OneDrive/Desktop/DIGSIGN/docs/pages/04_MONITORING_PAGE_SPECIFICATION.md) |
 | **`/database`** | **Database Inspector** | [**`05_DATABASE_INSPECTOR_PAGE_SPECIFICATION.md`**](file:///c:/Users/Viki/OneDrive/Desktop/DIGSIGN/docs/pages/05_DATABASE_INSPECTOR_PAGE_SPECIFICATION.md) |
+| **`/transfer`** | **Real-Time Quantum Transfer** | [**`06_TRANSFER_PAGE_SPECIFICATION.md`**](file:///c:/Users/Viki/OneDrive/Desktop/DIGSIGN/docs/pages/06_TRANSFER_PAGE_SPECIFICATION.md) |
 
 ---
 

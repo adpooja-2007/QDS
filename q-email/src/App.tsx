@@ -6,13 +6,15 @@ import { DemonstrationPage } from './pages/Demonstration/index';
 import { MonitoringPage } from './pages/Monitoring/index';
 import { AttackSandboxPage } from './pages/AttackSandbox/index';
 import { DatabaseInspectorPage } from './pages/DatabaseInspector/index';
+import { TransferPage } from './pages/Transfer/index';
 
-type ActiveView = 'home' | 'demonstration' | 'monitoring' | 'attack-sandbox' | 'database';
+type ActiveView = 'home' | 'demonstration' | 'monitoring' | 'attack-sandbox' | 'database' | 'transfer';
 
 export const App: React.FC = () => {
   // Parse initial route from window.location.pathname
   const getInitialRoute = (): ActiveView => {
     const path = window.location.pathname.replace(/^\//, '').toLowerCase();
+    if (path.startsWith('transfer')) return 'transfer';
     if (path.startsWith('demonstration') || path.startsWith('demo')) return 'demonstration';
     if (path.startsWith('monitoring') || path.startsWith('monitor')) return 'monitoring';
     if (path.startsWith('attack') || path.startsWith('sandbox')) return 'attack-sandbox';
@@ -39,7 +41,8 @@ export const App: React.FC = () => {
   const handleNavigate = (route: string) => {
     const cleanRoute = route.replace(/^\//, '').toLowerCase();
     let targetView: ActiveView = 'home';
-    if (cleanRoute.startsWith('demonstration') || cleanRoute.startsWith('demo')) targetView = 'demonstration';
+    if (cleanRoute.startsWith('transfer')) targetView = 'transfer';
+    else if (cleanRoute.startsWith('demonstration') || cleanRoute.startsWith('demo')) targetView = 'demonstration';
     else if (cleanRoute.startsWith('monitoring') || cleanRoute.startsWith('monitor')) targetView = 'monitoring';
     else if (cleanRoute.startsWith('attack') || cleanRoute.startsWith('sandbox')) targetView = 'attack-sandbox';
     else if (cleanRoute.startsWith('database') || cleanRoute.startsWith('db')) targetView = 'database';
@@ -71,6 +74,15 @@ export const App: React.FC = () => {
           incidents={incidents}
           telemetryLogs={telemetryLogs}
           performance={performance}
+        />
+      </div>
+
+      <div className={`h-full w-full ${activeView === 'transfer' ? 'flex flex-col' : 'hidden'}`}>
+        <TransferPage
+          onNavigateHome={() => handleNavigate('home')}
+          onNavigateMonitoring={() => handleNavigate('monitoring')}
+          onNavigateDemonstration={() => handleNavigate('demonstration')}
+          onNavigateAttackSandbox={() => handleNavigate('attack-sandbox')}
         />
       </div>
 
