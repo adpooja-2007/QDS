@@ -2537,13 +2537,13 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
 
                         const rawMsg = log.message || '';
                         const logAny = log as any;
-                        const isDemoLog = logAny.source === 'demonstration' || logAny.isDemonstration || (!logAny.isTransfer && !rawMsg.includes('TX-') && !rawMsg.match(/file \[([^\]]+)\]/i) && !rawMsg.match(/text "([^"]+)"/i));
+                        const isExplicitDemo = logAny.source === 'demonstration' || logAny.isDemonstration === true;
                         const fileInLog = rawMsg.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin|ps1|md))\]/i) || rawMsg.match(/file \[([^\]]+)\]/i);
-                        const textInLog = rawMsg.match(/text "([^"]+)"/i);
+                        const textInLog = rawMsg.match(/text "([^"]+)"/i) || rawMsg.match(/"([^"]{3,50})"/);
 
                         let payloadDisplay = null;
 
-                        if (isDemoLog && !fileInLog && !textInLog) {
+                        if (isExplicitDemo && !fileInLog && !textInLog) {
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#F3E8FF] border border-[#D8B4FE] text-[#7E22CE] font-mono text-[11px] font-bold">
                               💬 "demonstrated"
@@ -2564,11 +2564,35 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                             </span>
                           );
                         } else {
-                          payloadDisplay = (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#F3E8FF] border border-[#D8B4FE] text-[#7E22CE] font-mono text-[11px] font-bold">
-                              💬 "demonstrated"
-                            </span>
-                          );
+                          // Check if row index matches a real transferred message in savedMessages
+                          const txIdx = filteredTelemetry.indexOf(log);
+                          if (savedMessages.length > 0 && txIdx < savedMessages.length) {
+                            const tx = savedMessages[txIdx];
+                            if (tx.payloadType === 'file' || tx.fileName) {
+                              payloadDisplay = (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
+                                  📄 {tx.fileName || tx.title || 'qds_document.sig'}
+                                </span>
+                              );
+                            } else {
+                              const cleanText = (tx.content || 'CLASSIFIED').trim();
+                              const first10 = cleanText.slice(0, 10);
+                              payloadDisplay = (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
+                                  💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                                </span>
+                              );
+                            }
+                          } else {
+                            // General telemetry event: take clean first 10 chars of event/subsystem message as usual before
+                            const cleanMsg = rawMsg.replace(/^(Alice preparing|Arbitrator evaluating|Bob applying|Verdict:|\s)+/i, '').trim() || log.event_type || log.subsystem;
+                            const first10 = cleanMsg.slice(0, 10);
+                            payloadDisplay = (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#F1F5F9] border border-[#CBD5E1] text-[#334155] font-mono text-[11px] font-medium">
+                                💬 "{first10}{cleanMsg.length > 10 ? '...' : ''}"
+                              </span>
+                            );
+                          }
                         }
 
                         return (
