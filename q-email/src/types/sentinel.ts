@@ -93,7 +93,14 @@ export interface SecurityIncident {
   id: string;
   session_id: string;
   event: string;
+  title?: string;
+  description?: string;
   severity: SeverityType;
+  impact?: string;
+  impact_color?: string;
+  status?: string;
+  status_color?: string;
+  assigned?: string;
   qber: number;
   chsh: number;
   timestamp: string;

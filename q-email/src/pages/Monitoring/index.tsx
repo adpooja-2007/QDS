@@ -482,13 +482,46 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
     sampleTime: string;
   } | null>(null);
 
+  const normalizeIncidentItem = (raw: any): IncidentDetailItem => {
+    const id = raw.id || `INC-${Math.floor(1000 + Math.random() * 9000)}`;
+    const status = raw.status || 'INVESTIGATING';
+    const assigned = raw.assigned || raw.operator || 'Dr. Anisha S.';
+    const impact = raw.impact || raw.severity || 'CRITICAL';
+    const title = raw.title || raw.event || raw.summary || 'Quantum Security Intrusion';
+    const description = raw.description || raw.summary || 'Quantum security anomaly logged on active link.';
+
+    return {
+      id,
+      status: status as any,
+      status_color: raw.status_color || (status === 'ESCALATED' ? '#BA1A1A' : status === 'RESOLVED' ? '#065F46' : '#C2540A'),
+      assigned,
+      impact: impact as any,
+      impact_color: raw.impact_color || (impact === 'CRITICAL' || impact === 'HIGH' ? '#BA1A1A' : impact === 'MED' ? '#0058BE' : '#065F46'),
+      title,
+      description,
+      timeline: Array.isArray(raw.timeline) && raw.timeline.length > 0 ? raw.timeline : (
+        Array.isArray(raw.detection_timeline) && raw.detection_timeline.length > 0 ? raw.detection_timeline : [
+          {
+            time: `${new Date().toLocaleTimeString()} UTC`,
+            title: 'Threat Detected',
+            title_color: '#091426',
+            dot_color: '#94A3B8',
+            description: description
+          }
+        ]
+      )
+    };
+  };
+
   // Incidents Ledger State (Exact Replica of Reference Architecture with Reliable Selection & Status Persistence)
   const [incidentsList, setIncidentsList] = useState<IncidentDetailItem[]>(() => {
     try {
       const saved = localStorage.getItem('qds_incidents_list');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(normalizeIncidentItem);
+        }
       }
     } catch {}
     return defaultIncidentRecords;
@@ -582,8 +615,9 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
 
         // 1. Update security incident list if incident created
         if (detail.newIncident) {
-          setIncidentsList(prev => [detail.newIncident, ...prev.filter(i => i.id !== detail.newIncident.id)]);
-          setSelectedIncidentId(detail.newIncident.id);
+          const normInc = normalizeIncidentItem(detail.newIncident);
+          setIncidentsList(prev => [normInc, ...prev.filter(i => i.id !== normInc.id)]);
+          setSelectedIncidentId(normInc.id);
         }
 
         // 2. Add telemetry log entry to live telemetry stream table and graphs
@@ -2921,6 +2955,19 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('qds_incidents_list');
+                        setIncidentsList(defaultIncidentRecords);
+                        setSelectedIncidentId(defaultIncidentRecords[2].id);
+                        showToast('✓ Incident ledger reset to default clean state.');
+                      }}
+                      className="px-3 py-1 bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F6F3F5] text-[#45474C] font-mono text-[10.5px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
+                      title="Reset Incident Ledger to default clean state"
+                    >
+                      <RotateCcw className="w-3 h-3 text-[#45474C]" />
+                      <span>RESET LEDGER</span>
+                    </button>
                     <button
                       onClick={() => setShowCreateIncidentModal(true)}
                       className="px-3 py-1 bg-[#091426] hover:bg-[#1E293B] text-white font-mono text-[10.5px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5 shadow-none"
