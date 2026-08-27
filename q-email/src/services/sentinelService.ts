@@ -713,9 +713,10 @@ class SentinelService {
 
     this.sessions = [newSession, ...this.sessions.filter(s => s.session_id !== sessId)];
 
+    let newIncident: SecurityIncident | null = null;
     if (isBreach) {
       const incidentId = `INC-${Date.now().toString().slice(-4)}`;
-      const newIncident: SecurityIncident = {
+      newIncident = {
         id: incidentId,
         session_id: sessId,
         event: `Quantum Channel Intrusion: ${meta.category}`,
@@ -748,6 +749,27 @@ class SentinelService {
     try {
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('qds:telemetry-update', { detail: newItem }));
+        window.dispatchEvent(new CustomEvent('qds_attack_launched', { 
+          detail: { 
+            newSession, 
+            newItem, 
+            newIncident: isBreach ? newIncident : null,
+            qberPercent,
+            chshScore,
+            scenarioKey
+          } 
+        }));
+
+        if (isBreach) {
+          window.dispatchEvent(new CustomEvent('qds_incident_created', { detail: newIncident }));
+          try {
+            const saved = localStorage.getItem('qds_incidents_list');
+            const list = saved ? JSON.parse(saved) : [];
+            const updatedList = [newIncident, ...list.filter((i: any) => i.id !== newIncident.id)];
+            localStorage.setItem('qds_incidents_list', JSON.stringify(updatedList));
+            localStorage.setItem('qds_selected_incident_id', newIncident.id);
+          } catch {}
+        }
       }
     } catch {}
 

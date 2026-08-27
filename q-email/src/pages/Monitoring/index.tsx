@@ -42,7 +42,7 @@ import {
   QuantumNode, 
   SecurityIncident 
 } from '../../types/sentinel';
-import { sentinelService } from '../../services/sentinelService';
+import { sentinelService, formatISTTime } from '../../services/sentinelService';
 import { apiClient } from '../../api/client';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -570,6 +570,69 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
       window.removeEventListener('qds_session_created', handleLiveSessionUpdate);
       window.removeEventListener('storage', handleLiveSessionUpdate);
       clearInterval(pollTimer);
+    };
+  }, []);
+
+  // Real-time synchronization of attack sandbox launches across Monitoring sub-tabs
+  useEffect(() => {
+    const handleAttackLaunchedEvent = (e: any) => {
+      try {
+        const detail = e?.detail;
+        if (!detail) return;
+
+        // 1. Update security incident list if incident created
+        if (detail.newIncident) {
+          setIncidentsList(prev => [detail.newIncident, ...prev.filter(i => i.id !== detail.newIncident.id)]);
+          setSelectedIncidentId(detail.newIncident.id);
+        }
+
+        // 2. Add telemetry log entry to live stream
+        if (detail.newItem) {
+          setSelectedItem(detail.newItem);
+          setSelectedTelemetryDetail(detail.newItem);
+        }
+
+        // 3. Update Threat Anomalies list if attack compromised
+        if (detail.newSession && detail.newSession.verdict?.threat_detected) {
+          const qberObs = detail.newSession.metrics?.qber || 0.142;
+          const qberPct = (qberObs > 1 ? qberObs : qberObs * 100).toFixed(1);
+          const threatTitle = (detail.newSession.verdict.threat_type || 'MAN_IN_THE_MIDDLE_EAVESDROPPING').replace(/_/g, ' ').toUpperCase();
+
+          const newAnom: ThreatAnomalyItem = {
+            id: `ANOM-${Date.now().toString().slice(-4)}`,
+            severity: 'CRITICAL',
+            origin_node: 'QN-EVE (Probe)',
+            anomaly_type: threatTitle,
+            time: formatISTTime(new Date(), false),
+            title: threatTitle,
+            telemetry: {
+              node: 'QN-BOB (Receiver)',
+              baseline_qber: '1.8%',
+              current_qber: `${qberPct}%`,
+            },
+            risk_bars: [
+              { height: 100, color: '#BA1A1A' },
+              { height: 95, color: '#BA1A1A' },
+              { height: 80, color: '#BA1A1A' },
+              { height: 90, color: '#BA1A1A' },
+            ]
+          };
+          setThreatAnomalies(prev => [newAnom, ...prev]);
+          setSelectedThreatAnomaly(newAnom);
+        }
+
+        showToast(`ATTACK EVENT REFLECTED: ${detail.newSession?.verdict?.threat_type || 'Attack Sandbox Launch'}. Metrics updated.`);
+      } catch (err) {
+        console.warn('Error syncing attack launched event:', err);
+      }
+    };
+
+    window.addEventListener('qds_attack_launched', handleAttackLaunchedEvent);
+    window.addEventListener('qds_incident_created', handleAttackLaunchedEvent);
+
+    return () => {
+      window.removeEventListener('qds_attack_launched', handleAttackLaunchedEvent);
+      window.removeEventListener('qds_incident_created', handleAttackLaunchedEvent);
     };
   }, []);
 
