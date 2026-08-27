@@ -2411,17 +2411,42 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b border-[#E2E8F0] bg-[#FBF8FA]">
-                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-48 uppercase tracking-wider">Timestamp</th>
-                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-48 uppercase tracking-wider">Subsystem</th>
-                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] uppercase tracking-wider">Event</th>
-                        <th className="py-2.5 px-4 text-right font-mono text-[10.5px] font-medium text-[#75777D] w-36 uppercase tracking-wider">Payload (B)</th>
-                        <th className="py-2.5 px-4 text-right font-mono text-[10.5px] font-medium text-[#75777D] w-28 uppercase tracking-wider">Status</th>
+                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-36 uppercase tracking-wider">Timestamp</th>
+                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-40 uppercase tracking-wider">Subsystem</th>
+                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-48 uppercase tracking-wider">Event</th>
+                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] uppercase tracking-wider">Transmitted Payload / File</th>
+                        <th className="py-2.5 px-4 text-right font-mono text-[10.5px] font-medium text-[#75777D] w-24 uppercase tracking-wider">Latency</th>
+                        <th className="py-2.5 px-4 text-right font-mono text-[10.5px] font-medium text-[#75777D] w-24 uppercase tracking-wider">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#F1F5F9] font-mono text-[12px] bg-[#FFFFFF]">
                       {filteredTelemetry.slice(0, 10).map((log) => {
                         const isError = log.status_code >= 400 || log.is_error || log.subsystem === 'ERR DETECT';
                         const isSelected = selectedItem.id === log.id;
+
+                        // Extract file or text payload info from log message or log fields
+                        const fileMatch = log.message?.match(/\[([^\]]+\.(?:sig|pdf|txt|json))\]/i);
+                        const isTextPayload = log.message?.toLowerCase().includes('text') || log.event_type?.toLowerCase().includes('text');
+                        
+                        let payloadBadge = (
+                          <span className="text-[#64748B] text-[11px] font-normal truncate block max-w-[280px]">
+                            {log.message || 'Quantum One-Time-Pad Payload'}
+                          </span>
+                        );
+
+                        if (fileMatch) {
+                          payloadBadge = (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
+                              📄 FILE: {fileMatch[1]}
+                            </span>
+                          );
+                        } else if (isTextPayload) {
+                          payloadBadge = (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
+                              💬 TEXT: {log.message ? `"${log.message.slice(0, 24)}..."` : 'Quantum Text Payload'}
+                            </span>
+                          );
+                        }
 
                         return (
                           <tr 
@@ -2454,8 +2479,11 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                             <td className={`py-2 px-4 ${isError ? 'text-[#BA1A1A]' : 'text-[#1B1B1D]'}`}>
                               {log.event_type}
                             </td>
+                            <td className="py-2 px-4">
+                              {payloadBadge}
+                            </td>
                             <td className="py-2 px-4 text-right text-[#1B1B1D]">
-                              {log.latency_ms}
+                              {log.latency_ms}ms
                             </td>
                             <td className="py-2 px-4 text-right">
                               <span className={`px-2 py-0.5 rounded-[2px] font-mono text-[10px] font-bold ${

@@ -162,12 +162,11 @@ export const TransferPage: React.FC<TransferPageProps> = ({
       // Call live backend FastAPI API if available
       let backendRes: any = null;
       try {
-        backendRes = await apiClient.generateSignature({
-          document_name: docName,
-          file_size_kb: transferMode === 'file' ? selectedFile?.sizeKb || 64.0 : 16.0,
-          is_eve_active: isEveActive,
-          scenario: isEveActive ? 'EVE_INTERCEPT' : 'CLEAN'
-        });
+        backendRes = await sentinelService.createSessionAsync(
+          docName,
+          transferMode === 'file' ? selectedFile?.sizeKb || 64.0 : 16.0,
+          isEveActive
+        );
       } catch {
         // Fallback simulated response if backend offline
         backendRes = {
@@ -452,7 +451,7 @@ export const TransferPage: React.FC<TransferPageProps> = ({
                 <div className="flex items-center gap-2">
                   <Lock className="w-3.5 h-3.5 text-[#0058BE]" />
                   <span className="text-[11.5px] font-mono font-bold text-[#091426] uppercase">
-                    Computed SHA-256 Digest ($H = \text{SHA256}(M)$)
+                    Computed SHA-256 Digest (H = SHA256(M))
                   </span>
                 </div>
                 <button
