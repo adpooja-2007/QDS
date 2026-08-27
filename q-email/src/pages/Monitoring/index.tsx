@@ -2093,11 +2093,12 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
               <div className="space-y-4">
 
                 {/* SIH 2026 HYBRID PQC FALLBACK & COGNITIVE AI REMEDIATION PANEL (SIH PS-26141) */}
-                <div className="border border-[#E2E8F0] bg-[#FFFFFF] rounded-[2px] p-4 shadow-none space-y-3 font-mono">
-                  <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
+                <div className="border border-[#E2E8F0] bg-[#FFFFFF] rounded-[2px] overflow-hidden shadow-none font-mono">
+                  {/* Panel Header Bar */}
+                  <div className="bg-[#F6F3F5] border-b border-[#E2E8F0] px-4 py-2.5 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2">
-                      <ShieldCheck className={`w-5 h-5 ${sihSystemState === 'QUANTUM_SECURE' ? 'text-[#065F46]' : 'text-[#BA1A1A]'}`} />
-                      <span className="font-bold text-[11.5px] text-[#091426] uppercase tracking-wider">
+                      <ShieldCheck className={`w-4 h-4 ${sihSystemState === 'QUANTUM_SECURE' ? 'text-[#065F46]' : 'text-[#BA1A1A]'}`} />
+                      <span className="font-mono text-[10.5px] font-bold uppercase tracking-widest text-[#091426]">
                         SIH 2026 COGNITIVE DEFENSE CONTROL · HYBRID PQC FALLBACK GATEWAY (PS-26141)
                       </span>
                     </div>
@@ -2105,70 +2106,74 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                       <button
                         onClick={handleTriggerSihClean}
                         disabled={sihLoading}
-                        className="px-3 py-1 bg-[#FFFFFF] border border-[#065F46] text-[#065F46] hover:bg-[#F0FDF4] text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
+                        className="px-3 py-1 bg-[#FFFFFF] border border-[#065F46] hover:bg-[#F0FDF4] text-[#065F46] font-mono text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
                       >
                         <RefreshCw className={`w-3 h-3 ${sihLoading ? 'animate-spin' : ''}`} />
-                        <span>Reset Clean Channel</span>
+                        <span>RESET CLEAN CHANNEL</span>
                       </button>
                       <button
                         onClick={handleTriggerSihAttack}
                         disabled={sihLoading}
-                        className="px-3 py-1 bg-[#BA1A1A] hover:bg-[#991B1B] text-white text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
+                        className="px-3 py-1 bg-[#BA1A1A] hover:bg-[#991B1B] text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
                       >
                         <Zap className="w-3 h-3 text-[#FDE047]" />
-                        <span>Trigger Attack Simulation</span>
+                        <span>TRIGGER ATTACK SIMULATION</span>
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-3 text-[11px]">
-                    <div className={`p-2.5 rounded-[2px] border ${sihSystemState === 'QUANTUM_SECURE' ? 'bg-[#F0FDF4] border-[#BBF7D0]' : 'bg-[#FEF2F2] border-[#FCA5A5]'}`}>
-                      <span className="text-[#75777D] text-[9.5px] block font-bold">ACTIVE SYSTEM MODE</span>
-                      <strong className={`text-[12px] font-extrabold ${sihSystemState === 'QUANTUM_SECURE' ? 'text-[#065F46]' : 'text-[#BA1A1A]'}`}>
-                        {sihSystemState}
-                      </strong>
-                    </div>
-
-                    <div className="p-2.5 rounded-[2px] bg-[#F8FAFC] border border-[#E2E8F0]">
-                      <span className="text-[#75777D] text-[9.5px] block font-bold">QBER / HOEFFDING BOUND</span>
-                      <strong className={`text-[12px] font-extrabold ${sihQber > 0.055 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
-                        {(sihQber * 100).toFixed(1)}% (Limit: 5.5%)
-                      </strong>
-                    </div>
-
-                    <div className="p-2.5 rounded-[2px] bg-[#F8FAFC] border border-[#E2E8F0]">
-                      <span className="text-[#75777D] text-[9.5px] block font-bold">CHSH BELL METRIC (S)</span>
-                      <strong className={`text-[12px] font-extrabold ${sihChsh < 2.0 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
-                        S = {sihChsh.toFixed(2)} {sihChsh >= 2.0 ? '(Quantum)' : '(Collapsed)'}
-                      </strong>
-                    </div>
-
-                    <div className="p-2.5 rounded-[2px] bg-[#F8FAFC] border border-[#E2E8F0]">
-                      <span className="text-[#75777D] text-[9.5px] block font-bold">PQC ALGORITHM</span>
-                      <strong className="text-[11px] font-bold text-[#0058BE]">
-                        Dilithium3 (ML-DSA-65)
-                      </strong>
-                    </div>
-                  </div>
-
-                  {/* AI Cognitive Incident Explainer Terminal */}
-                  <div className="bg-[#091426] border border-[#1E293B] p-3.5 rounded-[2px] text-[11px] space-y-2">
-                    <div className="flex items-center justify-between text-[#94A3B8] border-b border-[#1E293B] pb-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <Terminal className="w-3.5 h-3.5 text-[#38BDF8]" />
-                        <span className="font-bold text-[#F8FAFC] text-[10px] uppercase tracking-wider">AI COGNITIVE INCIDENT EXPLAINER (LOCAL OLLAMA ENGINE)</span>
+                  {/* Panel Body */}
+                  <div className="p-4 space-y-3.5 bg-[#FFFFFF]">
+                    {/* 4-Card Metrics Grid */}
+                    <div className="grid grid-cols-4 gap-3 text-[11px]">
+                      <div className={`p-3 rounded-[2px] border ${sihSystemState === 'QUANTUM_SECURE' ? 'bg-[#F0FDF4] border-[#BBF7D0]' : 'bg-[#FEF2F2] border-[#FCA5A5]'}`}>
+                        <span className="text-[#75777D] text-[9.5px] uppercase tracking-wider font-bold block mb-0.5">ACTIVE SYSTEM MODE</span>
+                        <strong className={`text-[12.5px] font-extrabold ${sihSystemState === 'QUANTUM_SECURE' ? 'text-[#065F46]' : 'text-[#BA1A1A]'}`}>
+                          {sihSystemState}
+                        </strong>
                       </div>
-                      <span className="text-[#38BDF8] text-[9.5px] font-bold">OFFLINE AIR-GAPPED CONTROL</span>
-                    </div>
-                    <div className="text-[#E2E8F0] font-mono text-[10.5px] leading-relaxed whitespace-pre-line max-h-[140px] overflow-y-auto p-1">
-                      {sihAiReport}
-                    </div>
-                    {sihFallbackSig && (
-                      <div className="pt-1.5 border-t border-[#1E293B] text-[10px] text-[#94A3B8] flex items-center justify-between">
-                        <span>Backup CRYSTALS-Dilithium Public Signature Hash:</span>
-                        <span className="font-mono text-[#FDE047] font-bold">{sihFallbackSig}</span>
+
+                      <div className="p-3 rounded-[2px] bg-[#F6F3F5] border border-[#E2E8F0]">
+                        <span className="text-[#75777D] text-[9.5px] uppercase tracking-wider font-bold block mb-0.5">QBER / HOEFFDING BOUND</span>
+                        <strong className={`text-[12.5px] font-extrabold ${sihQber > 0.055 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
+                          {(sihQber * 100).toFixed(1)}% <span className="text-[10px] font-normal text-[#75777D]">(Limit: 5.5%)</span>
+                        </strong>
                       </div>
-                    )}
+
+                      <div className="p-3 rounded-[2px] bg-[#F6F3F5] border border-[#E2E8F0]">
+                        <span className="text-[#75777D] text-[9.5px] uppercase tracking-wider font-bold block mb-0.5">CHSH BELL METRIC (S)</span>
+                        <strong className={`text-[12.5px] font-extrabold ${sihChsh < 2.0 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
+                          S = {sihChsh.toFixed(2)} <span className="text-[10px] font-normal text-[#75777D]">{sihChsh >= 2.0 ? '(Quantum)' : '(Collapsed)'}</span>
+                        </strong>
+                      </div>
+
+                      <div className="p-3 rounded-[2px] bg-[#F6F3F5] border border-[#E2E8F0]">
+                        <span className="text-[#75777D] text-[9.5px] uppercase tracking-wider font-bold block mb-0.5">PQC ALGORITHM</span>
+                        <strong className="text-[12px] font-bold text-[#0058BE]">
+                          Dilithium3 (ML-DSA-65)
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* AI Cognitive Incident Explainer Terminal */}
+                    <div className="bg-[#091426] border border-[#1E293B] p-3.5 rounded-[2px] text-[11px] space-y-2">
+                      <div className="flex items-center justify-between text-[#94A3B8] border-b border-[#1E293B] pb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Terminal className="w-3.5 h-3.5 text-[#38BDF8]" />
+                          <span className="font-bold text-[#F8FAFC] text-[10px] uppercase tracking-wider">AI COGNITIVE INCIDENT EXPLAINER (LOCAL OLLAMA ENGINE)</span>
+                        </div>
+                        <span className="text-[#38BDF8] text-[9.5px] font-bold uppercase tracking-wider">OFFLINE AIR-GAPPED CONTROL</span>
+                      </div>
+                      <div className="text-[#E2E8F0] font-mono text-[10.5px] leading-relaxed whitespace-pre-line max-h-[140px] overflow-y-auto p-1">
+                        {sihAiReport}
+                      </div>
+                      {sihFallbackSig && (
+                        <div className="pt-1.5 border-t border-[#1E293B] text-[10px] text-[#94A3B8] flex items-center justify-between font-mono">
+                          <span>Backup CRYSTALS-Dilithium Public Signature Hash:</span>
+                          <span className="text-[#38BDF8] font-bold">{sihFallbackSig}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
