@@ -961,9 +961,12 @@ class SentinelService {
       }
     }
 
-    this.liveStream = [newItem, ...this.liveStream.filter(i => i.id !== newItem.id)]
-      .sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0) || b.timestamp.localeCompare(a.timestamp))
-      .slice(0, 10);
+    if (newItem) {
+      newItem.source = 'demonstration';
+      newItem.isDemonstration = true;
+    }
+
+    this.liveStream = [newItem, ...this.liveStream.filter(i => i.id !== newItem.id)].slice(0, 15);
     
     // Also push to persistent telemetry table
     this.telemetry.unshift({
