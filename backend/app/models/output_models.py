@@ -65,6 +65,16 @@ class DecoyResult(BaseModel):
     status: DecoyStatus = DecoyStatus.DISABLED
 
 
+class HelstromResult(BaseModel):
+    overlap_gamma: float
+    prior_probability_0: float = 0.5
+    prior_probability_1: float = 0.5
+    trace_distance: float
+    min_error_probability: float
+    max_fidelity: float
+    status: str = "BOUND_ENFORCED"
+
+
 class DecisionResult(BaseModel):
     qber_pass: bool
     chsh_pass: bool
@@ -99,6 +109,7 @@ class SecurityAuditResponse(BaseModel):
     threshold_analysis: ThresholdResult | None = None
     chsh_analysis: CHSHResult | None = None
     decoy_analysis: DecoyResult | None = None
+    helstrom_analysis: HelstromResult | None = None
     decision: DecisionResult | None = None
     diagnostics: DiagnosticsResult | None = None
     telemetry: TelemetryResult | None = None

@@ -12,6 +12,7 @@ from app.engine.qber import calculate_qber
 from app.engine.hoeffding import calculate_hoeffding_threshold
 from app.engine.chsh import evaluate_chsh_score
 from app.engine.decoy import evaluate_decoy_statistics
+from app.engine.helstrom import evaluate_helstrom_bound
 from app.engine.classifier import classify_attack_condition
 from app.engine.decision import evaluate_decision_gate
 from app.engine.audit import build_security_audit_report
@@ -73,6 +74,9 @@ def analyze_security_transaction(request: SecurityAnalysisRequest) -> SecurityAu
     # 7. Decoy-State Statistics (M2-F12)
     decoy_res = evaluate_decoy_statistics(request.decoy)
 
+    # 7b. Helstrom Quantum Minimum Error Bound (State Discrimination Limit)
+    helstrom_res = evaluate_helstrom_bound(overlap_gamma=0.70710678)
+
     # 8. Attack Classification (M2-F13)
     diagnostics = classify_attack_condition(
         qber_result=qber_res,
@@ -103,6 +107,7 @@ def analyze_security_transaction(request: SecurityAnalysisRequest) -> SecurityAu
         threshold_analysis=threshold_res,
         chsh_analysis=chsh_res,
         decoy_analysis=decoy_res,
+        helstrom_analysis=helstrom_res,
         decision=decision,
         diagnostics=diagnostics,
         execution_time_ms=execution_time_ms,

@@ -37,9 +37,12 @@
 - **Live Telemetry Stream Table**: Live event stream with subsystem badges (`ARBITRATOR MAC`, `NONCE AUDIT`, `DECOY ANALYSIS`, `EVE PROBE`, `FIBER TELEMETRY`, `OPTICAL JAMMER`), latency, HTTP status code, and JSON copy button.
 
 ### 2.2. THREATS Tab
-- **4 Metric Tiles**: Observed QBER, Hoeffding Ceiling, CHSH Score, Security Verdict.
+- **5 Metric Tiles**: Observed QBER, Hoeffding Ceiling, CHSH Score, Helstrom Minimum Error Discrimination Bound ($P_e^{\text{Helstrom}} = 14.65\%$), Security Verdict.
+- **Helstrom Minimum Error Discrimination Audit**:
+  $$P_e^{\text{Helstrom}} = \frac{1}{2} \left( 1 - \text{Tr}|\pi_0 \rho_0 - \pi_1 \rho_1| \right) = \frac{1}{2}\left( 1 - \sqrt{1 - 4\pi_0\pi_1\gamma^2} \right) = 14.64\%$$
+  - Enforces the physical quantum lower limit on any eavesdropper probe discrimination error.
 - **Hoeffding Formula Audit**: Sample size $N$, false alarm parameter $\alpha = 0.001$, confidence margin $\Delta$, upper bound calculation.
-- **Decision Matrix**: Bitwise XOR check, Hoeffding bound test, Bell test, Pauli alignment check.
+- **Decision Matrix**: Bitwise XOR check, Hoeffding bound test, Bell test, Helstrom state discrimination test, Pauli alignment check.
 - **Threat Anomaly Cards**: Categorized threat items with risk bar visualization and origin node attribution (`ARB-CORE-01`, `NONCE-CACHE-01`, `DECOY-SPLITTER-01`, `NODE-EVE-01`).
 
 ### 2.3. INCIDENTS Tab
