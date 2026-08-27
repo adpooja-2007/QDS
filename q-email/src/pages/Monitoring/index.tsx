@@ -2155,22 +2155,22 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                       </div>
                     </div>
 
-                    {/* AI Cognitive Incident Explainer Terminal */}
-                    <div className="bg-[#091426] border border-[#1E293B] p-3.5 rounded-[2px] text-[11px] space-y-2">
-                      <div className="flex items-center justify-between text-[#94A3B8] border-b border-[#1E293B] pb-1.5">
+                    {/* AI Cognitive Incident Explainer Box (Light Theme) */}
+                    <div className="bg-[#F6F3F5] border border-[#E2E8F0] p-3.5 rounded-[2px] text-[11px] space-y-2 font-mono">
+                      <div className="flex items-center justify-between text-[#75777D] border-b border-[#E2E8F0] pb-1.5">
                         <div className="flex items-center gap-1.5">
-                          <Terminal className="w-3.5 h-3.5 text-[#38BDF8]" />
-                          <span className="font-bold text-[#F8FAFC] text-[10px] uppercase tracking-wider">AI COGNITIVE INCIDENT EXPLAINER (LOCAL OLLAMA ENGINE)</span>
+                          <Terminal className="w-3.5 h-3.5 text-[#0058BE]" />
+                          <span className="font-bold text-[#091426] text-[10px] uppercase tracking-wider">AI COGNITIVE INCIDENT EXPLAINER (LOCAL OLLAMA ENGINE)</span>
                         </div>
-                        <span className="text-[#38BDF8] text-[9.5px] font-bold uppercase tracking-wider">OFFLINE AIR-GAPPED CONTROL</span>
+                        <span className="text-[#0058BE] text-[9.5px] font-bold uppercase tracking-wider">OFFLINE AIR-GAPPED CONTROL</span>
                       </div>
-                      <div className="text-[#E2E8F0] font-mono text-[10.5px] leading-relaxed whitespace-pre-line max-h-[140px] overflow-y-auto p-1">
+                      <div className="text-[#091426] font-mono text-[10.5px] leading-relaxed whitespace-pre-line max-h-[140px] overflow-y-auto p-1">
                         {sihAiReport}
                       </div>
                       {sihFallbackSig && (
-                        <div className="pt-1.5 border-t border-[#1E293B] text-[10px] text-[#94A3B8] flex items-center justify-between font-mono">
+                        <div className="pt-1.5 border-t border-[#E2E8F0] text-[10px] text-[#75777D] flex items-center justify-between font-mono">
                           <span>Backup CRYSTALS-Dilithium Public Signature Hash:</span>
-                          <span className="text-[#38BDF8] font-bold">{sihFallbackSig}</span>
+                          <span className="text-[#0058BE] font-bold">{sihFallbackSig}</span>
                         </div>
                       )}
                     </div>
