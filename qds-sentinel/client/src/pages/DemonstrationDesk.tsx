@@ -119,117 +119,32 @@ export function DemonstrationDesk() {
       <div className="demo-desk-status-line"><span className={playing ? "demo-desk-running" : ""}>{playing ? "Simulation running" : "Simulation paused"}</span><i /><b>{phaseLabel}</b><span>Stream pulse: <strong>#{streamPulse} / 08</strong></span><span>Measured QBER: <strong className={eve ? "text-copper" : "text-blue"}>{qber} {eve ? "(alert)" : "(nominal)"}</strong></span></div>
       <div ref={stageRef} className={eve ? "demo-desk-canvas demo-desk-canvas-threat" : "demo-desk-canvas"} onPointerMove={updateDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
         <svg className="demo-desk-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <filter id="glowBlue" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="0.8" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="glowCopper" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="1.0" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          {/* SVG Connection Paths */}
-          <path id="path-arb-alice" d={`M ${nodes.arb.x} ${nodes.arb.y} L ${nodes.alice.x} ${nodes.alice.y}`} className="demo-desk-link" stroke="#38BDF8" strokeWidth="0.35" strokeDasharray="0.8 1.2" vectorEffect="non-scaling-stroke" />
-          
-          {!eve ? (
-            <path id="path-arb-bob" d={`M ${nodes.arb.x} ${nodes.arb.y} L ${nodes.bob.x} ${nodes.bob.y}`} className="demo-desk-link" stroke="#34D399" strokeWidth="0.35" strokeDasharray="0.8 1.2" vectorEffect="non-scaling-stroke" />
-          ) : (
-            <>
-              <path id="path-arb-eve" d={`M ${nodes.arb.x} ${nodes.arb.y} L ${nodes.eve.x} ${nodes.eve.y}`} className="demo-desk-link demo-desk-link-threat" stroke="#C2540A" strokeWidth="0.5" strokeDasharray="1 1" vectorEffect="non-scaling-stroke" />
-              <path id="path-eve-bob" d={`M ${nodes.eve.x} ${nodes.eve.y} L ${nodes.bob.x} ${nodes.bob.y}`} className="demo-desk-link demo-desk-link-threat" stroke="#EF4444" strokeWidth="0.5" strokeDasharray="1 1" vectorEffect="non-scaling-stroke" />
-            </>
-          )}
-
-          {/* Classical Feed-Forward Channel (Alice -> Bob) */}
-          <path id="path-alice-bob" d={`M ${nodes.alice.x} ${nodes.alice.y} Q 50 ${Math.min(nodes.alice.y, nodes.bob.y) + 12} ${nodes.bob.x} ${nodes.bob.y}`} stroke="#F59E0B" strokeWidth="0.3" strokeDasharray="0.6 1" opacity="0.6" fill="none" vectorEffect="non-scaling-stroke" />
-
-          {/* Node Anchors */}
-          {[nodes.alice, nodes.arb, nodes.bob, ...(eve ? [nodes.eve] : [])].map((point, index) => (
-            <circle key={index} cx={point.x} cy={point.y} r="0.9" fill="#0058BE" />
+          {links.map((link, index) => (
+            <line key={index} className={eve && index > 0 ? "demo-desk-link demo-desk-link-threat" : "demo-desk-link"} {...link} />
           ))}
-
-          {/* Dynamic Photons Animating Along Paths */}
-          {(playing || step === 1 || step === 2) && (
-            <>
-              {/* Photon A: Arbitrator -> Alice */}
-              <g className="photon-group-a" filter="url(#glowBlue)">
-                <circle r="1.6" fill="#38BDF8">
-                  <animateMotion dur={`${2.2 / simSpeed}s`} repeatCount="indefinite" begin="0s">
-                    <mpath href="#path-arb-alice" />
-                  </animateMotion>
-                </circle>
-                <circle r="3.4" fill="#38BDF8" opacity="0.4">
-                  <animateMotion dur={`${2.2 / simSpeed}s`} repeatCount="indefinite" begin="0s">
-                    <mpath href="#path-arb-alice" />
-                  </animateMotion>
-                </circle>
-              </g>
-
-              {!eve ? (
-                /* Photon B: Arbitrator -> Bob */
-                <g className="photon-group-b" filter="url(#glowBlue)">
-                  <circle r="1.6" fill="#34D399">
-                    <animateMotion dur={`${2.2 / simSpeed}s`} repeatCount="indefinite" begin={`${1.1 / simSpeed}s`}>
-                      <mpath href="#path-arb-bob" />
-                    </animateMotion>
-                  </circle>
-                  <circle r="3.4" fill="#34D399" opacity="0.4">
-                    <animateMotion dur={`${2.2 / simSpeed}s`} repeatCount="indefinite" begin={`${1.1 / simSpeed}s`}>
-                      <mpath href="#path-arb-bob" />
-                    </animateMotion>
-                  </circle>
-                </g>
-              ) : (
-                /* Threat Photons: Arbitrator -> Eve -> Bob */
-                <>
-                  <g className="photon-group-eve-in" filter="url(#glowCopper)">
-                    <circle r="1.8" fill="#C2540A">
-                      <animateMotion dur={`${1.6 / simSpeed}s`} repeatCount="indefinite" begin="0s">
-                        <mpath href="#path-arb-eve" />
-                      </animateMotion>
-                    </circle>
-                  </g>
-                  <g className="photon-group-eve-out" filter="url(#glowCopper)">
-                    <circle r="1.8" fill="#EF4444">
-                      <animateMotion dur={`${1.6 / simSpeed}s`} repeatCount="indefinite" begin={`${0.8 / simSpeed}s`}>
-                        <mpath href="#path-eve-bob" />
-                      </animateMotion>
-                    </circle>
-                  </g>
-                </>
-              )}
-            </>
-          )}
-
-          {/* Classical Feed-Forward Bits (Alice -> Bob during Phase 3/4) */}
-          {(playing || step === 3 || step === 4) && (
-            <g className="classical-bit-group">
-              <rect width="2.2" height="1.4" rx="0.4" fill="#F59E0B">
-                <animateMotion dur={`${1.8 / simSpeed}s`} repeatCount="indefinite" begin="0s" rotate="auto">
-                  <mpath href="#path-alice-bob" />
-                </animateMotion>
-              </rect>
-            </g>
-          )}
+          {[nodes.alice, nodes.arb, nodes.bob].map((point, index) => (
+            <circle key={index} cx={point.x} cy={point.y} r=".72" />
+          ))}
         </svg>
+
+        {!eve && <div className="demo-desk-photon demo-desk-photon-a" style={{ left: `${nodes.arb.x}%`, top: `${nodes.arb.y}%` }} />}
+        {!eve && <div className="demo-desk-photon demo-desk-photon-b" style={{ left: `${nodes.arb.x}%`, top: `${nodes.arb.y}%` }} />}
+        {eve && <div className="demo-desk-photon demo-desk-photon-eve" style={{ left: `${nodes.eve.x}%`, top: `${nodes.eve.y}%` }} />}
 
         {(["alice", "arb", "bob", "eve"] as NodeId[]).map((id) => {
           const point = nodes[id];
           const specs = {
-            alice: { name: "Alice node", role: "TX MOD 99", detail: step === 2 ? "BSM Active" : "Signer Node Alpha", icon: FileKey2, tone: "blue" },
-            arb: { name: "Arbitrator", role: "EPR source", detail: step === 0 ? "BBO Crystal Pump" : phase.meta, icon: Sparkles, tone: "copper" },
-            bob: { name: "Bob node", role: "RX DET 01", detail: step === 3 ? "Pauli σXZ Aligned" : "Verifier Node Beta", icon: ShieldCheck, tone: "blue" },
-            eve: { name: "Eve probe", role: eve ? "Interception active" : "Bypassed / passive", detail: eve ? "QBER 14.2% (Tap active)" : "No channel access", icon: AlertTriangle, tone: "copper" }
+            alice: { name: "Alice node", role: "TX MOD 99", detail: "Awaiting photon A", icon: FileKey2, tone: "blue" },
+            arb: { name: "Arbitrator", role: "EPR source", detail: phase.meta, icon: Sparkles, tone: "copper" },
+            bob: { name: "Bob node", role: "RX DET 01", detail: "Awaiting photon B", icon: ShieldCheck, tone: "blue" },
+            eve: { name: "Eve probe", role: eve ? "Interception active" : "Bypassed / passive", detail: eve ? "Tap rate 35%" : "No channel access", icon: AlertTriangle, tone: "copper" }
           }[id];
           const Icon = specs.icon;
-          const isActiveNode = (id === "arb" && step === 0) || (id === "alice" && (step === 1 || step === 2)) || (id === "bob" && (step === 3 || step === 5)) || (id === "eve" && eve);
 
           return (
             <button
               key={id}
-              className={`demo-desk-node demo-desk-node-${specs.tone} ${id === "eve" && !eve ? "demo-desk-node-muted" : ""} ${dragging === id ? "demo-desk-node-dragging" : ""} ${isActiveNode ? "demo-desk-node-active" : ""}`}
+              className={`demo-desk-node demo-desk-node-${specs.tone} ${id === "eve" && !eve ? "demo-desk-node-muted" : ""} ${dragging === id ? "demo-desk-node-dragging" : ""}`}
               style={{ left: `${point.x}%`, top: `${point.y}%` }}
               onPointerDown={(event) => beginDrag(id, event)}
             >
