@@ -155,15 +155,20 @@ function PhotonTrack({ id, from, to, tone, delay = "0s" }: { id: string; from: {
 }
 
 function HomePortal() {
-  return <div className="page-content portal-page"><Topbar eyebrow="00 / Switchboard" title="Trust is a measurable state." subtitle="QDS Sentinel / quantum signature assurance console" action={<Pill tone="good"><StatusDot /> gateway connected</Pill>} /><section className="hero-panel"><div className="hero-copy"><div className="hero-kicker"><span className="copper-line" /> quantum digital signatures / v1.0.0</div><h2>Prove authenticity<br /><em>under pressure.</em></h2><p>Observe the quantum protocol, surface an adversary, and keep every decision auditable from one calibrated console.</p><div className="hero-actions"><Link href="/demonstration" className="button button-copper"><Play size={15} fill="currentColor" /> Launch protocol demo <ArrowUpRight size={14} /></Link><Link href="/monitoring" className="button hero-secondary-action">Open live audit <ArrowUpRight size={14} /></Link><Link href="/transfer" className="button hero-secondary-action">Open transfer terminal <ArrowUpRight size={14} /></Link></div></div><div className="hero-art"><img src={HERO} alt="Abstract photon pulse crossing a dark optical channel" /><div className="hero-readout"><span>current assurance</span><strong>98.8%</strong><small>within tolerance</small></div></div><div className="hero-footnote">FIELD NOTE 001 <span>////</span> authenticated distribution is never assumed</div></section><section className="portal-grid"><SectionLabel index="01" eyebrow="Choose an instrument" title="Operator views" action={<span className="section-note">Two pathways / one source of truth</span>} /><div className="portal-cards"><Link href="/demonstration" className="portal-card portal-card-dark"><div className="card-number">01</div><div className="portal-card-visual"><div className="orbit orbit-a" /><div className="orbit orbit-b" /><div className="node node-a">A</div><div className="node node-b">B</div><div className="photon photon-one" /><div className="photon photon-two" /></div><div className="portal-card-body"><div className="eyebrow light">Interactive physics simulator</div><h3>Alice <span>↔</span> Bob</h3><p>Walk the six protocol phases from EPR pair distribution to the final CHSH audit gate.</p><div className="tag-row"><Pill tone="dark">EPR pairs</Pill><Pill tone="dark">BSM</Pill><Pill tone="dark">CHSH test</Pill></div><span className="card-cta">Enter demonstration <ArrowUpRight size={14} /></span></div></Link><Link href="/monitoring" className="portal-card portal-card-paper"><div className="card-number">02</div><div className="monitor-card-top"><div><div className="eyebrow">Forensic telemetry</div><h3>Security<br /><em>monitoring</em></h3></div><div className="alert-count"><span>open alerts</span><strong>01</strong></div></div><div className="mini-chart"><TelemetryChart /></div><div className="portal-card-body"><p>Track QBER boundaries, Bell non-locality, and the complete audit stream as sessions move through the network.</p><div className="tag-row"><Pill tone="blue">Hoeffding</Pill><Pill tone="copper">Quarantine</Pill><Pill>Session DB</Pill></div><span className="card-cta">Open live audit <ArrowUpRight size={14} /></span></div></Link></div></section><section className="cluster-strip"><div className="cluster-heading"><span className="eyebrow">Cluster status</span><strong>All systems observable</strong></div><div className="cluster-item"><span className="cluster-icon"><Radio size={15} /></span><div><span className="metric-label">Active session</span><strong>QKD-260827-91F4</strong></div></div><div className="cluster-item"><span className="cluster-icon"><Network size={15} /></span><div><span className="metric-label">Connected nodes</span><strong>04 / 04 online</strong></div></div><div className="cluster-item"><span className="cluster-icon"><LockKeyhole size={15} /></span><div><span className="metric-label">Channel integrity</span><strong>Authenticated</strong></div></div><div className="cluster-item cluster-item-accent"><span className="eyebrow">last sync</span><strong>11:48:09 <span>UTC</span></strong></div></section><section className="network-band"><div><SectionLabel index="02" eyebrow="Network map" title="Quantum links, made legible." /><p className="network-intro">A live topology of the authenticated channel. The visual layer stays quiet; the signal layer tells the story.</p><Link href="/monitoring" className="text-link">Inspect topology <ArrowUpRight size={14} /></Link></div><div className="network-visual"><img src={NETWORK} alt="Abstract quantum network topology" /><div className="network-node n-arb">ARBITRATOR<span>12ms</span></div><div className="network-node n-alice">ALICE<span>18ms</span></div><div className="network-node n-bob">BOB<span>20ms</span></div><div className="network-node n-eve">EVE<span>quarantined</span></div></div></section></div>;
+  const { telemetryLogs } = useSentinel();
+  const [ticker, setTicker] = useState(0);
+  useEffect(() => { const timer = setInterval(() => setTicker(t => t + 1), 3000); return () => clearInterval(timer); }, []);
+  return <div className="page-content portal-page"><Topbar eyebrow="00 / Switchboard" title="Trust is a measurable state." subtitle="QDS Sentinel / quantum signature assurance console" action={<Pill tone="good"><StatusDot /> gateway connected</Pill>} /><section className="hero-panel"><div className="hero-copy"><div className="hero-kicker"><span className="copper-line" /> quantum digital signatures / v1.0.0</div><h2>Prove authenticity<br /><em>under pressure.</em></h2><p>Observe the quantum protocol, surface an adversary, and keep every decision auditable from one calibrated console.</p><div className="hero-actions"><Link href="/demonstration" className="button button-copper"><Play size={15} fill="currentColor" /> Launch protocol demo <ArrowUpRight size={14} /></Link><Link href="/monitoring" className="button hero-secondary-action">Open live audit <ArrowUpRight size={14} /></Link><Link href="/transfer" className="button hero-secondary-action">Open transfer terminal <ArrowUpRight size={14} /></Link></div></div><div className="hero-art"><img src={HERO} alt="Abstract photon pulse crossing a dark optical channel" /><div className="hero-readout"><span>current assurance</span><strong>98.8%</strong><small>within tolerance</small></div></div><div className="hero-footnote">FIELD NOTE 001 <span>////</span> authenticated distribution is never assumed</div></section><section className="portal-grid"><SectionLabel index="01" eyebrow="Choose an instrument" title="Operator views" action={<span className="section-note">Two pathways / one source of truth</span>} /><div className="portal-cards"><Link href="/demonstration" className="portal-card portal-card-dark"><div className="card-number">01</div><div className="portal-card-visual"><div className="orbit orbit-a" /><div className="orbit orbit-b" /><div className="node node-a">A</div><div className="node node-b">B</div><div className="photon photon-one" /><div className="photon photon-two" /></div><div className="portal-card-body"><div className="eyebrow light">Interactive physics simulator</div><h3>Alice <span>↔</span> Bob</h3><p>Walk the six protocol phases from EPR pair distribution to the final CHSH audit gate.</p><div className="tag-row"><Pill tone="dark">EPR pairs</Pill><Pill tone="dark">BSM</Pill><Pill tone="dark">CHSH test</Pill></div><span className="card-cta">Enter demonstration <ArrowUpRight size={14} /></span></div></Link><Link href="/monitoring" className="portal-card portal-card-paper"><div className="card-number">02</div><div className="monitor-card-top"><div><div className="eyebrow">Forensic telemetry</div><h3>Security<br /><em>monitoring</em></h3></div><div className="alert-count"><span>open alerts</span><strong>01</strong></div></div><div className="mini-chart"><div className="font-mono text-[10px] space-y-1">{telemetryLogs.slice(0, 4).map((l, i) => <p key={i} className={l.isThreat ? "text-copper" : "text-slate-500"}>&gt; {l.source}: {l.text.slice(0, 30)}...</p>)}</div></div><div className="portal-card-body"><p>Track QBER boundaries, Bell non-locality, and the complete audit stream as sessions move through the network.</p><div className="tag-row"><Pill tone="blue">Hoeffding</Pill><Pill tone="copper">Quarantine</Pill><Pill>Session DB</Pill></div><span className="card-cta">Open live audit <ArrowUpRight size={14} /></span></div></Link></div></section><section className="cluster-strip"><div className="cluster-heading"><span className="eyebrow">Cluster status</span><strong>All systems observable</strong></div><div className="cluster-item"><span className="cluster-icon"><Radio size={15} /></span><div><span className="metric-label">Active session</span><strong>QKD-260827-91F4</strong></div></div><div className="cluster-item"><span className="cluster-icon"><Network size={15} /></span><div><span className="metric-label">Connected nodes</span><strong>04 / 04 online</strong></div></div><div className="cluster-item"><span className="cluster-icon"><LockKeyhole size={15} /></span><div><span className="metric-label">Channel integrity</span><strong>Authenticated</strong></div></div><div className="cluster-item cluster-item-accent"><span className="eyebrow">last sync</span><strong>11:48:09 <span>UTC</span></strong></div></section><section className="network-band"><div><SectionLabel index="02" eyebrow="Network map" title="Quantum links, made legible." /><p className="network-intro">A live topology of the authenticated channel. The visual layer stays quiet; the signal layer tells the story.</p><Link href="/monitoring" className="text-link">Inspect topology <ArrowUpRight size={14} /></Link></div><div className="network-visual"><img src={NETWORK} alt="Abstract quantum network topology" /><div className="network-node n-arb">ARBITRATOR<span>12ms</span></div><div className="network-node n-alice">ALICE<span>18ms</span></div><div className="network-node n-bob">BOB<span>20ms</span></div><div className="network-node n-eve">EVE<span>quarantined</span></div></div></section></div>;
 }
 
 function MonitoringPage() {
+  const { eveActive, toggleEve, qber, chsh, telemetryLogs, incidents, activeAttack } = useSentinel();
   const [tab, setTab] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get("section");
     return ["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(requested ?? "") ? requested! : "overview";
   });
-  const [threat, setThreat] = useState(false);
+  const threat = eveActive;
+  const setThreat = toggleEve;
   const [range, setRange] = useState("15M");
   const [query, setQuery] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
@@ -173,20 +178,23 @@ function MonitoringPage() {
   const [isolated, setIsolated] = useState<string[]>([]);
   const selectTab = (nextTab: string) => { if (!["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(nextTab)) return; setTab(nextTab); const params = new URLSearchParams(window.location.search); params.set("section", nextTab); window.history.replaceState({}, "", window.location.pathname + "?" + params.toString()); };
   useEffect(() => { const onTab = (event: Event) => selectTab((event as CustomEvent<string>).detail); const onPopState = () => { const requested = new URLSearchParams(window.location.search).get("section"); setTab(["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"); }; window.addEventListener("qds-monitor-tab", onTab); window.addEventListener("popstate", onPopState); return () => { window.removeEventListener("qds-monitor-tab", onTab); window.removeEventListener("popstate", onPopState); }; }, []);
-  const rows = telemetry.map((item, index) => ({ ...item, id: "evt-" + index, qber: threat || item.isThreat ? "14.2%" : "1.9%", chsh: threat || item.isThreat ? "1.86" : "2.78", code: item.isThreat || (threat && index === 2) ? "403 FORBIDDEN" : "200 OK" }));
+  
+  const rows = telemetryLogs.map((item) => ({ ...item, qber: `${(qber * 100).toFixed(1)}%`, chsh: chsh.toFixed(2), code: item.isThreat || threat ? "403 FORBIDDEN" : "200 OK" }));
   const filtered = rows.filter((item) => (item.source + " " + item.text).toLowerCase().includes(query.toLowerCase()));
   const copyJson = async (item: any) => { await navigator.clipboard?.writeText(JSON.stringify(item)); setCopied(item.id); window.setTimeout(() => setCopied(null), 1600); };
-  const exportTelemetry = () => { const csv = ["timestamp,subsystem,event,latency,status,qber,chsh", ...rows.map((item) => [item.time, item.source, item.text, item.ms, item.code, item.qber, item.chsh].join(","))].join("\\n"); const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); const a = document.createElement("a"); a.href = url; a.download = "soc_telemetry_report_" + Date.now() + ".csv"; a.click(); URL.revokeObjectURL(url); toast.success("SOC telemetry report exported"); };
-  return <div className={cn("page-content monitoring-page", "monitoring-tab-" + tab)}><Topbar eyebrow="02 / Security operations" title="SOC monitoring center" subtitle="Boundary charts, incident forensics, and distributed node telemetry" action={<div className="monitor-top-actions"><Link href="/home" className="button button-quiet button-small"><ArrowLeft size={14} /> Home portal</Link><span className={threat ? "status-text-threat" : "status-text-good"}>{threat ? "THREAT DETECTED" : "NOMINAL · 99.9% SECURE"}</span><button className="button button-outline button-small" onClick={exportTelemetry}><Download size={14} /> Export</button></div>} /><main className="monitor-section-stage" key={tab}><div className="monitor-active-section"><strong>SOC Operations Center</strong><span>gateway / 3001 · <b className={threat ? "text-copper" : "status-text-good"}>{threat ? "DEGRADED" : "NOMINAL"}</b></span></div>{tab === "overview" && <OverviewPanel threat={threat} setThreat={setThreat} range={range} setRange={setRange} filtered={filtered} copyJson={copyJson} exportTelemetry={exportTelemetry} />}{tab === "threats" && <ThreatsPanel threat={threat} onThreat={() => setThreat(!threat)} />}{tab === "incidents" && <IncidentsPanel selectedIncident={selectedIncident} setSelectedIncident={setSelectedIncident} />}{tab === "sessions" && <SessionsPanel selectedSession={selectedSession} setSelectedSession={setSelectedSession} />}{tab === "network" && <NetworkPanel selectedNode={selectedNode} setSelectedNode={setSelectedNode} isolatedNodes={isolated} setIsolatedNodes={setIsolated} />}{tab === "pqc" && <PQCDefensePanel threat={threat} onThreat={() => setThreat(!threat)} />}<aside className="monitor-inspector"><div className="inspector-head"><span className="eyebrow">{tab === "overview" ? "Live incident" : tab === "threats" ? "Threat inspector" : tab === "incidents" ? "Incident inspector" : tab === "sessions" ? "Session inspector" : tab === "pqc" ? "PQC defense" : "Node inventory"}</span><button className="icon-button" aria-label="Inspector options"><MoreHorizontal size={15} /></button></div>{tab === "overview" && <><div className="inspector-status"><AlertTriangle size={16} /><strong>{threat ? "Critical alarm" : "Recent anomaly"}</strong></div><h3>{threat ? "Intercept-resend disturbance" : "Signature forgery review"}</h3><p>Live evidence and operator actions for the highest-priority boundary event.</p><div className="inspector-list"><div><span>origin node</span><strong>{threat ? "EVE / basis mismatch" : "NODE-104"}</strong></div><div><span>QBER</span><strong className={threat ? "text-copper" : "status-text-good"}>{threat ? "14.2%" : "1.9%"}</strong></div><div><span>CHSH</span><strong>{threat ? "1.86" : "2.78"}</strong></div></div><button className="button button-copper inspector-action" onClick={() => selectTab("incidents")}>Open incident log <ArrowUpRight size={14} /></button></>}{tab === "threats" && <><div className="inspector-status threat"><AlertTriangle size={16} /><strong>{threat ? "Attack simulation active" : "Audit posture nominal"}</strong></div><h3>Threat audit posture</h3><p>Helstrom and Hoeffding thresholds stay visible beside the anomaly workbench.</p><div className="inspector-list"><div><span>Helstrom floor</span><strong>14.645%</strong></div><div><span>Hoeffding bound</span><strong>5.5%</strong></div><div><span>CHSH ceiling</span><strong>2.828</strong></div></div></>}{tab === "incidents" && <><div className="inspector-status"><ShieldAlert size={16} /><strong>Forensic queue</strong></div><h3>Click a record to inspect</h3><p>Incident evidence, audit timeline, and escalation actions appear here when a row is selected.</p><button className="button button-outline inspector-action" onClick={() => setSelectedIncident({ id: "INC-104", time: "11:31:08", severity: "CRITICAL", title: "Intercept-resend disturbance", analyst: "A. Kovacs", detail: "QBER 14.2% crossed Hoeffding bound; CHSH collapsed to 1.86." })}>Inspect INC-104</button></>}{tab === "sessions" && <><div className="inspector-status good"><Activity size={16} /><strong>12 active streams</strong></div><h3>Session ledger</h3><p>Select a row to open raw JSON evidence and document hash details.</p><button className="button button-outline inspector-action" onClick={() => toast.success("Session ledger synced")}><RefreshCw size={14} /> Sync ledger</button></>}{tab === "network" && <><div className="inspector-status good"><Network size={16} /><strong>{isolated.length ? isolated.length + " isolated" : "4 nodes online"}</strong></div><h3>Node inventory</h3><p>Choose a node in the topology to open quarantine controls.</p><div className="inspector-list"><div><span>core</span><strong>ARBITRATOR</strong></div><div><span>quantum nodes</span><strong>ALICE · BOB</strong></div><div><span>probe</span><strong className="text-copper">EVE</strong></div></div></>}</aside></main></div>;
+  const exportTelemetry = () => { const csv = ["timestamp,subsystem,event,latency,status,qber,chsh", ...rows.map((item) => [item.time, item.source, item.text, item.ms, item.code, item.qber, item.chsh].join(","))].join("\n"); const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); const a = document.createElement("a"); a.href = url; a.download = "soc_telemetry_report_" + Date.now() + ".csv"; a.click(); URL.revokeObjectURL(url); toast.success("SOC telemetry report exported"); };
+
+  return <div className={cn("page-content monitoring-page", "monitoring-tab-" + tab)}><Topbar eyebrow="02 / Security operations" title="SOC monitoring center" subtitle={`Boundary charts, incident forensics, and distributed node telemetry (${activeAttack})`} action={<div className="monitor-top-actions"><Link href="/home" className="button button-quiet button-small"><ArrowLeft size={14} /> Home portal</Link><span className={threat ? "status-text-threat" : "status-text-good"}>{threat ? `THREAT DETECTED (${activeAttack})` : "NOMINAL · 99.9% SECURE"}</span><button className="button button-outline button-small" onClick={exportTelemetry}><Download size={14} /> Export</button></div>} /><main className="monitor-section-stage" key={tab}><div className="monitor-active-section"><strong>SOC Operations Center</strong><span>gateway / 3001 · <b className={threat ? "text-copper" : "status-text-good"}>{threat ? "DEGRADED" : "NOMINAL"}</b></span></div>{tab === "overview" && <OverviewPanel threat={threat} setThreat={setThreat} range={range} setRange={setRange} filtered={filtered} copyJson={copyJson} exportTelemetry={exportTelemetry} />}{tab === "threats" && <ThreatsPanel threat={threat} onThreat={() => setThreat()} />}{tab === "incidents" && <IncidentsPanel selectedIncident={selectedIncident} setSelectedIncident={setSelectedIncident} />}{tab === "sessions" && <SessionsPanel selectedSession={selectedSession} setSelectedSession={setSelectedSession} />}{tab === "network" && <NetworkPanel selectedNode={selectedNode} setSelectedNode={setSelectedNode} isolatedNodes={isolated} setIsolatedNodes={setIsolated} />}{tab === "pqc" && <PQCDefensePanel threat={threat} onThreat={() => setThreat()} />}<aside className="monitor-inspector"><div className="inspector-head"><span className="eyebrow">{tab === "overview" ? "Live incident" : tab === "threats" ? "Threat inspector" : tab === "incidents" ? "Incident inspector" : tab === "sessions" ? "Session inspector" : tab === "pqc" ? "PQC defense" : "Node inventory"}</span><button className="icon-button" aria-label="Inspector options"><MoreHorizontal size={15} /></button></div>{tab === "overview" && <><div className="inspector-status"><AlertTriangle size={16} /><strong>{threat ? "Critical alarm" : "Recent anomaly"}</strong></div><h3>{threat ? `Active Attack: ${activeAttack}` : "Signature forgery review"}</h3><p>Live evidence and operator actions for the highest-priority boundary event.</p><div className="inspector-list"><div><span>origin node</span><strong>{threat ? "EVE / basis mismatch" : "NODE-104"}</strong></div><div><span>QBER</span><strong className={threat ? "text-copper" : "status-text-good"}>{(qber * 100).toFixed(1)}%</strong></div><div><span>CHSH</span><strong>{chsh.toFixed(2)}</strong></div></div><button className="button button-copper inspector-action" onClick={() => selectTab("incidents")}>Open incident log <ArrowUpRight size={14} /></button></>}{tab === "threats" && <><div className="inspector-status threat"><AlertTriangle size={16} /><strong>{threat ? "Attack simulation active" : "Audit posture nominal"}</strong></div><h3>Threat audit posture</h3><p>Helstrom and Hoeffding thresholds stay visible beside the anomaly workbench.</p><div className="inspector-list"><div><span>Helstrom floor</span><strong>14.645%</strong></div><div><span>Hoeffding bound</span><strong>5.5%</strong></div><div><span>CHSH ceiling</span><strong>2.828</strong></div></div></>}{tab === "incidents" && <><div className="inspector-status"><ShieldAlert size={16} /><strong>Forensic queue ({incidents.length})</strong></div><h3>Click a record to inspect</h3><p>Incident evidence, audit timeline, and escalation actions appear here when a row is selected.</p><button className="button button-outline inspector-action" onClick={() => setSelectedIncident(incidents[0] || { id: "INC-104", time: "11:31:08", severity: "CRITICAL", title: "Intercept-resend disturbance", analyst: "A. Kovacs", detail: "QBER 14.2% crossed Hoeffding bound; CHSH collapsed to 1.86." })}>Inspect Latest Incident</button></>}{tab === "sessions" && <><div className="inspector-status good"><Activity size={16} /><strong>12 active streams</strong></div><h3>Session ledger</h3><p>Select a row to open raw JSON evidence and document hash details.</p><button className="button button-outline inspector-action" onClick={() => toast.success("Session ledger synced")}><RefreshCw size={14} /> Sync ledger</button></>}{tab === "network" && <><div className="inspector-status good"><Network size={16} /><strong>{isolated.length ? isolated.length + " isolated" : "4 nodes online"}</strong></div><h3>Node inventory</h3><p>Choose a node in the topology to open quarantine controls.</p><div className="inspector-list"><div><span>core</span><strong>ARBITRATOR</strong></div><div><span>quantum nodes</span><strong>ALICE · BOB</strong></div><div><span>probe</span><strong className="text-copper">EVE</strong></div></div></>}</aside></main></div>;
 }
 
 /* PQC Defense workspace — Signal Atelier renders post-quantum assurance as warm paper, ink structure, blue verification, and copper intervention. */
-function PQCDefensePanel({ threat, onThreat }: { threat: boolean; onThreat: () => void }) {
+function PQCDefensePanel({ threat: localThreat, onThreat: localOnThreat }: { threat?: boolean; onThreat?: () => void }) {
+  const { eveActive, toggleEve, qber, chsh, pqcMode, remediationReport } = useSentinel();
+  const threat = eveActive;
   const [handover, setHandover] = useState(0);
   const [diagnosticOpen, setDiagnosticOpen] = useState(true);
   const [architectureOpen, setArchitectureOpen] = useState(false);
   const [tokensRotated, setTokensRotated] = useState(false);
-  const [aiReport, setAiReport] = useState<string>("No anomalies detected. QDS teleportation keys are active and verified. Quantum channel is operating at optimal coherence.");
   const [pqcSigHash, setPqcSigHash] = useState<string>("0x8f3c719e4a2d810b5c4f3a1e9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c");
 
   const stages = [
@@ -198,25 +206,217 @@ function PQCDefensePanel({ threat, onThreat }: { threat: boolean; onThreat: () =
   const specs = [["Mathematical hardness assumption", "Module Learning-With-Errors (MLWE) & Short Integer Solution (SIS)"], ["NIST security level", "Category 3 (equivalent to AES-192 / RSA-4096 quantum resistance)"], ["Public key / signature size", "1,952 bytes public key / 3,293 bytes signature"], ["Quantum resistance margin", "Immune to Shor’s polynomial quantum factoring algorithm"]];
 
   const handleToggleAttack = async () => {
-    const nextThreat = !threat;
-    onThreat();
-    if (nextThreat) {
-      try {
-        const res = await apiClient.auditAndRemediate({ qber_override: 0.142, chsh_score: 1.76 });
-        if (res.ai_cognitive_report) setAiReport(res.ai_cognitive_report);
-        if (res.fallback_signature) setPqcSigHash(res.fallback_signature);
-        toast.warning("Attack simulated! CRYSTALS-Dilithium3 PQC Fallback active.");
-      } catch {
-        toast.warning("Attack simulated! PQC Fallback active.");
-      }
-    } else {
-      setAiReport("No anomalies detected. QDS teleportation keys are active and verified. Quantum channel is operating at optimal coherence.");
-      toast.success("Clean quantum channel restored.");
-    }
+    await toggleEve();
   };
 
   const copyToken = (token: string) => { navigator.clipboard?.writeText(token); toast.success("PQC token copied"); };
-  return <section className="pqc-defense"><div className="pqc-titlebar"><div><h2>PQC defense operations control</h2><p>Deterministic Hoeffding threat gate & NIST post-quantum cryptography handover</p></div><div className="pqc-title-actions"><button className="button button-outline button-small" onClick={() => { setArchitectureOpen(!architectureOpen); toast.info(architectureOpen ? "Architecture overlay closed" : "PQC architecture model opened"); }}><Network size={14} /> {architectureOpen ? "Hide architecture" : "View PQC architecture"}</button><button className="button button-outline button-small" onClick={() => { if (threat) onThreat(); setHandover(0); setTokensRotated(false); setAiReport("No anomalies detected. QDS teleportation keys are active and verified. Quantum channel is operating at optimal coherence."); toast.success("Clean quantum channel restored"); }}><RotateCcw size={14} /> Reset clean channel</button><button className={cn("button button-small", threat ? "button-quiet" : "button-copper")} onClick={handleToggleAttack}><Zap size={14} /> {threat ? "Clear attack simulation" : "Trigger attack simulation"}</button></div></div>{architectureOpen && <div className="pqc-architecture-note"><Network size={15} /><span>Architecture model: physical QDS witness → deterministic audit gate → ephemeral key zeroization → ML-DSA-65 fallback signature.</span><button onClick={() => setArchitectureOpen(false)}><X size={14} /></button></div>}<div className="pqc-metrics"><div className="pqc-metric pqc-metric-mode"><span>Active system mode</span><strong className={threat ? "text-copper" : "status-text-good"}>{threat ? "PQC_FALLBACK" : "QUANTUM_SECURE"}</strong><small>{threat ? "Dilithium3 fallback ready" : "Pristine QDS teleportation"}</small></div><div className="pqc-metric"><span>QBER / Hoeffding bound</span><strong className={threat ? "text-copper" : "status-text-good"}>{threat ? "8.4%" : "4.2%"}</strong><small>Statistical cutoff limit: 5.50%</small></div><div className="pqc-metric"><span>CHSH Bell metric (S)</span><strong className={threat ? "text-copper" : "status-text-good"}>S = {threat ? "1.94" : "2.78"}</strong><small>{threat ? "Classical boundary reached" : "Quantum non-locality verified"}</small></div><div className="pqc-metric"><span>PQC algorithm (NIST)</span><strong>Dilithium3 (ML-DSA-65)</strong><small>Key exchange: Kyber768 (ML-KEM)</small></div></div><div className="pqc-workspace"><div className="pqc-main"><section className="pqc-console"><header><div><TerminalSquare size={15} /><strong>Air-gapped cognitive incident diagnosis</strong><small>Ollama Phi-3 engine</small></div><button onClick={() => setDiagnosticOpen(!diagnosticOpen)}>{diagnosticOpen ? "Collapse diagnostic" : "Open diagnostic"}</button></header>{diagnosticOpen && <div className={cn("pqc-diagnostic-copy", threat && "pqc-diagnostic-copy-threat")} style={{ whiteSpace: 'pre-wrap' }}>{threat ? aiReport : "No anomalies detected. QDS teleportation keys are active and verified. Quantum channel is operating at optimal coherence."}</div>}</section><section className="pqc-specs"><header><ShieldCheck size={15} /><strong>NIST post-quantum cryptography specifications</strong><span>ML-DSA-65</span></header><div>{specs.map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div></section></div><aside className="pqc-side"><section className="pqc-handover"><header><GitBranch size={15} /><strong>Handover sequence diagram</strong></header><div>{stages.map(([title, detail], index) => <button key={title} className={cn("pqc-handover-stage", handover === index && "pqc-handover-stage-active", threat && index === 1 && "pqc-handover-stage-threat")} onClick={() => { setHandover(index); toast.info(title + " selected"); }}><i>0{index + 1}</i><span><strong>{title}</strong><small>{detail}</small></span></button>)}</div></section><section className="pqc-token-inspector"><header><LockKeyhole size={15} /><strong>Live key token inspector</strong></header><div><span>Current Alice public key hash</span><code>{pqcSigHash}</code><button onClick={() => copyToken(pqcSigHash)}>Copy key hash</button></div><div><span>Bob PQC key encapsulation nonce</span><code>{tokensRotated ? "0x7ab3d2c1e8f4a906b5c2d7e1f3a8b4c6d9e0f2a5b7c1d3e6f8a0b2c4d6e8f0a2" : "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b"}</code><button onClick={() => { setTokensRotated(!tokensRotated); toast.success("Bob encapsulation nonce rotated"); }}>{tokensRotated ? "Restore nonce" : "Rotate nonce"}</button></div></section></aside></div></section>;
+  return <section className="pqc-defense"><div className="pqc-titlebar"><div><h2>PQC defense operations control</h2><p>Deterministic Hoeffding threat gate & NIST post-quantum cryptography handover</p></div><div className="pqc-title-actions"><button className="button button-outline button-small" onClick={() => { setArchitectureOpen(!architectureOpen); toast.info(architectureOpen ? "Architecture overlay closed" : "PQC architecture model opened"); }}><Network size={14} /> {architectureOpen ? "Hide architecture" : "View PQC architecture"}</button><button className="button button-outline button-small" onClick={() => { if (threat) toggleEve(); setHandover(0); setTokensRotated(false); toast.success("Clean quantum channel restored"); }}><RotateCcw size={14} /> Reset clean channel</button><button className={cn("button button-small", threat ? "button-quiet" : "button-copper")} onClick={handleToggleAttack}><Zap size={14} /> {threat ? "Clear attack simulation" : "Trigger attack simulation"}</button></div></div>{architectureOpen && <div className="pqc-architecture-note"><Network size={15} /><span>Architecture model: physical QDS witness → deterministic audit gate → ephemeral key zeroization → ML-DSA-65 fallback signature.</span><button onClick={() => setArchitectureOpen(false)}><X size={14} /></button></div>}<div className="pqc-metrics"><div className="pqc-metric pqc-metric-mode"><span>Active system mode</span><strong className={threat ? "text-copper" : "status-text-good"}>{threat ? "PQC_FALLBACK" : "QUANTUM_SECURE"}</strong><small>{threat ? "Dilithium3 fallback ready" : "Pristine QDS teleportation"}</small></div><div className="pqc-metric"><span>QBER / Hoeffding bound</span><strong className={threat ? "text-copper" : "status-text-good"}>{(qber * 100).toFixed(1)}%</strong><small>Statistical cutoff limit: 5.50%</small></div><div className="pqc-metric"><span>CHSH Bell metric (S)</span><strong className={threat ? "text-copper" : "status-text-good"}>S = {chsh.toFixed(2)}</strong><small>{threat ? "Classical boundary reached" : "Quantum non-locality verified"}</small></div><div className="pqc-metric"><span>PQC algorithm (NIST)</span><strong>Dilithium3 (ML-DSA-65)</strong><small>Key exchange: Kyber768 (ML-KEM)</small></div></div><div className="pqc-workspace"><div className="pqc-main"><section className="pqc-console"><header><div><TerminalSquare size={15} /><strong>Air-gapped cognitive incident diagnosis</strong><small>Ollama Phi-3 engine</small></div><button onClick={() => setDiagnosticOpen(!diagnosticOpen)}>{diagnosticOpen ? "Collapse diagnostic" : "Open diagnostic"}</button></header>{diagnosticOpen && <div className={cn("pqc-diagnostic-copy", threat && "pqc-diagnostic-copy-threat")} style={{ whiteSpace: 'pre-wrap' }}>{remediationReport || (threat ? "THREAT DIAGNOSIS\n1. MitM Attack Detected: Calculated QBER vastly exceeds Hoeffding threshold.\n2. Entanglement Depolarization: CHSH score collapsed (< 2.0 classical limit).\n\nAUTOMATED REMEDIATION PLAN EXECUTED\n1. Physical Key Purge: Flushed key buffers.\n2. Dynamic PQC Handover: Hot-swapped to CRYSTALS-Dilithium3 ML-DSA-65." : "No anomalies detected. QDS teleportation keys are active and verified. Quantum channel is operating at optimal coherence.")}</div>}</section><section className="pqc-specs"><header><ShieldCheck size={15} /><strong>NIST post-quantum cryptography specifications</strong><span>ML-DSA-65</span></header><div>{specs.map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div></section></div><aside className="pqc-side"><section className="pqc-handover"><header><GitBranch size={15} /><strong>Handover sequence diagram</strong></header><div>{stages.map(([title, detail], index) => <button key={title} className={cn("pqc-handover-stage", handover === index && "pqc-handover-stage-active", threat && index === 1 && "pqc-handover-stage-threat")} onClick={() => { setHandover(index); toast.info(title + " selected"); }}><i>0{index + 1}</i><span><strong>{title}</strong><small>{detail}</small></span></button>)}</div></section><section className="pqc-token-inspector"><header><LockKeyhole size={15} /><strong>Live key token inspector</strong></header><div><span>Current Alice public key hash</span><code>{pqcSigHash}</code><button onClick={() => copyToken(pqcSigHash)}>Copy key hash</button></div><div><span>Bob PQC key encapsulation nonce</span><code>{tokensRotated ? "0x7ab3d2c1e8f4a906b5c2d7e1f3a8b4c6d9e0f2a5b7c1d3e6f8a0b2c4d6e8f0a2" : "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b"}</code><button onClick={() => { setTokensRotated(!tokensRotated); toast.success("Bob encapsulation nonce rotated"); }}>{tokensRotated ? "Restore nonce" : "Rotate nonce"}</button></div></section></aside></div></section>;
+}
+
+function SandboxPage() {
+  const { eveActive, triggerAttack, qber: globalQber, chsh: globalChsh, pqcMode, remediationReport, activeAttack } = useSentinel();
+  const [active, setActive] = useState(activeAttack || "MitM attack");
+  const [running, setRunning] = useState(false);
+  const [expandedNode, setExpandedNode] = useState<string | null>(null);
+  const [isExecutingApi, setIsExecutingApi] = useState(false);
+  const [visibleLinesCount, setVisibleLinesCount] = useState(1);
+
+  const attacks = [
+    { title: "Clean signature", code: "CLEAN", detail: "Authenticated Bell-pair exchange", tone: "good", type: "clean", qber: 0.019, chsh: 2.76 },
+    { title: "MitM attack", code: "MITM", detail: "Intercept / resend eavesdrop", tone: "copper", type: "forgery", qber: 0.142, chsh: 1.76 },
+    { title: "Forgery attack", code: "FORGE", detail: "Tampered feed-forward bits", tone: "copper", type: "forgery", qber: 0.128, chsh: 1.82 },
+    { title: "Replay attack", code: "REPLAY", detail: "Captured nonce retransmit", tone: "copper", type: "replay", qber: 0.086, chsh: 1.91 },
+    { title: "Channel noise", code: "NOISE", detail: "Optical thermal disturbance", tone: "blue", type: "noise", qber: 0.048, chsh: 2.34 },
+    { title: "PNS attack", code: "PNS", detail: "Photon-number splitting probe", tone: "blue", type: "pns", qber: 0.095, chsh: 1.88 }
+  ];
+
+  const selected = attacks.find((attack) => attack.title === active) ?? attacks[1];
+  const threatened = selected.tone === "copper";
+
+  const triggerBackendAttack = async (attackItem: typeof selected) => {
+    setIsExecutingApi(true);
+    setVisibleLinesCount(1);
+    try {
+      await triggerAttack(attackItem.title, attackItem.qber, attackItem.chsh);
+    } catch {
+      toast.info(`Staged ${attackItem.title} scenario locally.`);
+    } finally {
+      setIsExecutingApi(false);
+    }
+  };
+
+  useEffect(() => {
+    triggerBackendAttack(selected);
+    const timer = setInterval(() => {
+      setVisibleLinesCount((prev) => (prev < 8 ? prev + 1 : prev));
+    }, 140);
+    return () => clearInterval(timer);
+  }, [active]);
+
+  const consoleLines = {
+    arbitrator: [
+      "> initialize protocol (BB84 EXT)",
+      "> awaiting registration",
+      threatened ? "> ACK: Alice connected [ID: 0x9F3A]" : "> ACK: all nodes authenticated",
+      "> channel seed established · quantum-link-01",
+      threatened ? `> WARN: QBER ${(selected.qber * 100).toFixed(1)}% reached Hoeffding bound` : "> QBER 1.9% within operating band",
+      threatened ? `> ERR: Bell correlation collapsed (S=${selected.chsh} < 2.0)` : `> CHSH S=${selected.chsh} verified`,
+      threatened ? "> ABORT: intercept-resend adversary detected" : "> ACCEPT: signature verification sustained",
+      pqcMode ? "> PQC FALLBACK: CRYSTALS-Dilithium3 (ML-DSA-65) active" : "> QDS Teleportation: pristine key exchange"
+    ],
+    alice: [
+      "> seq gen start()",
+      "> basis: [+, ×, ×, +, +]",
+      "> bits: [1, 0, 1, 1, 0, —]",
+      "> transmitting photons (n=1024)",
+      "> stream tx: 100% complete",
+      "> awaiting basis reconciliation",
+      threatened ? "> ERR: sift parity breach detected by arbitrator" : "> ACK: signed message delivered"
+    ],
+    bob: [
+      "> listener active(port: 9091)",
+      "> measuring stream...",
+      "> rand bases: [×, ×, +, ×, +, —]",
+      "> capture: 1024 photons received",
+      threatened ? `> ERR: sifted key invalid (phase collapse ${(selected.qber * 100).toFixed(1)}%)` : "> ACK: Pauli frame aligned",
+      pqcMode ? "> PQC VERIFIED: Dilithium3 signature matches payload" : "> QDS VERIFIED: physical attestation sealed"
+    ],
+    eve: [
+      "> inject probe(target: quantum-link-01)",
+      `> attack type: ${selected.code}`,
+      threatened ? "> WARN: state collapse detected on bit 12" : "> standby: no adversarial action",
+      threatened ? "> WARN: state collapse detected on bit 18" : "> waiting for scenario trigger",
+      threatened ? "> ERR: arbitrator probing anomaly · probe isolated" : "> passive observation only"
+    ]
+  };
+
+  const Pane = ({ title, nodeKey, variant, lines }: { title: string; nodeKey: "arbitrator" | "alice" | "bob" | "eve"; variant: "good" | "copper" | "blue"; lines: string[] }) => (
+    <section className={cn("sandbox-v2-console", "sandbox-v2-console-" + variant)}>
+      <div className="sandbox-v2-console-head">
+        <span>{title}</span>
+        <div>
+          <button onClick={() => toast.success(title + " log copied")} aria-label={"Copy " + title + " log"}><Copy size={12} /></button>
+          <button onClick={() => setExpandedNode(nodeKey)} aria-label={"Expand " + title + " console"}><ArrowUpRight size={12} /></button>
+        </div>
+      </div>
+      <div className="sandbox-v2-console-body">
+        {lines.slice(0, visibleLinesCount).map((line, index) => (
+          <p key={line + index} className={cn(line.includes("ERR") || line.includes("ABORT") ? "console-line-alert" : line.includes("WARN") ? "console-line-warn" : line.includes("ACK") || line.includes("ACCEPT") || line.includes("PQC") ? "console-line-ok" : "")}>{line}</p>
+        ))}
+        {visibleLinesCount < lines.length && (
+          <p className="text-[10px] text-slate-400 animate-pulse font-mono">&gt; streaming line {visibleLinesCount + 1}/{lines.length}...</p>
+        )}
+      </div>
+      {title === "EVE INTERCEPT" && threatened && <span className="sandbox-v2-console-alert">INTERVENTION ACTIVE</span>}
+    </section>
+  );
+
+  return (
+    <div className="sandbox-v2">
+      <header className="sandbox-v2-header">
+        <div className="sandbox-v2-brand">
+          <img src={MARK} alt="" />
+          <span>QDS SENTINEL</span>
+        </div>
+        <strong>Attack sandbox & Live SOC Event Integration</strong>
+        <span aria-hidden="true" />
+      </header>
+      <div className="sandbox-v2-shell">
+        <aside className="sandbox-v2-scenarios">
+          <span className="eyebrow">Attack scenarios</span>
+          <div className="sandbox-v2-scenario-list">
+            {attacks.map((attack) => (
+              <button
+                key={attack.title}
+                className={cn("sandbox-v2-scenario", active === attack.title && "sandbox-v2-scenario-active", "sandbox-v2-scenario-" + attack.tone)}
+                onClick={() => {
+                  setActive(attack.title);
+                  setRunning(false);
+                }}
+              >
+                <i />
+                <span>{attack.title}</span>
+                <small>{attack.code}</small>
+              </button>
+            ))}
+          </div>
+          <div className="sandbox-v2-scenario-spacer" />
+          <button
+            className={cn("sandbox-v2-initiate", (running || isExecutingApi) && "sandbox-v2-initiate-active")}
+            disabled={isExecutingApi}
+            onClick={() => {
+              setRunning(!running);
+              triggerBackendAttack(selected);
+            }}
+          >
+            {isExecutingApi ? "FastAPI Executing…" : running ? "Pause handshake" : "Initiate handshake"}
+          </button>
+        </aside>
+
+        <main className="sandbox-v2-consoles">
+          <Pane title="ARBITRATOR.SYS" nodeKey="arbitrator" variant={threatened ? "copper" : "good"} lines={consoleLines.arbitrator} />
+          <Pane title="ALICE NODE" nodeKey="alice" variant="good" lines={consoleLines.alice} />
+          <Pane title="BOB NODE" nodeKey="bob" variant="good" lines={consoleLines.bob} />
+          <Pane title="EVE INTERCEPT" nodeKey="eve" variant={threatened ? "copper" : "blue"} lines={consoleLines.eve} />
+
+          {remediationReport && (
+            <div className="col-span-2 p-4 bg-white border border-[#E2E8F0] rounded-[2px] shadow-sm mt-2 text-[11px] font-mono">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0] mb-2">
+                <span className="font-bold text-[#0058BE] uppercase flex items-center gap-1.5">
+                  <ShieldCheck size={14} /> Ollama AI Cognitive Remediation Report
+                </span>
+                <span className={cn("px-2 py-0.5 text-[9px] font-bold uppercase", threatened ? "bg-[#C2540A]/10 text-[#C2540A]" : "bg-[#34D399]/10 text-[#065F46]")}>
+                  {pqcMode ? "PQC_FALLBACK_ACTIVE" : "QUANTUM_SECURE"}
+                </span>
+              </div>
+              <pre className="whitespace-pre-wrap text-[#1E293B] leading-relaxed font-mono">{remediationReport}</pre>
+            </div>
+          )}
+        </main>
+
+        <aside className="sandbox-v2-telemetry">
+          <span className="eyebrow">Telemetry & PQC Status</span>
+          <SandboxMetricChart title="QBER vs Hoeffding" value={`Current: ${(globalQber * 100).toFixed(1)}%`} detail={threatened ? "0.055 threshold breach" : "nominal drift"} threat={threatened} mode="qber" />
+          <SandboxMetricChart title="CHSH Bell violation" value={`S = ${globalChsh.toFixed(2)}`} detail={threatened ? "Classical bound (S=2.0)" : "Quantum correlation"} threat={threatened} mode="chsh" />
+          <div className="sandbox-v2-readout">
+            <div><span>Key rate</span><b>{threatened ? "1.2 kbps" : "4.8 kbps"}</b></div>
+            <div><span>Sifting eff.</span><b>{threatened ? "49.6%" : "96.2%"}</b></div>
+            <div>
+              <span>Security status</span>
+              <b className={threatened ? "text-copper" : "status-text-good"}>{threatened ? "PQC FALLBACK" : "Nominal"}</b>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {expandedNode && (
+        <div className="sandbox-console-overlay" onClick={() => setExpandedNode(null)}>
+          <section className="sandbox-console-focus" onClick={(event) => event.stopPropagation()}>
+            <div className="sandbox-console-focus-head">
+              <div>
+                <span className="eyebrow">Expanded protocol node</span>
+                <h2>{expandedNode === "arbitrator" ? "ARBITRATOR.SYS" : expandedNode === "alice" ? "ALICE NODE" : expandedNode === "bob" ? "BOB NODE" : "EVE INTERCEPT"}</h2>
+              </div>
+              <button className="icon-button" onClick={() => setExpandedNode(null)} aria-label="Close expanded node"><X size={15} /></button>
+            </div>
+            <div className="sandbox-console-focus-log">
+              {consoleLines[expandedNode as keyof typeof consoleLines].concat([
+                "> trace id: qds-260827-91f4",
+                "> packet evidence retained",
+                threatened ? "> verdict: reject / PQC Dilithium3 fallback engaged" : "> verdict: accept / no intervention required"
+              ]).map((line, index) => (
+                <p key={line + index} className={cn(line.includes("ERR") || line.includes("ABORT") || line.includes("reject") ? "console-line-alert" : line.includes("WARN") ? "console-line-warn" : line.includes("ACK") || line.includes("ACCEPT") || line.includes("accept") || line.includes("PQC") ? "console-line-ok" : "")}>{line}</p>
+              ))}
+            </div>
+            <div className="sandbox-console-focus-actions">
+              <button className="button button-outline button-small" onClick={() => toast.success("Expanded node log copied")}><Copy size={14} /> Copy evidence</button>
+              <button className="button button-copper button-small" onClick={() => setExpandedNode(null)}>Collapse node</button>
+            </div>
+          </section>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* Overview workspace — Signal Atelier keeps nominal security calm through mineral paper, ink structure, analytic blue data, and text-only green verification. */
@@ -540,7 +740,6 @@ function TransferPage() {
                 <footer>
                   <span>QBER: <b className={payload.metricTone}>{payload.qber}</b></span>
                   <span>CHSH: <b className={payload.metricTone}>S={payload.chsh}</b></span>
-                  <span>Pauli: <b>{payload.pauli}</b></span>
                   <button onClick={() => { navigator.clipboard?.writeText(payload.body + "\n" + payload.signature); toast.success("Receipt evidence copied"); }}><Copy size={13} /> Copy</button>
                 </footer>
               </article>
@@ -555,218 +754,8 @@ function TransferPage() {
   );
 }
 
-function SandboxPage() {
-
-  const [active, setActive] = useState("MitM attack");
-  const [running, setRunning] = useState(false);
-  const [expandedNode, setExpandedNode] = useState<string | null>(null);
-  const [remediationData, setRemediationData] = useState<any>(null);
-  const [isExecutingApi, setIsExecutingApi] = useState(false);
-
-  const attacks = [
-    { title: "Clean signature", code: "CLEAN", detail: "Authenticated Bell-pair exchange", tone: "good", type: "clean", qber: 0.019, chsh: 2.76 },
-    { title: "MitM attack", code: "MITM", detail: "Intercept / resend eavesdrop", tone: "copper", type: "forgery", qber: 0.142, chsh: 1.76 },
-    { title: "Forgery attack", code: "FORGE", detail: "Tampered feed-forward bits", tone: "copper", type: "forgery", qber: 0.128, chsh: 1.82 },
-    { title: "Replay attack", code: "REPLAY", detail: "Captured nonce retransmit", tone: "copper", type: "replay", qber: 0.086, chsh: 1.91 },
-    { title: "Channel noise", code: "NOISE", detail: "Optical thermal disturbance", tone: "blue", type: "noise", qber: 0.048, chsh: 2.34 },
-    { title: "PNS attack", code: "PNS", detail: "Photon-number splitting probe", tone: "blue", type: "pns", qber: 0.095, chsh: 1.88 }
-  ];
-
-  const selected = attacks.find((attack) => attack.title === active) ?? attacks[1];
-  const threatened = selected.tone === "copper";
-
-  const triggerBackendAttack = async (attackItem: typeof selected) => {
-    setIsExecutingApi(true);
-    try {
-      if (attackItem.type !== "clean") {
-        await apiClient.injectAttack(attackItem.type as any);
-      }
-      const res = await apiClient.auditAndRemediate({
-        qber_override: attackItem.qber,
-        chsh_score: attackItem.chsh
-      });
-      setRemediationData(res);
-      if (res.status === "PQC_FALLBACK_ACTIVE") {
-        toast.error(`FastAPI Triggered: ${attackItem.title} detected! PQC Dilithium3 Fallback Engaged!`);
-      } else {
-        toast.success(`FastAPI Channel Clean: ${attackItem.title} - Nominal quantum state.`);
-      }
-    } catch {
-      toast.info(`Staged ${attackItem.title} scenario locally.`);
-    } finally {
-      setIsExecutingApi(false);
-    }
-  };
-
-  useEffect(() => {
-    triggerBackendAttack(selected);
-  }, [active]);
-
-  const consoleLines = {
-    arbitrator: [
-      "> initialize protocol (BB84 EXT)",
-      "> awaiting registration",
-      threatened ? "> ACK: Alice connected [ID: 0x9F3A]" : "> ACK: all nodes authenticated",
-      "> channel seed established · quantum-link-01",
-      threatened ? `> WARN: QBER ${(selected.qber * 100).toFixed(1)}% reached Hoeffding bound` : "> QBER 1.9% within operating band",
-      threatened ? `> ERR: Bell correlation collapsed (S=${selected.chsh} < 2.0)` : `> CHSH S=${selected.chsh} verified`,
-      threatened ? "> ABORT: intercept-resend adversary detected" : "> ACCEPT: signature verification sustained",
-      remediationData?.status === "PQC_FALLBACK_ACTIVE" ? "> PQC FALLBACK: CRYSTALS-Dilithium3 (ML-DSA-65) active" : "> QDS Teleportation: pristine key exchange"
-    ],
-    alice: [
-      "> seq gen start()",
-      "> basis: [+, ×, ×, +, +]",
-      "> bits: [1, 0, 1, 1, 0, —]",
-      "> transmitting photons (n=1024)",
-      "> stream tx: 100% complete",
-      "> awaiting basis reconciliation",
-      threatened ? "> ERR: sift parity breach detected by arbitrator" : "> ACK: signed message delivered"
-    ],
-    bob: [
-      "> listener active(port: 9091)",
-      "> measuring stream...",
-      "> rand bases: [×, ×, +, ×, +, —]",
-      "> capture: 1024 photons received",
-      threatened ? `> ERR: sifted key invalid (phase collapse ${(selected.qber * 100).toFixed(1)}%)` : "> ACK: Pauli frame aligned",
-      remediationData?.status === "PQC_FALLBACK_ACTIVE" ? "> PQC VERIFIED: Dilithium3 signature matches payload" : "> QDS VERIFIED: physical attestation sealed"
-    ],
-    eve: [
-      "> inject probe(target: quantum-link-01)",
-      `> attack type: ${selected.code}`,
-      threatened ? "> WARN: state collapse detected on bit 12" : "> standby: no adversarial action",
-      threatened ? "> WARN: state collapse detected on bit 18" : "> waiting for scenario trigger",
-      threatened ? "> ERR: arbitrator probing anomaly · probe isolated" : "> passive observation only"
-    ]
-  };
-
-  const Pane = ({ title, nodeKey, variant, lines }: { title: string; nodeKey: "arbitrator" | "alice" | "bob" | "eve"; variant: "good" | "copper" | "blue"; lines: string[] }) => (
-    <section className={cn("sandbox-v2-console", "sandbox-v2-console-" + variant)}>
-      <div className="sandbox-v2-console-head">
-        <span>{title}</span>
-        <div>
-          <button onClick={() => toast.success(title + " log copied")} aria-label={"Copy " + title + " log"}><Copy size={12} /></button>
-          <button onClick={() => setExpandedNode(nodeKey)} aria-label={"Expand " + title + " console"}><ArrowUpRight size={12} /></button>
-        </div>
-      </div>
-      <div className="sandbox-v2-console-body">
-        {lines.map((line, index) => (
-          <p key={line + index} className={cn(line.includes("ERR") || line.includes("ABORT") ? "console-line-alert" : line.includes("WARN") ? "console-line-warn" : line.includes("ACK") || line.includes("ACCEPT") || line.includes("PQC") ? "console-line-ok" : "")}>{line}</p>
-        ))}
-      </div>
-      {title === "EVE INTERCEPT" && threatened && <span className="sandbox-v2-console-alert">INTERVENTION ACTIVE</span>}
-    </section>
-  );
-
-  return (
-    <div className="sandbox-v2">
-      <header className="sandbox-v2-header">
-        <div className="sandbox-v2-brand">
-          <img src={MARK} alt="" />
-          <span>QDS SENTINEL</span>
-        </div>
-        <strong>Attack sandbox & FastAPI PQC Remediation</strong>
-        <span aria-hidden="true" />
-      </header>
-      <div className="sandbox-v2-shell">
-        <aside className="sandbox-v2-scenarios">
-          <span className="eyebrow">Attack scenarios</span>
-          <div className="sandbox-v2-scenario-list">
-            {attacks.map((attack) => (
-              <button
-                key={attack.title}
-                className={cn("sandbox-v2-scenario", active === attack.title && "sandbox-v2-scenario-active", "sandbox-v2-scenario-" + attack.tone)}
-                onClick={() => {
-                  setActive(attack.title);
-                  setRunning(false);
-                }}
-              >
-                <i />
-                <span>{attack.title}</span>
-                <small>{attack.code}</small>
-              </button>
-            ))}
-          </div>
-          <div className="sandbox-v2-scenario-spacer" />
-          <button
-            className={cn("sandbox-v2-initiate", (running || isExecutingApi) && "sandbox-v2-initiate-active")}
-            disabled={isExecutingApi}
-            onClick={() => {
-              setRunning(!running);
-              triggerBackendAttack(selected);
-            }}
-          >
-            {isExecutingApi ? "FastAPI Executing…" : running ? "Pause handshake" : "Initiate handshake"}
-          </button>
-        </aside>
-
-        <main className="sandbox-v2-consoles">
-          <Pane title="ARBITRATOR.SYS" nodeKey="arbitrator" variant={threatened ? "copper" : "good"} lines={consoleLines.arbitrator} />
-          <Pane title="ALICE NODE" nodeKey="alice" variant="good" lines={consoleLines.alice} />
-          <Pane title="BOB NODE" nodeKey="bob" variant="good" lines={consoleLines.bob} />
-          <Pane title="EVE INTERCEPT" nodeKey="eve" variant={threatened ? "copper" : "blue"} lines={consoleLines.eve} />
-
-          {remediationData?.ai_cognitive_report && (
-            <div className="col-span-2 p-4 bg-white border border-[#E2E8F0] rounded-[2px] shadow-sm mt-2 text-[11px] font-mono">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0] mb-2">
-                <span className="font-bold text-[#0058BE] uppercase flex items-center gap-1.5">
-                  <ShieldCheck size={14} /> Ollama AI Cognitive Remediation Report
-                </span>
-                <span className={cn("px-2 py-0.5 text-[9px] font-bold uppercase", threatened ? "bg-[#C2540A]/10 text-[#C2540A]" : "bg-[#34D399]/10 text-[#065F46]")}>
-                  {remediationData.status}
-                </span>
-              </div>
-              <pre className="whitespace-pre-wrap text-[#1E293B] leading-relaxed font-mono">{remediationData.ai_cognitive_report}</pre>
-            </div>
-          )}
-        </main>
-
-        <aside className="sandbox-v2-telemetry">
-          <span className="eyebrow">Telemetry & PQC Status</span>
-          <SandboxMetricChart title="QBER vs Hoeffding" value={`Current: ${(selected.qber * 100).toFixed(1)}%`} detail={threatened ? "0.055 threshold breach" : "nominal drift"} threat={threatened} mode="qber" />
-          <SandboxMetricChart title="CHSH Bell violation" value={`S = ${selected.chsh.toFixed(2)}`} detail={threatened ? "Classical bound (S=2.0)" : "Quantum correlation"} threat={threatened} mode="chsh" />
-          <div className="sandbox-v2-readout">
-            <div><span>Key rate</span><b>{threatened ? "1.2 kbps" : "4.8 kbps"}</b></div>
-            <div><span>Sifting eff.</span><b>{threatened ? "49.6%" : "96.2%"}</b></div>
-            <div>
-              <span>Security status</span>
-              <b className={threatened ? "text-copper" : "status-text-good"}>{threatened ? "PQC FALLBACK" : "Nominal"}</b>
-            </div>
-          </div>
-        </aside>
-      </div>
-
-      {expandedNode && (
-        <div className="sandbox-console-overlay" onClick={() => setExpandedNode(null)}>
-          <section className="sandbox-console-focus" onClick={(event) => event.stopPropagation()}>
-            <div className="sandbox-console-focus-head">
-              <div>
-                <span className="eyebrow">Expanded protocol node</span>
-                <h2>{expandedNode === "arbitrator" ? "ARBITRATOR.SYS" : expandedNode === "alice" ? "ALICE NODE" : expandedNode === "bob" ? "BOB NODE" : "EVE INTERCEPT"}</h2>
-              </div>
-              <button className="icon-button" onClick={() => setExpandedNode(null)} aria-label="Close expanded node"><X size={15} /></button>
-            </div>
-            <div className="sandbox-console-focus-log">
-              {consoleLines[expandedNode as keyof typeof consoleLines].concat([
-                "> trace id: qds-260827-91f4",
-                "> packet evidence retained",
-                threatened ? "> verdict: reject / PQC Dilithium3 fallback engaged" : "> verdict: accept / no intervention required"
-              ]).map((line, index) => (
-                <p key={line + index} className={cn(line.includes("ERR") || line.includes("ABORT") || line.includes("reject") ? "console-line-alert" : line.includes("WARN") ? "console-line-warn" : line.includes("ACK") || line.includes("ACCEPT") || line.includes("accept") || line.includes("PQC") ? "console-line-ok" : "")}>{line}</p>
-              ))}
-            </div>
-            <div className="sandbox-console-focus-actions">
-              <button className="button button-outline button-small" onClick={() => toast.success("Expanded node log copied")}><Copy size={14} /> Copy evidence</button>
-              <button className="button button-copper button-small" onClick={() => setExpandedNode(null)}>Collapse node</button>
-            </div>
-          </section>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
 function DatabasePage() {
+
   const [selected, setSelected] = useState(sessionRows[0]);
   return <div className="page-content database-page"><Topbar eyebrow="04 / Data studio" title="Live database" subtitle="Inspect session state, raw bitstreams, and audit records" action={<button className="button button-copper button-small" onClick={() => toast.success("Insert record form ready")}>+ Insert record</button>} /><div className="db-layout"><aside className="table-sidebar"><span className="eyebrow">Tables / 04</span>{[{name:"quantum_sessions", count:"12", icon: Radio},{name:"attack_records", count:"08", icon: AlertTriangle},{name:"node_metrics", count:"04", icon: Network},{name:"telemetry_logs", count:"1.2k", icon: Activity}].map((table, i) => {const Icon=table.icon; return <button className={cn("table-nav", i === 0 && "table-nav-active")} key={table.name}><Icon size={15} /><span>{table.name}</span><b>{table.count}</b></button>})}<div className="db-sidebar-foot"><StatusDot /> auto-sync every 2.5s</div></aside><main className="db-main"><div className="db-toolbar"><div className="db-title"><Database size={16} /><strong>quantum_sessions</strong><Pill tone="good">synced</Pill></div><div className="db-actions"><div className="search-box"><Search size={14} /><input placeholder="Search rows" /></div><button className="filter-button"><SlidersHorizontal size={14} /> Status: all</button><button className="icon-button" onClick={() => toast.success("Table refreshed")} aria-label="Refresh table"><RefreshCw size={15} /></button></div></div><div className="data-table-wrap db-table-wrap"><table className="data-table db-table"><thead><tr><th>Session ID</th><th>Document name</th><th>Status</th><th>QBER</th><th>Hoeffding</th><th>CHSH</th><th>Verdict</th><th>Created</th></tr></thead><tbody>{sessionRows.map((row) => <tr onClick={() => setSelected(row)} className={selected.id === row.id ? "row-selected" : ""} key={row.id}><td className="mono strong-cell">{row.id}</td><td>{row.doc}</td><td><span className={cn("row-status", row.status === "Quarantined" && "row-status-bad")}><StatusDot tone={row.status === "Quarantined" ? "bad" : "ok"} />{row.status}</span></td><td>{row.qber}</td><td>5.5%</td><td>{row.chsh}</td><td><Pill tone={row.verdict === "REJECT" ? "copper" : "good"}>{row.verdict}</Pill></td><td className="mono muted">{row.time}</td></tr>)}</tbody></table></div><div className="db-pagination"><span>Showing 1–4 of 12 records</span><div><button className="icon-button"><ArrowLeft size={14} /></button><button className="page-current">1</button><button className="icon-button"><ChevronRight size={14} /></button></div></div></main><aside className="record-drawer"><div className="drawer-head"><div><span className="eyebrow">Record inspector</span><h3>Session payload</h3></div><button className="icon-button" aria-label="Close inspector"><X size={15} /></button></div><Pill tone={selected.verdict === "REJECT" ? "copper" : "good"}>{selected.verdict} / {selected.status}</Pill><div className="record-id">{selected.id}</div><div className="record-block"><span className="eyebrow">Document</span><strong>{selected.doc}</strong><span className="mono muted">sha256: af7c…e91b</span></div><div className="record-metrics"><div><span>QBER</span><strong className={selected.verdict === "REJECT" ? "text-copper" : ""}>{selected.qber}</strong></div><div><span>CHSH</span><strong>{selected.chsh}</strong></div></div><div className="json-block"><div><span>raw_payload.jsonb</span><Copy size={13} /></div><pre>{`{
   "alice_bits": [1, 0, 1, 1, 0, 1],

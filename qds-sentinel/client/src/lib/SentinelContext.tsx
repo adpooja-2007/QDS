@@ -16,6 +16,30 @@ export interface TransmissionRecord {
   metricTone: string;
 }
 
+export interface TelemetryItem {
+  id: string;
+  time: string;
+  source: string;
+  text: string;
+  ms: string;
+  code: string;
+  qber: string;
+  chsh: string;
+  isThreat?: boolean;
+}
+
+export interface IncidentItem {
+  id: string;
+  title: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  status: 'INVESTIGATING' | 'MITIGATED' | 'RESOLVED';
+  qber: string;
+  chsh: string;
+  timestamp: string;
+  analyst: string;
+  detail: string;
+}
+
 export interface SentinelContextType {
   eveActive: boolean;
   activeSessionId: string;
@@ -24,9 +48,11 @@ export interface SentinelContextType {
   pqcMode: boolean;
   remediationReport: string | null;
   payloads: TransmissionRecord[];
+  telemetryLogs: TelemetryItem[];
+  incidents: IncidentItem[];
   activeAttack: string;
   toggleEve: () => Promise<void>;
-  triggerAttack: (attackType: string, customQber?: number, customChsh?: number) => Promise<void>;
+  triggerAttack: (attackTitle: string, customQber?: number, customChsh?: number) => Promise<void>;
   sendTransmission: (payload: { mode: 'message' | 'document'; message?: string; file?: File | null; digest?: string | null }) => Promise<void>;
   resetChannel: () => void;
 }
@@ -41,6 +67,18 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [pqcMode, setPqcMode] = useState(false);
   const [remediationReport, setRemediationReport] = useState<string | null>(null);
   const [activeAttack, setActiveAttack] = useState('Clean signature');
+
+  const [telemetryLogs, setTelemetryLogs] = useState<TelemetryItem[]>([
+    { id: 'evt-0', time: '11:48:09.102', source: 'ARB-CORE', text: 'SPDC photon pair routed to Alice & Bob via Dark Fiber Link 1', ms: '12ms', code: '200 OK', qber: '1.9%', chsh: '2.78' },
+    { id: 'evt-1', time: '11:47:52.884', source: 'QN-ALICE', text: 'Joint Bell State Measurement completed for session QKD-260827-91F4', ms: '18ms', code: '200 OK', qber: '1.9%', chsh: '2.76' },
+    { id: 'evt-2', time: '11:46:12.441', source: 'EVE-PROBE', text: 'Hoeffding statistical bound audit passed · QBER <= 5.50%', ms: '20ms', code: '200 OK', qber: '1.9%', chsh: '2.78' },
+  ]);
+
+  const [incidents, setIncidents] = useState<IncidentItem[]>([
+    { id: 'INC-2026-0801', title: 'Photon Number Splitting Tap', severity: 'CRITICAL', status: 'INVESTIGATING', qber: '14.2%', chsh: '1.76', timestamp: '11:48:09', analyst: 'A. Kovacs', detail: 'QBER 14.2% crossed Hoeffding bound; CHSH collapsed to 1.76.' },
+    { id: 'INC-2026-0802', title: 'Replay State Injection', severity: 'HIGH', status: 'MITIGATED', qber: '8.6%', chsh: '1.91', timestamp: '11:31:08', analyst: 'J. Doe', detail: 'Captured nonce retransmit attempt blocked by Toeplitz hash.' },
+  ]);
+
   const [payloads, setPayloads] = useState<TransmissionRecord[]>([
     {
       id: "TX-3635",
@@ -89,9 +127,50 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setPqcMode(nextEve);
     }
 
+    const nowStr = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
+
     if (nextEve) {
-      toast.error("Global Threat Injected: Eve interception active across all quantum channels! QBER = 14.2%. PQC Fallback Engaged!");
+      const newEvt: TelemetryItem = {
+        id: `evt-${Date.now()}`,
+        time: nowStr,
+        source: 'EVE-PROBE',
+        text: 'Intercept-resend attack tap detected on optical link',
+        ms: '85ms',
+        code: '403 FORBIDDEN',
+        qber: '14.2%',
+        chsh: '1.76',
+        isThreat: true
+      };
+      setTelemetryLogs((prev) => [newEvt, ...prev]);
+
+      const newInc: IncidentItem = {
+        id: `INC-2026-${Math.floor(1000 + Math.random() * 8999)}`,
+        title: 'Man-in-the-Middle Interception Tap',
+        severity: 'CRITICAL',
+        status: 'INVESTIGATING',
+        qber: '14.2%',
+        chsh: '1.76',
+        timestamp: nowStr.slice(0, 8),
+        analyst: 'A. Kovacs',
+        detail: 'QBER 14.2% crossed Hoeffding threshold cutoff (5.5%). Bell correlation collapsed (S=1.76 < 2.0).'
+      };
+      setIncidents((prev) => [newInc, ...prev]);
+
+      toast.error("Global Threat Injected: Eve interception active across all quantum channels! QBER = 14.2%. SOC Dashboard updated!");
     } else {
+      const newEvt: TelemetryItem = {
+        id: `evt-${Date.now()}`,
+        time: nowStr,
+        source: 'ARB-CORE',
+        text: 'Channel restored · Eve bypassed · QBER returned to nominal 1.9%',
+        ms: '12ms',
+        code: '200 OK',
+        qber: '1.9%',
+        chsh: '2.76',
+        isThreat: false
+      };
+      setTelemetryLogs((prev) => [newEvt, ...prev]);
+
       toast.success("Global Channel Restored: Eve bypassed. Quantum channel operating at nominal QBER = 1.9%.");
     }
   };
@@ -104,6 +183,8 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const targetChsh = customChsh ?? (isThreat ? 1.76 : 2.76);
     setQber(targetQber);
     setChsh(targetChsh);
+
+    const nowStr = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
 
     try {
       let attackType: 'forgery' | 'replay' | 'noise' | 'pns' = 'forgery';
@@ -120,6 +201,51 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setRemediationReport(res.ai_cognitive_report || null);
     } catch {
       setPqcMode(isThreat);
+    }
+
+    if (isThreat) {
+      const newEvt: TelemetryItem = {
+        id: `evt-${Date.now()}`,
+        time: nowStr,
+        source: 'ATTACK-SANDBOX',
+        text: `[ATTACK INJECTED] ${attackTitle} staged on quantum optical channel.`,
+        ms: '85ms',
+        code: '403 FORBIDDEN',
+        qber: `${(targetQber * 100).toFixed(1)}%`,
+        chsh: targetChsh.toFixed(2),
+        isThreat: true
+      };
+      setTelemetryLogs((prev) => [newEvt, ...prev]);
+
+      const newInc: IncidentItem = {
+        id: `INC-2026-${Math.floor(1000 + Math.random() * 8999)}`,
+        title: `Simulated Attack: ${attackTitle}`,
+        severity: attackTitle.includes("Noise") ? 'MEDIUM' : 'CRITICAL',
+        status: 'INVESTIGATING',
+        qber: `${(targetQber * 100).toFixed(1)}%`,
+        chsh: targetChsh.toFixed(2),
+        timestamp: nowStr.slice(0, 8),
+        analyst: 'A. Kovacs',
+        detail: `QBER ${(targetQber * 100).toFixed(1)}% reached Hoeffding bound. CHSH S=${targetChsh.toFixed(2)}.`
+      };
+      setIncidents((prev) => [newInc, ...prev]);
+
+      toast.error(`[SOC DASHBOARD UPDATED] ${attackTitle} injected into live SOC telemetry stream!`);
+    } else {
+      const newEvt: TelemetryItem = {
+        id: `evt-${Date.now()}`,
+        time: nowStr,
+        source: 'ATTACK-SANDBOX',
+        text: '[CLEAN SIGNATURE] Pristine Bell-pair exchange restored.',
+        ms: '12ms',
+        code: '200 OK',
+        qber: '1.9%',
+        chsh: '2.76',
+        isThreat: false
+      };
+      setTelemetryLogs((prev) => [newEvt, ...prev]);
+
+      toast.success("[SOC DASHBOARD UPDATED] Clean channel restored.");
     }
   };
 
@@ -188,6 +314,8 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       pqcMode,
       remediationReport,
       payloads,
+      telemetryLogs,
+      incidents,
       activeAttack,
       toggleEve,
       triggerAttack,
