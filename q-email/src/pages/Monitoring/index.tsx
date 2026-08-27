@@ -586,8 +586,9 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
           setSelectedIncidentId(detail.newIncident.id);
         }
 
-        // 2. Add telemetry log entry to live stream
+        // 2. Add telemetry log entry to live telemetry stream table and graphs
         if (detail.newItem) {
+          setTelemetryStream(prev => [detail.newItem, ...prev.filter(i => i.id !== detail.newItem.id)].slice(0, 10));
           setSelectedItem(detail.newItem);
           setSelectedTelemetryDetail(detail.newItem);
         }
