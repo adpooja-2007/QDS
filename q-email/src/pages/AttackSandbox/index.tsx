@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Shield, Settings, Bell, User, Check, X, Copy, Maximize2, Terminal, Sliders, Info, Activity, RefreshCw } from 'lucide-react';
 import { sentinelService } from '../../services/sentinelService';
 import { apiClient } from '../../api/client';
@@ -388,6 +388,68 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
   const [fiberNoiseDb, setFiberNoiseDb] = useState<number>(0.18);
 
   const scenario = ATTACK_SCENARIOS[selectedScenarioKey] || ATTACK_SCENARIOS.clean;
+
+  // Dynamic Live Sparkline History Buffers (15 continuous data points)
+  const [qberHistory, setQberHistory] = useState<number[]>(() => Array.from({ length: 15 }, () => 0.018 + Math.random() * 0.005));
+  const [chshHistory, setChshHistory] = useState<number[]>(() => Array.from({ length: 15 }, () => 2.76 + Math.random() * 0.08));
+
+  // Update dynamic sparkline history whenever scenario changes or live timer ticks
+  useEffect(() => {
+    const targetQber = scenario.qber;
+    const targetChsh = scenario.chsh;
+
+    const interval = setInterval(() => {
+      setQberHistory(prev => {
+        const noise = (Math.random() * 0.008 - 0.004);
+        const nextVal = Math.max(0.01, targetQber + noise);
+        return [...prev.slice(1), nextVal];
+      });
+
+      setChshHistory(prev => {
+        const noise = (Math.random() * 0.06 - 0.03);
+        const nextVal = Math.min(2.828, Math.max(1.1, targetChsh + noise));
+        return [...prev.slice(1), nextVal];
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [selectedScenarioKey, scenario.qber, scenario.chsh]);
+
+  // Compute SVG Path for QBER (Range 0.0 to 0.25 -> Y: 85 to 15)
+  const qberSparklinePath = useMemo(() => {
+    const minX = 10;
+    const maxX = 230;
+    const minY = 15; // Highest QBER (0.25)
+    const maxY = 85; // Lowest QBER (0.00)
+    const len = qberHistory.length;
+
+    const pts = qberHistory.map((val, i) => {
+      const x = minX + (i / (len - 1)) * (maxX - minX);
+      const clamped = Math.min(0.25, Math.max(0.0, val));
+      const y = maxY - (clamped / 0.25) * (maxY - minY);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+
+    return `M ${pts.join(' L ')}`;
+  }, [qberHistory]);
+
+  // Compute SVG Path for CHSH (Range 1.0 to 3.0 -> Y: 85 to 15)
+  const chshSparklinePath = useMemo(() => {
+    const minX = 10;
+    const maxX = 230;
+    const minY = 15; // Highest S (3.0)
+    const maxY = 85; // Lowest S (1.0)
+    const len = chshHistory.length;
+
+    const pts = chshHistory.map((val, i) => {
+      const x = minX + (i / (len - 1)) * (maxX - minX);
+      const clamped = Math.min(3.0, Math.max(1.0, val));
+      const y = maxY - ((clamped - 1.0) / 2.0) * (maxY - minY);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+
+    return `M ${pts.join(' L ')}`;
+  }, [chshHistory]);
 
   // Real-time line streaming animation for terminals
   const [visibleLinesCount, setVisibleLinesCount] = useState<number>(scenario.arbitratorLogs.length);
@@ -887,29 +949,23 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
                 {/* Threshold Line (Dashed Red at y = 45) */}
                 <line x1="0" y1="45" x2="240" y2="45" stroke="#DC2626" strokeWidth="1.2" strokeDasharray="3 3" />
 
-                {/* Dynamic QBER Curve */}
-                {selectedScenarioKey === 'clean' ? (
-                  <path
-                    d="M 5 86 Q 60 84, 120 88 T 235 85"
-                    fill="none"
-                    stroke="#0058BE"
-                    strokeWidth="2"
-                  />
-                ) : (
-                  <path
-                    d="M 5 84 Q 60 80, 110 82 T 180 44 L 235 32"
-                    fill="none"
-                    stroke="#0058BE"
-                    strokeWidth="2"
-                  />
-                )}
+                {/* Dynamic Live QBER Curve */}
+                <path
+                  d={qberSparklinePath}
+                  fill="none"
+                  stroke={qberHistory[qberHistory.length - 1] > 0.055 ? "#BA1A1A" : "#0058BE"}
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="transition-all duration-300 ease-out"
+                />
               </svg>
 
               {/* Bottom Axis Labels */}
               <div className="flex justify-between items-end text-[9.5px] z-10 leading-none">
                 <span className="text-[#94A3B8]">0.0</span>
-                <span className={`font-bold ${scenario.qber > 0.11 ? 'text-[#0058BE]' : 'text-[#065F46]'}`}>
-                  {scenario.qberLabel}
+                <span className={`font-bold font-mono transition-all ${qberHistory[qberHistory.length - 1] > 0.055 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
+                  Current: {(qberHistory[qberHistory.length - 1] * 100).toFixed(2)}%
                 </span>
               </div>
             </div>
@@ -947,29 +1003,23 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
                 {/* Classical Limit Line (Dashed Gray at y = 65) */}
                 <line x1="0" y1="65" x2="240" y2="65" stroke="#94A3B8" strokeWidth="1.2" strokeDasharray="3 3" />
 
-                {/* Bell Correlation Curve */}
-                {selectedScenarioKey === 'clean' ? (
-                  <path
-                    d="M 5 28 Q 60 25, 120 30 T 235 27"
-                    fill="none"
-                    stroke="#065F46"
-                    strokeWidth="2"
-                  />
-                ) : (
-                  <path
-                    d="M 5 62 Q 60 42, 120 38 T 235 64"
-                    fill="none"
-                    stroke="#C2540A"
-                    strokeWidth="2"
-                  />
-                )}
+                {/* Dynamic Live Bell Correlation Curve */}
+                <path
+                  d={chshSparklinePath}
+                  fill="none"
+                  stroke={chshHistory[chshHistory.length - 1] < 2.0 ? "#BA1A1A" : "#065F46"}
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="transition-all duration-300 ease-out"
+                />
               </svg>
 
               {/* Bottom Axis Labels */}
               <div className="flex justify-between items-end text-[9.5px] z-10 leading-none">
                 <span className="text-[#64748B]">Classical limit (S=2.0)</span>
-                <span className={`font-bold ${scenario.chsh < 2.0 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
-                  {scenario.chshLabel}
+                <span className={`font-bold font-mono transition-all ${chshHistory[chshHistory.length - 1] < 2.0 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
+                  S = {chshHistory[chshHistory.length - 1].toFixed(2)}
                 </span>
               </div>
             </div>
