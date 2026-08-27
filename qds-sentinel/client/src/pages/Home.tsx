@@ -442,25 +442,211 @@ function SandboxPage() {
   const [active, setActive] = useState("MitM attack");
   const [running, setRunning] = useState(false);
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
+  const [remediationData, setRemediationData] = useState<any>(null);
+  const [isExecutingApi, setIsExecutingApi] = useState(false);
+
   const attacks = [
-    { title: "Clean signature", code: "CLEAN", detail: "Authenticated Bell-pair exchange", tone: "good" },
-    { title: "MitM attack", code: "MITM", detail: "Intercept / resend eavesdrop", tone: "copper" },
-    { title: "Forgery attack", code: "FORGE", detail: "Tampered feed-forward bits", tone: "copper" },
-    { title: "Replay attack", code: "REPLAY", detail: "Captured nonce retransmit", tone: "copper" },
-    { title: "Channel noise", code: "NOISE", detail: "Optical thermal disturbance", tone: "blue" },
-    { title: "PNS attack", code: "PNS", detail: "Photon-number splitting probe", tone: "blue" }
+    { title: "Clean signature", code: "CLEAN", detail: "Authenticated Bell-pair exchange", tone: "good", type: "clean", qber: 0.019, chsh: 2.76 },
+    { title: "MitM attack", code: "MITM", detail: "Intercept / resend eavesdrop", tone: "copper", type: "forgery", qber: 0.142, chsh: 1.76 },
+    { title: "Forgery attack", code: "FORGE", detail: "Tampered feed-forward bits", tone: "copper", type: "forgery", qber: 0.128, chsh: 1.82 },
+    { title: "Replay attack", code: "REPLAY", detail: "Captured nonce retransmit", tone: "copper", type: "replay", qber: 0.086, chsh: 1.91 },
+    { title: "Channel noise", code: "NOISE", detail: "Optical thermal disturbance", tone: "blue", type: "noise", qber: 0.048, chsh: 2.34 },
+    { title: "PNS attack", code: "PNS", detail: "Photon-number splitting probe", tone: "blue", type: "pns", qber: 0.095, chsh: 1.88 }
   ];
+
   const selected = attacks.find((attack) => attack.title === active) ?? attacks[1];
   const threatened = selected.tone === "copper";
-  const consoleLines = {
-    arbitrator: ["> initialize protocol (BB84 EXT)", "> awaiting registration", threatened ? "> ACK: Alice connected [ID: 0x9F3A]" : "> ACK: all nodes authenticated", "> channel seed established · quantum-link-01", threatened ? "> WARN: QBER 14.2% reached Hoeffding bound" : "> QBER 1.9% within operating band", threatened ? "> ERR: Bell correlation collapsed (S=1.94 < 2.0)" : "> CHSH S=2.76 verified", threatened ? "> ABORT: intercept-resend adversary detected" : "> ACCEPT: signature verification sustained"],
-    alice: ["> seq gen start()", "> basis: [+, ×, ×, +, +]", "> bits: [1, 0, 1, 1, 0, —]", "> transmitting photons (n=1024)", "> stream tx: 89% complete", "> awaiting basis reconciliation", threatened ? "> ERR: sift parity breach detected by arbitrator" : "> ACK: signed message delivered"],
-    bob: ["> listener active(port: 9091)", "> measuring stream...", "> rand bases: [×, ×, +, ×, +, —]", "> capture: 32% complete", threatened ? "> capture: K024 photons received" : "> capture: 1024 photons received", "> generating sifted key()", threatened ? "> ERR: sifted key invalid (phase collapse 14.2%)" : "> ACK: Pauli frame aligned"],
-    eve: ["> inject probe(target: quantum-link-01)", "> intercept-resend active", threatened ? "> WARN: state collapse detected on bit 12" : "> standby: no adversarial action", threatened ? "> WARN: state collapse detected on bit 18" : "> waiting for scenario trigger", "> copying sifted frames...", threatened ? "> ERR: arbitrator probing anomaly" : "> passive observation only"]
+
+  const triggerBackendAttack = async (attackItem: typeof selected) => {
+    setIsExecutingApi(true);
+    try {
+      if (attackItem.type !== "clean") {
+        await apiClient.injectAttack(attackItem.type as any);
+      }
+      const res = await apiClient.auditAndRemediate({
+        qber_override: attackItem.qber,
+        chsh_score: attackItem.chsh
+      });
+      setRemediationData(res);
+      if (res.status === "PQC_FALLBACK_ACTIVE") {
+        toast.error(`FastAPI Triggered: ${attackItem.title} detected! PQC Dilithium3 Fallback Engaged!`);
+      } else {
+        toast.success(`FastAPI Channel Clean: ${attackItem.title} - Nominal quantum state.`);
+      }
+    } catch {
+      toast.info(`Staged ${attackItem.title} scenario locally.`);
+    } finally {
+      setIsExecutingApi(false);
+    }
   };
-  const Pane = ({ title, nodeKey, variant, lines }: { title: string; nodeKey: "arbitrator" | "alice" | "bob" | "eve"; variant: "good" | "copper" | "blue"; lines: string[] }) => <section className={cn("sandbox-v2-console", "sandbox-v2-console-" + variant)}><div className="sandbox-v2-console-head"><span>{title}</span><div><button onClick={() => toast.success(title + " log copied")} aria-label={"Copy " + title + " log"}><Copy size={12} /></button><button onClick={() => setExpandedNode(nodeKey)} aria-label={"Expand " + title + " console"}><ArrowUpRight size={12} /></button></div></div><div className="sandbox-v2-console-body">{lines.map((line, index) => <p key={line + index} className={cn(line.includes("ERR") || line.includes("ABORT") ? "console-line-alert" : line.includes("WARN") ? "console-line-warn" : line.includes("ACK") || line.includes("ACCEPT") ? "console-line-ok" : "")}>{line}</p>)}</div>{title === "EVE INTERCEPT" && threatened && <span className="sandbox-v2-console-alert">INTERVENTION ACTIVE</span>}</section>;
-  return <div className="sandbox-v2"><header className="sandbox-v2-header"><div className="sandbox-v2-brand"><img src={MARK} alt="" /><span>QDS SENTINEL</span></div><strong>Attack sandbox</strong><span aria-hidden="true" /></header><div className="sandbox-v2-shell"><aside className="sandbox-v2-scenarios"><span className="eyebrow">Attack scenarios</span><div className="sandbox-v2-scenario-list">{attacks.map((attack) => <button key={attack.title} className={cn("sandbox-v2-scenario", active === attack.title && "sandbox-v2-scenario-active", "sandbox-v2-scenario-" + attack.tone)} onClick={() => { setActive(attack.title); setRunning(false); toast.info(attack.title + " staged"); }}><i /><span>{attack.title}</span><small>{attack.code}</small></button>)}</div><div className="sandbox-v2-scenario-spacer" /><button className={cn("sandbox-v2-initiate", running && "sandbox-v2-initiate-active")} onClick={() => { setRunning(!running); toast[!running ? "error" : "info"](!running ? selected.title + " handshake initiated" : "Handshake paused"); }}>{running ? "Pause handshake" : "Initiate handshake"}</button></aside><main className="sandbox-v2-consoles"><Pane title="ARBITRATOR.SYS" nodeKey="arbitrator" variant={threatened ? "copper" : "good"} lines={consoleLines.arbitrator} /><Pane title="ALICE NODE" nodeKey="alice" variant="good" lines={consoleLines.alice} /><Pane title="BOB NODE" nodeKey="bob" variant="good" lines={consoleLines.bob} /><Pane title="EVE INTERCEPT" nodeKey="eve" variant={threatened ? "copper" : "blue"} lines={consoleLines.eve} /></main><aside className="sandbox-v2-telemetry"><span className="eyebrow">Telemetry</span><SandboxMetricChart title="QBER vs Hoeffding" value={threatened ? "Current: 0.14" : "Current: 0.02"} detail={threatened ? "0.11 threshold" : "nominal drift"} threat={threatened} mode="qber" /><SandboxMetricChart title="CHSH Bell violation" value={threatened ? "S = 1.94" : "S = 2.76"} detail={threatened ? "Classical bound (S=2.0)" : "Quantum correlation"} threat={threatened} mode="chsh" /><div className="sandbox-v2-readout"><div><span>Key rate</span><b>{threatened ? "1.2 kbps" : "4.8 kbps"}</b></div><div><span>Sifting eff.</span><b>{threatened ? "49.6%" : "96.2%"}</b></div><div><span>Security status</span><b className={threatened ? "text-copper" : "status-text-good"}>{threatened ? "Compromised" : "Nominal"}</b></div></div></aside></div>{expandedNode && <div className="sandbox-console-overlay" onClick={() => setExpandedNode(null)}><section className="sandbox-console-focus" onClick={(event) => event.stopPropagation()}><div className="sandbox-console-focus-head"><div><span className="eyebrow">Expanded protocol node</span><h2>{expandedNode === "arbitrator" ? "ARBITRATOR.SYS" : expandedNode === "alice" ? "ALICE NODE" : expandedNode === "bob" ? "BOB NODE" : "EVE INTERCEPT"}</h2></div><button className="icon-button" onClick={() => setExpandedNode(null)} aria-label="Close expanded node"><X size={15} /></button></div><div className="sandbox-console-focus-log">{consoleLines[expandedNode as keyof typeof consoleLines].concat(["> trace id: qds-260827-91f4", "> packet evidence retained", threatened ? "> verdict: reject / containment advised" : "> verdict: accept / no intervention required"]).map((line, index) => <p key={line + index} className={cn(line.includes("ERR") || line.includes("ABORT") || line.includes("reject") ? "console-line-alert" : line.includes("WARN") ? "console-line-warn" : line.includes("ACK") || line.includes("ACCEPT") || line.includes("accept") ? "console-line-ok" : "")}>{line}</p>)}</div><div className="sandbox-console-focus-actions"><button className="button button-outline button-small" onClick={() => toast.success("Expanded node log copied")}><Copy size={14} /> Copy evidence</button><button className="button button-copper button-small" onClick={() => setExpandedNode(null)}>Collapse node</button></div></section></div>}</div>;
+
+  useEffect(() => {
+    triggerBackendAttack(selected);
+  }, [active]);
+
+  const consoleLines = {
+    arbitrator: [
+      "> initialize protocol (BB84 EXT)",
+      "> awaiting registration",
+      threatened ? "> ACK: Alice connected [ID: 0x9F3A]" : "> ACK: all nodes authenticated",
+      "> channel seed established · quantum-link-01",
+      threatened ? `> WARN: QBER ${(selected.qber * 100).toFixed(1)}% reached Hoeffding bound` : "> QBER 1.9% within operating band",
+      threatened ? `> ERR: Bell correlation collapsed (S=${selected.chsh} < 2.0)` : `> CHSH S=${selected.chsh} verified`,
+      threatened ? "> ABORT: intercept-resend adversary detected" : "> ACCEPT: signature verification sustained",
+      remediationData?.status === "PQC_FALLBACK_ACTIVE" ? "> PQC FALLBACK: CRYSTALS-Dilithium3 (ML-DSA-65) active" : "> QDS Teleportation: pristine key exchange"
+    ],
+    alice: [
+      "> seq gen start()",
+      "> basis: [+, ×, ×, +, +]",
+      "> bits: [1, 0, 1, 1, 0, —]",
+      "> transmitting photons (n=1024)",
+      "> stream tx: 100% complete",
+      "> awaiting basis reconciliation",
+      threatened ? "> ERR: sift parity breach detected by arbitrator" : "> ACK: signed message delivered"
+    ],
+    bob: [
+      "> listener active(port: 9091)",
+      "> measuring stream...",
+      "> rand bases: [×, ×, +, ×, +, —]",
+      "> capture: 1024 photons received",
+      threatened ? `> ERR: sifted key invalid (phase collapse ${(selected.qber * 100).toFixed(1)}%)` : "> ACK: Pauli frame aligned",
+      remediationData?.status === "PQC_FALLBACK_ACTIVE" ? "> PQC VERIFIED: Dilithium3 signature matches payload" : "> QDS VERIFIED: physical attestation sealed"
+    ],
+    eve: [
+      "> inject probe(target: quantum-link-01)",
+      `> attack type: ${selected.code}`,
+      threatened ? "> WARN: state collapse detected on bit 12" : "> standby: no adversarial action",
+      threatened ? "> WARN: state collapse detected on bit 18" : "> waiting for scenario trigger",
+      threatened ? "> ERR: arbitrator probing anomaly · probe isolated" : "> passive observation only"
+    ]
+  };
+
+  const Pane = ({ title, nodeKey, variant, lines }: { title: string; nodeKey: "arbitrator" | "alice" | "bob" | "eve"; variant: "good" | "copper" | "blue"; lines: string[] }) => (
+    <section className={cn("sandbox-v2-console", "sandbox-v2-console-" + variant)}>
+      <div className="sandbox-v2-console-head">
+        <span>{title}</span>
+        <div>
+          <button onClick={() => toast.success(title + " log copied")} aria-label={"Copy " + title + " log"}><Copy size={12} /></button>
+          <button onClick={() => setExpandedNode(nodeKey)} aria-label={"Expand " + title + " console"}><ArrowUpRight size={12} /></button>
+        </div>
+      </div>
+      <div className="sandbox-v2-console-body">
+        {lines.map((line, index) => (
+          <p key={line + index} className={cn(line.includes("ERR") || line.includes("ABORT") ? "console-line-alert" : line.includes("WARN") ? "console-line-warn" : line.includes("ACK") || line.includes("ACCEPT") || line.includes("PQC") ? "console-line-ok" : "")}>{line}</p>
+        ))}
+      </div>
+      {title === "EVE INTERCEPT" && threatened && <span className="sandbox-v2-console-alert">INTERVENTION ACTIVE</span>}
+    </section>
+  );
+
+  return (
+    <div className="sandbox-v2">
+      <header className="sandbox-v2-header">
+        <div className="sandbox-v2-brand">
+          <img src={MARK} alt="" />
+          <span>QDS SENTINEL</span>
+        </div>
+        <strong>Attack sandbox & FastAPI PQC Remediation</strong>
+        <span aria-hidden="true" />
+      </header>
+      <div className="sandbox-v2-shell">
+        <aside className="sandbox-v2-scenarios">
+          <span className="eyebrow">Attack scenarios</span>
+          <div className="sandbox-v2-scenario-list">
+            {attacks.map((attack) => (
+              <button
+                key={attack.title}
+                className={cn("sandbox-v2-scenario", active === attack.title && "sandbox-v2-scenario-active", "sandbox-v2-scenario-" + attack.tone)}
+                onClick={() => {
+                  setActive(attack.title);
+                  setRunning(false);
+                }}
+              >
+                <i />
+                <span>{attack.title}</span>
+                <small>{attack.code}</small>
+              </button>
+            ))}
+          </div>
+          <div className="sandbox-v2-scenario-spacer" />
+          <button
+            className={cn("sandbox-v2-initiate", (running || isExecutingApi) && "sandbox-v2-initiate-active")}
+            disabled={isExecutingApi}
+            onClick={() => {
+              setRunning(!running);
+              triggerBackendAttack(selected);
+            }}
+          >
+            {isExecutingApi ? "FastAPI Executing…" : running ? "Pause handshake" : "Initiate handshake"}
+          </button>
+        </aside>
+
+        <main className="sandbox-v2-consoles">
+          <Pane title="ARBITRATOR.SYS" nodeKey="arbitrator" variant={threatened ? "copper" : "good"} lines={consoleLines.arbitrator} />
+          <Pane title="ALICE NODE" nodeKey="alice" variant="good" lines={consoleLines.alice} />
+          <Pane title="BOB NODE" nodeKey="bob" variant="good" lines={consoleLines.bob} />
+          <Pane title="EVE INTERCEPT" nodeKey="eve" variant={threatened ? "copper" : "blue"} lines={consoleLines.eve} />
+
+          {remediationData?.ai_cognitive_report && (
+            <div className="col-span-2 p-4 bg-white border border-[#E2E8F0] rounded-[2px] shadow-sm mt-2 text-[11px] font-mono">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0] mb-2">
+                <span className="font-bold text-[#0058BE] uppercase flex items-center gap-1.5">
+                  <ShieldCheck size={14} /> Ollama AI Cognitive Remediation Report
+                </span>
+                <span className={cn("px-2 py-0.5 text-[9px] font-bold uppercase", threatened ? "bg-[#C2540A]/10 text-[#C2540A]" : "bg-[#34D399]/10 text-[#065F46]")}>
+                  {remediationData.status}
+                </span>
+              </div>
+              <pre className="whitespace-pre-wrap text-[#1E293B] leading-relaxed font-mono">{remediationData.ai_cognitive_report}</pre>
+            </div>
+          )}
+        </main>
+
+        <aside className="sandbox-v2-telemetry">
+          <span className="eyebrow">Telemetry & PQC Status</span>
+          <SandboxMetricChart title="QBER vs Hoeffding" value={`Current: ${(selected.qber * 100).toFixed(1)}%`} detail={threatened ? "0.055 threshold breach" : "nominal drift"} threat={threatened} mode="qber" />
+          <SandboxMetricChart title="CHSH Bell violation" value={`S = ${selected.chsh.toFixed(2)}`} detail={threatened ? "Classical bound (S=2.0)" : "Quantum correlation"} threat={threatened} mode="chsh" />
+          <div className="sandbox-v2-readout">
+            <div><span>Key rate</span><b>{threatened ? "1.2 kbps" : "4.8 kbps"}</b></div>
+            <div><span>Sifting eff.</span><b>{threatened ? "49.6%" : "96.2%"}</b></div>
+            <div>
+              <span>Security status</span>
+              <b className={threatened ? "text-copper" : "status-text-good"}>{threatened ? "PQC FALLBACK" : "Nominal"}</b>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {expandedNode && (
+        <div className="sandbox-console-overlay" onClick={() => setExpandedNode(null)}>
+          <section className="sandbox-console-focus" onClick={(event) => event.stopPropagation()}>
+            <div className="sandbox-console-focus-head">
+              <div>
+                <span className="eyebrow">Expanded protocol node</span>
+                <h2>{expandedNode === "arbitrator" ? "ARBITRATOR.SYS" : expandedNode === "alice" ? "ALICE NODE" : expandedNode === "bob" ? "BOB NODE" : "EVE INTERCEPT"}</h2>
+              </div>
+              <button className="icon-button" onClick={() => setExpandedNode(null)} aria-label="Close expanded node"><X size={15} /></button>
+            </div>
+            <div className="sandbox-console-focus-log">
+              {consoleLines[expandedNode as keyof typeof consoleLines].concat([
+                "> trace id: qds-260827-91f4",
+                "> packet evidence retained",
+                threatened ? "> verdict: reject / PQC Dilithium3 fallback engaged" : "> verdict: accept / no intervention required"
+              ]).map((line, index) => (
+                <p key={line + index} className={cn(line.includes("ERR") || line.includes("ABORT") || line.includes("reject") ? "console-line-alert" : line.includes("WARN") ? "console-line-warn" : line.includes("ACK") || line.includes("ACCEPT") || line.includes("accept") || line.includes("PQC") ? "console-line-ok" : "")}>{line}</p>
+              ))}
+            </div>
+            <div className="sandbox-console-focus-actions">
+              <button className="button button-outline button-small" onClick={() => toast.success("Expanded node log copied")}><Copy size={14} /> Copy evidence</button>
+              <button className="button button-copper button-small" onClick={() => setExpandedNode(null)}>Collapse node</button>
+            </div>
+          </section>
+        </div>
+      )}
+    </div>
+  );
 }
+
 
 function DatabasePage() {
   const [selected, setSelected] = useState(sessionRows[0]);
