@@ -7,6 +7,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 
+import { SentinelProvider } from "./lib/SentinelContext";
+
 function Router() {
   return (
     <Switch>
@@ -28,10 +30,13 @@ export default function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <SentinelProvider>
+            <Toaster />
+            <Router />
+          </SentinelProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
 }
+

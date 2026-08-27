@@ -1,6 +1,6 @@
-// Signal Atelier reminder: warm paper surfaces, ink-first hierarchy, copper intervention states, asymmetrical operator layouts, and restrained motion.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useSentinel } from "../lib/SentinelContext";
 import {
   Activity,
   AlertTriangle,
@@ -315,9 +315,12 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
 const steps = ["Entangled photon pair emission", "Joint Bell state measurement", "Classical feed-forward & Pauli frame correction", "Hoeffding statistical bound audit", "Privacy amplification & Toeplitz hash distillation", "Arbitrator final verdict"];
 const stepMeta = ["KEY EXCH MN", "ALICE BSM", "BOB NODE", "HOEFFDING CHK", "PRIVACY AMP", "THREAT ENGINE"];
 function LegacyDemonstrationPage() {
+
+  const { eveActive, toggleEve, qber: globalQber, chsh: globalChsh } = useSentinel();
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [eve, setEve] = useState(false);
+  const eve = eveActive;
+  const setEve = (val: boolean | ((curr: boolean) => boolean)) => toggleEve();
   const [dragging, setDragging] = useState<string | null>(null);
   const [executingLive, setExecutingLive] = useState(false);
   const [showCreateSession, setShowCreateSession] = useState(false);
@@ -348,12 +351,12 @@ function LegacyDemonstrationPage() {
     nodeDragFrame.current = window.requestAnimationFrame(() => { const next = pendingNodePosition.current; if (next) setNodePositions((current) => ({ ...current, [next.id]: { x: next.x, y: next.y } })); nodeDragFrame.current = null; });
   };
   const endNodeDrag = () => { if (nodeDragFrame.current !== null) { window.cancelAnimationFrame(nodeDragFrame.current); nodeDragFrame.current = null; } const next = pendingNodePosition.current; if (next) setNodePositions((current) => ({ ...current, [next.id]: { x: next.x, y: next.y } })); pendingNodePosition.current = null; setDragging(null); };
-  const currentQber = eve ? "14.2%" : "1.95%";
-  const currentChsh = eve ? "1.76" : step >= 4 ? "2.76" : "2.78";
+  const currentQber = (globalQber * 100).toFixed(1) + "%";
+  const currentChsh = globalChsh.toFixed(2);
   const matrixRows = Array.from({ length: 8 }, (_, i) => { const pulse = String(i + 1).padStart(2, "0"); const intercepted = eve && (i === 0 || i === 1 || i === 3 || i === 6); const discarded = i === 3 || i === 4 || i === 7; return { pulse, aliceBasis: i % 3 === 0 ? "×" : "+", aliceBit: i % 2 ? "1" : "0", bobBasis: i % 3 === 1 ? "+" : "×", bobBit: intercepted ? (i % 2 ? "0" : "1") : i % 2 ? "1" : "0", bell: ["Φ⁻", "Φ⁺", "Ψ⁺", "Φ⁺", "Φ⁻", "Ψ⁻", "Φ⁺", "Ψ⁺"][i], intercepted, discarded, angleA: i % 3 === 0 ? "45°" : "0°", angleB: i % 3 === 1 ? "45°" : "0°" }; });
-  const exportMatrix = () => { const header = "PLS,Alice Basis,Alice Bit,Bob Basis,Bob Bit,Bell Outcome,Eve Intercept,Sift Status,Polarization Angle A,Polarization Angle B"; const csv = [header, ...matrixRows.map((row) => [row.pulse, row.aliceBasis, row.aliceBit, row.bobBasis, row.bobBit, row.bell, row.intercepted ? "Yes" : "No", row.discarded ? "Discarded" : row.intercepted ? "QBER Error" : "Kept", row.angleA, row.angleB].join(","))].join("\\n"); const blob = new Blob([csv], { type: "text/csv;charset=utf-8" }); const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `quantum_matrix_${Date.now()}.csv`; anchor.click(); URL.revokeObjectURL(url); toast.success("Quantum matrix CSV exported"); };
+  const exportMatrix = () => { const header = "PLS,Alice Basis,Alice Bit,Bob Basis,Bob Bit,Bell Outcome,Eve Intercept,Sift Status,Polarization Angle A,Polarization Angle B"; const csv = [header, ...matrixRows.map((row) => [row.pulse, row.aliceBasis, row.aliceBit, row.bobBasis, row.bobBit, row.bell, row.intercepted ? "Yes" : "No", row.discarded ? "Discarded" : row.intercepted ? "QBER Error" : "Kept", row.angleA, row.angleB].join(","))].join("\n"); const blob = new Blob([csv], { type: "text/csv;charset=utf-8" }); const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `quantum_matrix_${Date.now()}.csv`; anchor.click(); URL.revokeObjectURL(url); toast.success("Quantum matrix CSV exported"); };
   const stepCopy = ["The arbitrator pumps an SPDC crystal to produce Bell pairs |Φ⁺⟩ = 1/√2 (|00⟩ + |11⟩) at λ = 1550 nm.", "Alice performs a joint Bell measurement on |ψdoc⟩ and her entangled qubit, producing two classical feed-forward bits (b₁, b₂).", "Bob receives (b₁, b₂) and applies σxᵇ¹ · σzᵇ² to restore quantum-state fidelity.", "The arbitrator samples N test qubits and checks observed QBER against the Hoeffding threshold τ = 5.0%.", "A Toeplitz matrix distills an unforgeable 256-bit quantum one-time-pad signature token.", "The threat engine accepts when QBER ≤ 5.0% and CHSH S ≥ 2.00; otherwise it rejects."];
-  return <div className="page-content demo-page"><Topbar onNotifications={() => setShowNotifications(!showNotifications)} eyebrow="01 / Quantum protocol" title="Alice ↔ Bob" subtitle="Interactive protocol visualizer / session QKD-260827-91F4" action={<><button className="button button-quiet button-small" onClick={() => setShowCreateSession(true)}><Plus size={14} /> New session</button><button className="icon-button" onClick={() => setShowSettings(true)} aria-label="Simulation settings"><Settings2 size={16} /></button><Link href="/home" className="button button-quiet button-small"><ArrowLeft size={14} /> Home portal</Link><Link href="/monitoring" className="button button-outline button-small">SOC monitoring <ArrowUpRight size={14} /></Link></>} /><div className="demo-toolbar"><div className="demo-session"><span className="mini-label"><StatusDot /> active session</span><strong>QKD-260827-91F4</strong></div><div className="demo-controls"><button className={cn("button button-quiet button-small", playing && "button-active")} onClick={() => setPlaying(!playing)}>{playing ? <Pause size={14} /> : <Play size={14} fill="currentColor" />} {playing ? "Pause" : "Play"}</button><button className="button button-outline button-small" onClick={() => setStep((s) => s >= 5 ? 0 : s + 1)}>Step forward <ChevronRight size={14} /></button><button className="icon-button" onClick={() => { setStep(0); setPlaying(false); setEve(false); }} aria-label="Reset protocol"><RotateCcw size={15} /></button><button className="button button-copper button-small" disabled={executingLive} onClick={() => { setExecutingLive(true); setTimeout(() => { setExecutingLive(false); setStep(5); setPlaying(false); toast.success("Live signature verification completed"); }, 700); }}>{executingLive ? <RefreshCw size={14} className="spin" /> : <Zap size={14} />} {executingLive ? "Executing…" : "Execute live protocol"}</button></div></div><div className="step-tracker"><div className="step-rail" aria-hidden="true"><span className="step-rail-fill" style={{ width: `${(step / (steps.length - 1)) * 100}%` }} /></div><span className="step-cursor" aria-hidden="true" style={{ "--step-index": step } as React.CSSProperties} />{steps.map((label, i) => <button key={label} className={cn("step-item", i === step && "step-current", i < step && "step-done")} onClick={() => setStep(i)}><span className="step-num">{i < step ? <Check size={12} /> : `0${i + 1}`}</span><span>{label}</span></button>)}</div><section className="protocol-board"><div className="protocol-intro"><div><span className="eyebrow">Phase 0{step + 1} / 06 · {stepMeta[step]}</span><h2>{steps[step]}</h2><p>{stepCopy[step]}</p><div className="protocol-metrics"><span><b>QBER</b>{currentQber}</span><span><b>CHSH S</b>{currentChsh}</span><span><b>τ cutoff</b>5.0%</span></div></div><div className="protocol-readout"><span>decision</span><strong className={eve ? "text-copper" : "text-blue"}>{eve ? "REJECT" : step === 5 ? "ACCEPT" : "PENDING"}</strong><small>{eve ? "disturbance detected" : step === 5 ? "all gates clear" : "awaiting next phase"}</small></div></div><div key={step} ref={stageRef} className={cn("channel-stage", eve && "channel-stage-threat", playing && "flow-playing", `phase-${step}`)} onPointerMove={moveNode} onPointerUp={endNodeDrag} onPointerCancel={endNodeDrag}><div className="flow-progress" aria-label={`Protocol phase ${step + 1} of 6`}>{steps.map((label, i) => <span key={label} className={cn(i === step && "flow-progress-current", i < step && "flow-progress-done")} />)}</div><svg className="connection-map" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line className="connection-line connection-optical" x1={nodePositions.arb.x} y1={nodePositions.arb.y} x2={nodePositions.alice.x} y2={nodePositions.alice.y} /><line className="connection-line connection-optical" x1={nodePositions.arb.x} y1={nodePositions.arb.y} x2={(eve ? nodePositions.eve.x : nodePositions.bob.x)} y2={(eve ? nodePositions.eve.y : nodePositions.bob.y)} /><line className={cn("connection-line", eve ? "connection-threat-route" : "connection-classical")} x1={(eve ? nodePositions.eve.x : nodePositions.alice.x)} y1={(eve ? nodePositions.eve.y : nodePositions.alice.y)} x2={nodePositions.bob.x} y2={nodePositions.bob.y} /><circle className="connection-anchor" cx={nodePositions.arb.x} cy={nodePositions.arb.y} r="1.1" /><circle className="connection-anchor" cx={nodePositions.alice.x} cy={nodePositions.alice.y} r="1.1" /><circle className="connection-anchor" cx={nodePositions.bob.x} cy={nodePositions.bob.y} r="1.1" /></svg><svg className="photon-system" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><PhotonTrack id="route-arb-alice" from={nodePositions.arb} to={nodePositions.alice} tone={eve ? "threat" : "quantum"} delay="-.2s" />{eve ? <><PhotonTrack id="route-arb-eve" from={nodePositions.arb} to={nodePositions.eve} tone="threat" delay="-.8s" /><PhotonTrack id="route-eve-bob" from={nodePositions.eve} to={nodePositions.bob} tone="threat" delay="-1.4s" /></> : <PhotonTrack id="route-arb-bob" from={nodePositions.arb} to={nodePositions.bob} tone="quantum" delay="-.95s" />}</svg><div className="stage-label stage-label-top">Optical channel <span>authenticated / 1550nm</span></div><div className={cn("protocol-node", "node-alice", "movable-node", dragging === "alice" && "node-dragging", step === 1 && "node-active", "compact-node")} style={{ left: `${nodePositions.alice.x}%`, top: `${nodePositions.alice.y}%` }} onPointerDown={(event) => beginNodeDrag("alice", event)}><div className="protocol-node-icon"><FileKey2 size={20} /></div><strong>ALICE</strong><span>node A / signer</span><div className="node-readout"><span>document hash</span><b>af7c…e91b</b></div></div><div className={cn("protocol-node", "node-arb", "movable-node", dragging === "arb" && "node-dragging", step === 0 && "node-active", "compact-node")} style={{ left: `${nodePositions.arb.x}%`, top: `${nodePositions.arb.y}%` }} onPointerDown={(event) => beginNodeDrag("arb", event)}><div className="protocol-node-icon"><Sparkles size={20} /></div><strong>ARBITRATOR</strong><span>entangled source</span><div className="node-readout"><span>EPR pairs</span><b>100 / 100</b></div></div><div className={cn("protocol-node", "node-bob", "movable-node", dragging === "bob" && "node-dragging", step === 3 && "node-active", "compact-node")} style={{ left: `${nodePositions.bob.x}%`, top: `${nodePositions.bob.y}%` }} onPointerDown={(event) => beginNodeDrag("bob", event)}><div className="protocol-node-icon"><ShieldCheck size={20} /></div><strong>BOB</strong><span>node B / verifier</span><div className="node-readout"><span>Pauli frame</span><b>{step >= 3 ? "σXZ aligned" : "awaiting bits"}</b></div></div><div className={cn("protocol-node", "node-eve", "movable-node", dragging === "eve" && "node-dragging", eve && "node-active", "compact-node")} style={{ left: `${nodePositions.eve.x}%`, top: `${nodePositions.eve.y}%` }} onPointerDown={(event) => beginNodeDrag("eve", event)}><div className="protocol-node-icon"><AlertTriangle size={20} /></div><strong>EVE</strong><span>adversary / isolated</span><div className="node-readout"><span>intercept rate</span><b>{eve ? "35% active" : "0% idle"}</b></div></div><div className="stage-label stage-label-bottom"><span>classical channel / authenticated</span><span>γ photon stream / entangled pair</span></div></div><div className="protocol-controls"><div className="control-copy"><span className="eyebrow">Adversarial simulation</span><strong>Man-in-the-middle interception</strong><span>Toggle to observe a broken Bell correlation.</span></div><button className={cn("switch", eve && "switch-on")} onClick={() => { setEve(!eve); toast[eve ? "info" : "error"](eve ? "Eve isolated · channel restored" : "Threat injected · audit will reject"); }} aria-pressed={eve}><span className="switch-thumb" /> <span>{eve ? "Eve active" : "Eve idle"}</span></button></div></section><section className="bitstream-section"><SectionLabel index="03" eyebrow="Evidence sample" title="Quantum bitstream & Pauli alignment" action={<div className="evidence-actions"><Pill tone="blue">{matrixRows.filter((row) => !row.discarded).length} kept / {matrixRows.filter((row) => row.discarded).length} dropped</Pill><button className="button button-quiet button-small" onClick={exportMatrix}><Download size={14} /> Export Matrix CSV</button></div>} /><div className="bitstream-table-wrap"><table className="data-table bitstream-table"><thead><tr><th>pulse</th><th>Alice basis</th><th>raw bit</th><th>Bell outcome</th><th>Bob basis</th><th>Pauli</th><th>sifting</th></tr></thead><tbody>{matrixRows.map((row) => <tr key={row.pulse}><td className="mono">{row.pulse}</td><td>{row.aliceBasis}</td><td className="mono">{row.aliceBit}</td><td className="mono">{row.bell}</td><td>{row.bobBasis}</td><td className="mono">{row.bobBit}</td><td><Pill tone={row.discarded || row.intercepted ? "copper" : "good"}>{row.discarded ? "DISCARDED" : row.intercepted ? "QBER ERROR" : "KEPT"}</Pill></td></tr>)}</tbody></table></div></section>{showCreateSession && <div className="modal-backdrop" onClick={() => setShowCreateSession(false)}><div className="modal-card" onClick={(event) => event.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">Provision / 01</span><h3>New quantum session</h3></div><button className="icon-button" onClick={() => setShowCreateSession(false)} aria-label="Close new session"><X size={15} /></button></div><p className="modal-copy">Create a clean handshake session and begin at the EPR preparation phase.</p><div className="form-grid"><label>Document<input defaultValue="board-resolution.pdf" /></label><label>Protocol profile<select defaultValue="QDS / 1550nm"><option>QDS / 1550nm</option><option>QDS / test channel</option></select></label></div><button className="button button-copper modal-submit" onClick={() => { setShowCreateSession(false); setStep(0); setPlaying(true); toast.success("Quantum Session created & active"); }}><Play size={14} fill="currentColor" /> Create & start session</button></div></div>}{showSettings && <div className="modal-backdrop" onClick={() => setShowSettings(false)}><div className="modal-card modal-card-small" onClick={(event) => event.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">Control plane</span><h3>Simulation settings</h3></div><button className="icon-button" onClick={() => setShowSettings(false)} aria-label="Close settings"><X size={15} /></button></div><div className="settings-row"><span>Playback speed</span><div className="speed-pills">{[0.5, 1, 2, 4].map((speed) => <button key={speed} className={cn("speed-pill", simSpeed === speed && "speed-pill-active")} onClick={() => setSimSpeed(speed)}>{speed}x</button>)}</div></div><div className="settings-note"><Gauge size={14} /> Photon velocity and auto-advance interval update together.</div></div></div>}{showNotifications && <div className="notification-popover"><div className="modal-head"><div><span className="eyebrow">Signal desk</span><h3>Notifications</h3></div><button className="icon-button" onClick={() => setShowNotifications(false)} aria-label="Close notifications"><X size={15} /></button></div><div className="notification-item"><span className="notification-mark" /><div><strong>{eve ? "Quantum channel intrusion" : "No active alerts"}</strong><span>{eve ? "35% intercept tap is disturbing Bell correlation." : "The current session is within nominal tolerance."}</span></div></div>{eve && <button className="text-link notification-clear" onClick={() => { setEve(false); setShowNotifications(false); toast.success("Alert cleared · channel restored"); }}>Clear active alert</button>}</div>}</div>;
+  return <div className="page-content demo-page"><Topbar onNotifications={() => setShowNotifications(!showNotifications)} eyebrow="01 / Quantum protocol" title="Alice ↔ Bob" subtitle="Interactive protocol visualizer / session QKD-260827-91F4" action={<><button className="button button-quiet button-small" onClick={() => setShowCreateSession(true)}><Plus size={14} /> New session</button><button className="icon-button" onClick={() => setShowSettings(true)} aria-label="Simulation settings"><Settings2 size={16} /></button><Link href="/home" className="button button-quiet button-small"><ArrowLeft size={14} /> Home portal</Link><Link href="/monitoring" className="button button-outline button-small">SOC monitoring <ArrowUpRight size={14} /></Link></>} /><div className="demo-toolbar"><div className="demo-session"><span className="mini-label"><StatusDot /> active session</span><strong>QKD-260827-91F4</strong></div><div className="demo-controls"><button className={cn("button button-quiet button-small", playing && "button-active")} onClick={() => setPlaying(!playing)}>{playing ? <Pause size={14} /> : <Play size={14} fill="currentColor" />} {playing ? "Pause" : "Play"}</button><button className="button button-outline button-small" onClick={() => setStep((s) => s >= 5 ? 0 : s + 1)}>Step forward <ChevronRight size={14} /></button><button className="icon-button" onClick={() => { setStep(0); setPlaying(false); toggleEve(); }} aria-label="Reset protocol"><RotateCcw size={15} /></button><button className="button button-copper button-small" disabled={executingLive} onClick={() => { setExecutingLive(true); setTimeout(() => { setExecutingLive(false); setStep(5); setPlaying(false); toast.success("Live signature verification completed"); }, 700); }}>{executingLive ? <RefreshCw size={14} className="spin" /> : <Zap size={14} />} {executingLive ? "Executing…" : "Execute live protocol"}</button></div></div><div className="step-tracker"><div className="step-rail" aria-hidden="true"><span className="step-rail-fill" style={{ width: `${(step / (steps.length - 1)) * 100}%` }} /></div><span className="step-cursor" aria-hidden="true" style={{ "--step-index": step } as React.CSSProperties} />{steps.map((label, i) => <button key={label} className={cn("step-item", i === step && "step-current", i < step && "step-done")} onClick={() => setStep(i)}><span className="step-num">{i < step ? <Check size={12} /> : `0${i + 1}`}</span><span>{label}</span></button>)}</div><section className="protocol-board"><div className="protocol-intro"><div><span className="eyebrow">Phase 0{step + 1} / 06 · {stepMeta[step]}</span><h2>{steps[step]}</h2><p>{stepCopy[step]}</p><div className="protocol-metrics"><span><b>QBER</b>{currentQber}</span><span><b>CHSH S</b>{currentChsh}</span><span><b>τ cutoff</b>5.0%</span></div></div><div className="protocol-readout"><span>decision</span><strong className={eve ? "text-copper" : "text-blue"}>{eve ? "REJECT" : step === 5 ? "ACCEPT" : "PENDING"}</strong><small>{eve ? "disturbance detected" : step === 5 ? "all gates clear" : "awaiting next phase"}</small></div></div><div key={step} ref={stageRef} className={cn("channel-stage", eve && "channel-stage-threat", playing && "flow-playing", `phase-${step}`)} onPointerMove={moveNode} onPointerUp={endNodeDrag} onPointerCancel={endNodeDrag}><div className="flow-progress" aria-label={`Protocol phase ${step + 1} of 6`}>{steps.map((label, i) => <span key={label} className={cn(i === step && "flow-progress-current", i < step && "flow-progress-done")} />)}</div><svg className="connection-map" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line className="connection-line connection-optical" x1={nodePositions.arb.x} y1={nodePositions.arb.y} x2={nodePositions.alice.x} y2={nodePositions.alice.y} /><line className="connection-line connection-optical" x1={nodePositions.arb.x} y1={nodePositions.arb.y} x2={(eve ? nodePositions.eve.x : nodePositions.bob.x)} y2={(eve ? nodePositions.eve.y : nodePositions.bob.y)} /><line className={cn("connection-line", eve ? "connection-threat-route" : "connection-classical")} x1={(eve ? nodePositions.eve.x : nodePositions.alice.x)} y1={(eve ? nodePositions.eve.y : nodePositions.alice.y)} x2={nodePositions.bob.x} y2={nodePositions.bob.y} /><circle className="connection-anchor" cx={nodePositions.arb.x} cy={nodePositions.arb.y} r="1.1" /><circle className="connection-anchor" cx={nodePositions.alice.x} cy={nodePositions.alice.y} r="1.1" /><circle className="connection-anchor" cx={nodePositions.bob.x} cy={nodePositions.bob.y} r="1.1" /></svg><svg className="photon-system" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><PhotonTrack id="route-arb-alice" from={nodePositions.arb} to={nodePositions.alice} tone={eve ? "threat" : "quantum"} delay="-.2s" />{eve ? <><PhotonTrack id="route-arb-eve" from={nodePositions.arb} to={nodePositions.eve} tone="threat" delay="-.8s" /><PhotonTrack id="route-eve-bob" from={nodePositions.eve} to={nodePositions.bob} tone="threat" delay="-1.4s" /></> : <PhotonTrack id="route-arb-bob" from={nodePositions.arb} to={nodePositions.bob} tone="quantum" delay="-.95s" />}</svg><div className="stage-label stage-label-top">Optical channel <span>authenticated / 1550nm</span></div><div className={cn("protocol-node", "node-alice", "movable-node", dragging === "alice" && "node-dragging", step === 1 && "node-active", "compact-node")} style={{ left: `${nodePositions.alice.x}%`, top: `${nodePositions.alice.y}%` }} onPointerDown={(event) => beginNodeDrag("alice", event)}><div className="protocol-node-icon"><FileKey2 size={20} /></div><strong>ALICE</strong><span>node A / signer</span><div className="node-readout"><span>document hash</span><b>af7c…e91b</b></div></div><div className={cn("protocol-node", "node-arb", "movable-node", dragging === "arb" && "node-dragging", step === 0 && "node-active", "compact-node")} style={{ left: `${nodePositions.arb.x}%`, top: `${nodePositions.arb.y}%` }} onPointerDown={(event) => beginNodeDrag("arb", event)}><div className="protocol-node-icon"><Sparkles size={20} /></div><strong>ARBITRATOR</strong><span>entangled source</span><div className="node-readout"><span>EPR pairs</span><b>100 / 100</b></div></div><div className={cn("protocol-node", "node-bob", "movable-node", dragging === "bob" && "node-dragging", step === 3 && "node-active", "compact-node")} style={{ left: `${nodePositions.bob.x}%`, top: `${nodePositions.bob.y}%` }} onPointerDown={(event) => beginNodeDrag("bob", event)}><div className="protocol-node-icon"><ShieldCheck size={20} /></div><strong>BOB</strong><span>node B / verifier</span><div className="node-readout"><span>Pauli frame</span><b>{step >= 3 ? "σXZ aligned" : "awaiting bits"}</b></div></div><div className={cn("protocol-node", "node-eve", "movable-node", dragging === "eve" && "node-dragging", eve && "node-active", "compact-node")} style={{ left: `${nodePositions.eve.x}%`, top: `${nodePositions.eve.y}%` }} onPointerDown={(event) => beginNodeDrag("eve", event)}><div className="protocol-node-icon"><AlertTriangle size={20} /></div><strong>EVE</strong><span>adversary / isolated</span><div className="node-readout"><span>intercept rate</span><b>{eve ? "35% active" : "0% idle"}</b></div></div><div className="stage-label stage-label-bottom"><span>classical channel / authenticated</span><span>γ photon stream / entangled pair</span></div></div><div className="protocol-controls"><div className="control-copy"><span className="eyebrow">Adversarial simulation</span><strong>Man-in-the-middle interception</strong><span>Toggle to observe a broken Bell correlation across all pages.</span></div><button className={cn("switch", eve && "switch-on")} onClick={() => toggleEve()} aria-pressed={eve}><span className="switch-thumb" /> <span>{eve ? "Eve active" : "Eve idle"}</span></button></div></section><section className="bitstream-section"><SectionLabel index="03" eyebrow="Evidence sample" title="Quantum bitstream & Pauli alignment" action={<div className="evidence-actions"><Pill tone="blue">{matrixRows.filter((row) => !row.discarded).length} kept / {matrixRows.filter((row) => row.discarded).length} dropped</Pill><button className="button button-quiet button-small" onClick={exportMatrix}><Download size={14} /> Export Matrix CSV</button></div>} /><div className="bitstream-table-wrap"><table className="data-table bitstream-table"><thead><tr><th>pulse</th><th>Alice basis</th><th>raw bit</th><th>Bell outcome</th><th>Bob basis</th><th>Pauli</th><th>sifting</th></tr></thead><tbody>{matrixRows.map((row) => <tr key={row.pulse}><td className="mono">{row.pulse}</td><td>{row.aliceBasis}</td><td className="mono">{row.aliceBit}</td><td className="mono">{row.bell}</td><td>{row.bobBasis}</td><td className="mono">{row.bobBit}</td><td><Pill tone={row.discarded || row.intercepted ? "copper" : "good"}>{row.discarded ? "DISCARDED" : row.intercepted ? "QBER ERROR" : "KEPT"}</Pill></td></tr>)}</tbody></table></div></section>{showCreateSession && <div className="modal-backdrop" onClick={() => setShowCreateSession(false)}><div className="modal-card" onClick={(event) => event.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">Provision / 01</span><h3>New quantum session</h3></div><button className="icon-button" onClick={() => setShowCreateSession(false)} aria-label="Close new session"><X size={15} /></button></div><p className="modal-copy">Create a clean handshake session and begin at the EPR preparation phase.</p><div className="form-grid"><label>Document<input defaultValue="board-resolution.pdf" /></label><label>Protocol profile<select defaultValue="QDS / 1550nm"><option>QDS / 1550nm</option><option>QDS / test channel</option></select></label></div><button className="button button-copper modal-submit" onClick={() => { setShowCreateSession(false); setStep(0); setPlaying(true); toast.success("Quantum Session created & active"); }}><Play size={14} fill="currentColor" /> Create & start session</button></div></div>}{showSettings && <div className="modal-backdrop" onClick={() => setShowSettings(false)}><div className="modal-card modal-card-small" onClick={(event) => event.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">Control plane</span><h3>Simulation settings</h3></div><button className="icon-button" onClick={() => setShowSettings(false)} aria-label="Close settings"><X size={15} /></button></div><div className="settings-row"><span>Playback speed</span><div className="speed-pills">{[0.5, 1, 2, 4].map((speed) => <button key={speed} className={cn("speed-pill", simSpeed === speed && "speed-pill-active")} onClick={() => setSimSpeed(speed)}>{speed}x</button>)}</div></div><div className="settings-note"><Gauge size={14} /> Photon velocity and auto-advance interval update together.</div></div></div>}{showNotifications && <div className="notification-popover"><div className="modal-head"><div><span className="eyebrow">Signal desk</span><h3>Notifications</h3></div><button className="icon-button" onClick={() => setShowNotifications(false)} aria-label="Close notifications"><X size={14} /></button></div><div className="notification-item"><span className="notification-mark" /><div><strong>{eve ? "Quantum channel intrusion" : "No active alerts"}</strong><span>{eve ? "35% intercept tap is disturbing Bell correlation." : "The current session is within nominal tolerance."}</span></div></div>{eve && <button className="text-link notification-clear" onClick={() => { toggleEve(); setShowNotifications(false); }}>Clear active alert</button>}</div>}</div>;
 }
 
 function DemonstrationPage() {
@@ -367,21 +370,18 @@ function SandboxMetricChart({ title, value, detail, threat, mode }: { title: str
 
 /* Transfer workspace — Signal Atelier applies mineral paper, ink, copper intervention, and analytic blue telemetry. */
 function TransferPage() {
+  const { eveActive, toggleEve, qber, chsh, pqcMode, payloads, sendTransmission, resetChannel } = useSentinel();
   const [mode, setMode] = useState<"message" | "document">(() => new URLSearchParams(window.location.search).get("mode") === "document" ? "document" : "message");
-  const [eveEnabled, setEveEnabled] = useState(false);
   const [message, setMessage] = useState("CLASSIFIED DEFENSE TELEMETRY: Quantum one-time-pad key handshake verified for orbital satellite relay Alpha-09.");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileDigest, setFileDigest] = useState<string | null>(null);
   const [fileIsDragging, setFileIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [payloads, setPayloads] = useState([
-    { id: "TX-3635", time: "02:51:30.587", verification: "Verified / PQC Dilithium3 fallback", title: "Classified defense telemetry", body: "CLASSIFIED DEFENSE TELEMETRY: Quantum one-time-pad key handshake verified for orbital satellite relay Alpha-09.", signature: "PQC LATTICE SIGNATURE (CRYSTALS-DILITHIUM3 / ML-DSA-65):\n3a7d9f2e4b6c8d0ef1a3b5b7c9d1e3f5a7b9c1d3e5f7a9b1c3d5e7f9a1b3c5d7e...", qber: "8.77%", chsh: "1.77", pauli: "PQC ML-DSA-65", tone: "pqc", metricTone: "text-copper" },
-    { id: "TX-1403", time: "20:43:28.197", verification: "Verified / PQC Dilithium3 fallback", title: "Hello Alice…", body: "hello alice", signature: "PQC LATTICE SIGNATURE (ML-DSA-65):\n79a2c4e6f8a0b2d4e6f8a0b2d4e6f8a0b2d4e6f8a0b2d4e6f8a0b2d4e6f8a0b2d4...", qber: "8.60%", chsh: "1.73", pauli: "Pauli mismatch", tone: "pqc", metricTone: "text-copper" },
-    { id: "TX-2853", time: "20:42:10.301", verification: "Verified / physical QDS", title: "Authenticated routing manifest", body: "QDS transport layer confirmed a physical signature match for the protected relay schedule.", signature: "PHYSICAL QDS ATTESTATION:\nBell-state witness sealed · optical entropy verified · channel path authenticated", qber: "1.90%", chsh: "2.78", pauli: "I · σZ", tone: "good", metricTone: "status-text-good" },
-  ]);
+
   const presets = ["Defense manifest 09", "OTP key exchange", "Satellite command"];
   const selectPreset = (preset: string) => setMessage(preset === "Defense manifest 09" ? "DEFENSE MANIFEST 09: Signed payload approved for authenticated orbital relay delivery." : preset === "OTP key exchange" ? "ONE-TIME-PAD EXCHANGE: Entangled key material sealed for the next authenticated message." : "SATELLITE COMMAND: Deploy the secure quantum control packet to the Alpha-09 relay.");
   const formatFileSize = (bytes: number) => bytes < 1024 * 1024 ? (bytes / 1024).toFixed(1) + " KB" : (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  
   const acceptDocument = async (candidate?: File | null) => {
     if (!candidate) return;
     const allowed = /\.(txt|pdf|sig|json)$/i.test(candidate.name);
@@ -392,53 +392,171 @@ function TransferPage() {
     try { const data = await candidate.arrayBuffer(); const hash = await crypto.subtle.digest("SHA-256", data); const digest = Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, "0")).join(""); setFileDigest("0x" + digest.slice(0, 48)); } catch { setFileDigest("0x7c8a92f4d61be05e7a3c4f88b19d20a6"); }
     toast.success(candidate.name + " staged for quantum signing");
   };
+
   const removeDocument = () => { setSelectedFile(null); setFileDigest(null); if (fileInputRef.current) fileInputRef.current.value = ""; toast.info("Document removed from the signing queue"); };
-  const sendPayload = async () => {
+
+  const handleSend = async () => {
     if (mode === "document" && !selectedFile) { toast.error("Choose a document before sending"); return; }
-    const id = "TX-" + Math.floor(1000 + Math.random() * 8999);
-    const isDocument = mode === "document" && Boolean(selectedFile);
-    const docHash = digest || "af7c8e91b2c4d6f8a0b2c4d6f8a0b2c4d6f8a0b2c4d6f8a0";
-
-    let pqcResult: any = null;
-    if (eveEnabled) {
-      try {
-        pqcResult = await apiClient.auditAndRemediate({
-          document_hash: docHash,
-          qber_override: 0.142,
-          chsh_score: 1.76
-        });
-      } catch {
-        pqcResult = null;
-      }
-    }
-
-    const pqcFallback = eveEnabled || (pqcResult && pqcResult.status === 'PQC_FALLBACK_ACTIVE');
-
-    const next = {
-      id,
-      time: new Date().toLocaleTimeString("en-GB", { hour12: false }) + ".000",
-      verification: eveEnabled ? "Verified / PQC Dilithium3 fallback engaged" : pqcFallback ? "Verified / PQC Dilithium3 fallback" : "Verified / physical QDS",
-      title: isDocument && selectedFile ? selectedFile.name : "quantum signed payload",
-      body: isDocument && selectedFile ? "DOCUMENT PAYLOAD: " + selectedFile.name + " · " + formatFileSize(selectedFile.size) + " · sealed for authenticated delivery across the QDS channel." : message || "Empty payload",
-      signature: pqcFallback
-        ? (pqcResult?.fallback_signature ? `PQC LATTICE SIGNATURE (CRYSTALS-DILITHIUM3 / ML-DSA-65):\n${pqcResult.fallback_signature}` : "PQC LATTICE SIGNATURE (CRYSTALS-DILITHIUM3 / ML-DSA-65):\n3a7d9f2e4b6c8d0ef1a3b5b7c9d1e3f5a7b9c1d3e5f7a9b1c3d5e7f9a1b3c5d7e...")
-        : "PHYSICAL QDS ATTESTATION:\nBell-state witness sealed · optical entropy verified · channel path authenticated",
-      qber: eveEnabled ? "14.20%" : "1.88%",
-      chsh: eveEnabled ? "1.76" : "2.76",
-      pauli: pqcFallback ? "PQC ML-DSA-65" : "I · σZ",
-      tone: pqcFallback ? "pqc" : "good",
-      metricTone: eveEnabled ? "text-copper" : "status-text-good"
-    };
-
-    setPayloads((current) => [next, ...current]);
-    if (isDocument && selectedFile) { toast.success(selectedFile.name + " signed and received by Bob"); removeDocument(); }
-    else toast[eveEnabled ? "warning" : "success"](eveEnabled ? "Payload received with disturbance; Dilithium3 PQC fallback engaged 100% safe!" : "Quantum signed payload verified by Bob");
+    await sendTransmission({ mode, message, file: selectedFile, digest: fileDigest });
+    if (mode === "document" && selectedFile) removeDocument();
   };
-  const digest = fileDigest || (eveEnabled ? "f098e1a7ce22d4ab9f3d5538ee04dced" : "0x6692d35f98fc1c149afbf4c8996fb92427ae4fe4649b934ca495991b7852b8");
-  return <div className="transfer-page"><header className="transfer-header"><div className="transfer-brand"><img src={MARK} alt="" /><span>QDS SENTINEL</span></div><strong>Real-time quantum transfer</strong><div className="transfer-header-actions"><span className={eveEnabled ? "transfer-security threat" : "transfer-security"}>{eveEnabled ? "PQC FALLBACK ACTIVE" : "FASTAPI CORE CONNECTED"}</span><Link href="/monitoring" className="transfer-soc-link">SOC console</Link></div></header><section className="transfer-status-strip"><span><Sparkles size={15} /> EPR rate <b>1,024 pairs/sec</b></span><span><Waves size={15} /> Observed QBER <b className={eveEnabled ? "text-copper" : "text-blue"}>{eveEnabled ? "8.44%" : "1.90%"}</b></span><span><Zap size={15} /> CHSH Bell score <b className={eveEnabled ? "text-copper" : "status-text-good"}>S = {eveEnabled ? "1.94" : "2.78"}</b></span><div className="transfer-strip-spacer" /><button className={cn("transfer-eve-toggle", eveEnabled && "transfer-eve-toggle-active")} onClick={() => { setEveEnabled(!eveEnabled); toast[eveEnabled ? "info" : "error"](eveEnabled ? "Eve interception removed" : "Eve interception tap enabled"); }}><LockKeyhole size={14} /> Eve interception tap <i><b /></i><small>{eveEnabled ? "Fallback active" : "Secure line"}</small></button><button className="transfer-reset" onClick={() => { setMessage("CLASSIFIED DEFENSE TELEMETRY: Quantum one-time-pad key handshake verified for orbital satellite relay Alpha-09."); setEveEnabled(false); removeDocument(); toast.info("Transfer session reset"); }}><RotateCcw size={14} /> Reset session</button></section><main className="transfer-workspace"><section className="transfer-terminal transfer-alice"><div className="transfer-terminal-head"><div><span className="transfer-node-mark">A</span><div><h1>Alice terminal <small>signer node alpha</small></h1><p>You are logged in as Alice · transmitting via 1550nm telecom fiber</p></div></div><div className="transfer-mode-switch"><button className={mode === "message" ? "active" : ""} onClick={() => setMode("message")}>Text message</button><button className={mode === "document" ? "active" : ""} onClick={() => setMode("document")}>Document file</button></div></div>{mode === "message" ? <div className="transfer-compose"><div><span className="eyebrow">Quick preset payloads</span><div className="transfer-presets">{presets.map((preset) => <button key={preset} onClick={() => selectPreset(preset)}>+ {preset}</button>)}</div></div><label className="transfer-compose-label">Compose quantum signed payload<textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Compose an authenticated payload" /></label><div className="transfer-digest"><div><LockKeyhole size={14} /><span>Computed SHA-256 digest (h = SHA256(m))</span></div><button onClick={() => { navigator.clipboard?.writeText(digest); toast.success("Digest copied"); }}><Copy size={13} /> Copy hash</button><code>{digest}</code></div></div> : <div className="transfer-document-compose"><div><span className="eyebrow">Upload document payload</span><p>Attach a protected document for local hashing and post-quantum signing.</p></div><input ref={fileInputRef} className="transfer-file-input" type="file" accept=".txt,.pdf,.sig,.json,application/pdf,application/json,text/plain" onChange={(event) => acceptDocument(event.target.files?.[0])} /><div className={cn("transfer-upload-zone", fileIsDragging && "transfer-upload-zone-dragging", Boolean(selectedFile) && "transfer-upload-zone-selected")} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInputRef.current?.click(); } }} onClick={() => fileInputRef.current?.click()} onDragEnter={(event) => { event.preventDefault(); setFileIsDragging(true); }} onDragOver={(event) => { event.preventDefault(); setFileIsDragging(true); }} onDragLeave={() => setFileIsDragging(false)} onDrop={(event) => { event.preventDefault(); setFileIsDragging(false); acceptDocument(event.dataTransfer.files?.[0]); }}>{selectedFile ? <div className="transfer-selected-file"><FileKey2 size={24} /><div><strong>{selectedFile.name}</strong><span>{formatFileSize(selectedFile.size)} · {fileDigest ? "SHA-256 sealed" : "Hashing evidence…"}</span></div><button type="button" onClick={(event) => { event.stopPropagation(); removeDocument(); }} aria-label="Remove selected document"><X size={16} /></button></div> : <><span className="transfer-upload-icon"><FileKey2 size={26} /></span><strong>Click or drag & drop file here</strong><small>Supports .txt, .pdf, .sig, .json files · max 10 MB</small></>}</div><div className="transfer-document-notes"><div><span>Local hash</span><strong>{fileDigest ? "Ready" : "Awaiting document"}</strong></div><div><span>Signature profile</span><strong>ML-DSA-65 fallback</strong></div><div><span>Destination</span><strong>Bob / node beta</strong></div></div><div className="transfer-digest"><div><LockKeyhole size={14} /><span>Computed SHA-256 document digest</span></div><button onClick={() => { navigator.clipboard?.writeText(digest); toast.success("Document digest copied"); }}><Copy size={13} /> Copy hash</button><code>{digest}</code></div></div>}<div className="transfer-sendbar"><span>State: {mode === "document" ? selectedFile ? "Document ready to sign" : "Awaiting document" : eveEnabled ? "Fallback signature mode" : "Ready to sign"}</span><button onClick={sendPayload}><Send size={15} /> Send quantum signed payload</button></div></section><section className="transfer-terminal transfer-bob"><div className="transfer-terminal-head"><div><span className="transfer-node-mark node-b">B</span><div><h1>Bob terminal <small>receiver node beta</small></h1><p>Real-time SNSPD detector listener · dark fiber receiver</p></div></div><span className="transfer-listening">Listening</span></div><div className="transfer-receipts"><div className="transfer-receipts-head"><span className="eyebrow">Received payloads ({payloads.length + 18})</span><span>Live receipt ledger</span></div>{payloads.map((payload) => <article className={cn("transfer-receipt", payload.tone === "pqc" && "transfer-receipt-pqc")} key={payload.id}><div className="transfer-receipt-meta"><strong className={payload.tone === "pqc" ? "receipt-pqc" : ""}>{payload.verification}</strong><span>{payload.id}</span><time>{payload.time}</time></div><h2>{payload.title}</h2><pre>{payload.body}</pre><div className={cn("transfer-signature", payload.tone === "pqc" && "transfer-signature-pqc")}><b>{payload.tone === "pqc" ? "PQC lattice signature / ML-DSA-65" : "Physical QDS attestation"}</b><code>{payload.signature}</code></div><footer><span>QBER: <b className={payload.metricTone}>{payload.qber}</b></span><span>CHSH: <b className={payload.metricTone}>S={payload.chsh}</b></span><span>Pauli: <b>{payload.pauli}</b></span><button onClick={() => { navigator.clipboard?.writeText(payload.body + "\n" + payload.signature); toast.success("Receipt evidence copied"); }}><Copy size={13} /> Copy</button></footer></article>)}</div><div className="transfer-bob-foot">Verification engine: FastAPI core + Hoeffding audit <strong className={eveEnabled ? "text-copper" : "status-text-good"}>{eveEnabled ? "PQC fallback integrity active" : "100% byte integrity assured"}</strong></div></section></main></div>;
+
+  const digest = fileDigest || (eveActive ? "f098e1a7ce22d4ab9f3d5538ee04dced" : "0x6692d35f98fc1c149afbf4c8996fb92427ae4fe4649b934ca495991b7852b8");
+
+  return (
+    <div className="transfer-page">
+      <header className="transfer-header">
+        <div className="transfer-brand"><img src={MARK} alt="" /><span>QDS SENTINEL</span></div>
+        <strong>Real-time quantum transfer</strong>
+        <div className="transfer-header-actions">
+          <span className={eveActive ? "transfer-security threat" : "transfer-security"}>{eveActive ? "PQC FALLBACK ACTIVE" : "FASTAPI CORE CONNECTED"}</span>
+          <Link href="/monitoring" className="transfer-soc-link">SOC console</Link>
+        </div>
+      </header>
+      <section className="transfer-status-strip">
+        <span><Sparkles size={15} /> EPR rate <b>1,024 pairs/sec</b></span>
+        <span><Waves size={15} /> Observed QBER <b className={eveActive ? "text-copper" : "text-blue"}>{(qber * 100).toFixed(2)}%</b></span>
+        <span><Zap size={15} /> CHSH Bell score <b className={eveActive ? "text-copper" : "status-text-good"}>S = {chsh.toFixed(2)}</b></span>
+        <div className="transfer-strip-spacer" />
+        <button className={cn("transfer-eve-toggle", eveActive && "transfer-eve-toggle-active")} onClick={() => toggleEve()}>
+          <LockKeyhole size={14} /> Eve interception tap <i><b /></i><small>{eveActive ? "Fallback active" : "Secure line"}</small>
+        </button>
+        <button className="transfer-reset" onClick={() => { setMessage("CLASSIFIED DEFENSE TELEMETRY: Quantum one-time-pad key handshake verified for orbital satellite relay Alpha-09."); removeDocument(); resetChannel(); }}>
+          <RotateCcw size={14} /> Reset session
+        </button>
+      </section>
+      <main className="transfer-workspace">
+        <section className="transfer-terminal transfer-alice">
+          <div className="transfer-terminal-head">
+            <div>
+              <span className="transfer-node-mark">A</span>
+              <div>
+                <h1>Alice terminal <small>signer node alpha</small></h1>
+                <p>You are logged in as Alice · transmitting via 1550nm telecom fiber</p>
+              </div>
+            </div>
+            <div className="transfer-mode-switch">
+              <button className={mode === "message" ? "active" : ""} onClick={() => setMode("message")}>Text message</button>
+              <button className={mode === "document" ? "active" : ""} onClick={() => setMode("document")}>Document file</button>
+            </div>
+          </div>
+          {mode === "message" ? (
+            <div className="transfer-compose">
+              <div>
+                <span className="eyebrow">Quick preset payloads</span>
+                <div className="transfer-presets">{presets.map((preset) => <button key={preset} onClick={() => selectPreset(preset)}>+ {preset}</button>)}</div>
+              </div>
+              <label className="transfer-compose-label">
+                Compose quantum signed payload
+                <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Compose an authenticated payload" />
+              </label>
+              <div className="transfer-digest">
+                <div><LockKeyhole size={14} /><span>Computed SHA-256 digest (h = SHA256(m))</span></div>
+                <button onClick={() => { navigator.clipboard?.writeText(digest); toast.success("Digest copied"); }}><Copy size={13} /> Copy hash</button>
+                <code>{digest}</code>
+              </div>
+            </div>
+          ) : (
+            <div className="transfer-document-compose">
+              <div>
+                <span className="eyebrow">Upload document payload</span>
+                <p>Attach a protected document for local hashing and post-quantum signing.</p>
+              </div>
+              <input ref={fileInputRef} className="transfer-file-input" type="file" accept=".txt,.pdf,.sig,.json,application/pdf,application/json,text/plain" onChange={(event) => acceptDocument(event.target.files?.[0])} />
+              <div
+                className={cn("transfer-upload-zone", fileIsDragging && "transfer-upload-zone-dragging", Boolean(selectedFile) && "transfer-upload-zone-selected")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInputRef.current?.click(); } }}
+                onClick={() => fileInputRef.current?.click()}
+                onDragEnter={(event) => { event.preventDefault(); setFileIsDragging(true); }}
+                onDragOver={(event) => { event.preventDefault(); setFileIsDragging(true); }}
+                onDragLeave={() => setFileIsDragging(false)}
+                onDrop={(event) => { event.preventDefault(); setFileIsDragging(false); acceptDocument(event.dataTransfer.files?.[0]); }}
+              >
+                {selectedFile ? (
+                  <div className="transfer-selected-file">
+                    <FileKey2 size={24} />
+                    <div>
+                      <strong>{selectedFile.name}</strong>
+                      <span>{formatFileSize(selectedFile.size)} · {fileDigest ? "SHA-256 sealed" : "Hashing evidence…"}</span>
+                    </div>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); removeDocument(); }} aria-label="Remove selected document"><X size={16} /></button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="transfer-upload-icon"><FileKey2 size={26} /></span>
+                    <strong>Click or drag & drop file here</strong>
+                    <small>Supports .txt, .pdf, .sig, .json files · max 10 MB</small>
+                  </>
+                )}
+              </div>
+              <div className="transfer-document-notes">
+                <div><span>Local hash</span><strong>{fileDigest ? "Ready" : "Awaiting document"}</strong></div>
+                <div><span>Signature profile</span><strong>ML-DSA-65 fallback</strong></div>
+                <div><span>Destination</span><strong>Bob / node beta</strong></div>
+              </div>
+              <div className="transfer-digest">
+                <div><LockKeyhole size={14} /><span>Computed SHA-256 document digest</span></div>
+                <button onClick={() => { navigator.clipboard?.writeText(digest); toast.success("Document digest copied"); }}><Copy size={13} /> Copy hash</button>
+                <code>{digest}</code>
+              </div>
+            </div>
+          )}
+          <div className="transfer-sendbar">
+            <span>State: {mode === "document" ? selectedFile ? "Document ready to sign" : "Awaiting document" : eveActive ? "Fallback signature mode" : "Ready to sign"}</span>
+            <button onClick={handleSend}><Send size={15} /> Send quantum signed payload</button>
+          </div>
+        </section>
+        <section className="transfer-terminal transfer-bob">
+          <div className="transfer-terminal-head">
+            <div>
+              <span className="transfer-node-mark node-b">B</span>
+              <div>
+                <h1>Bob terminal <small>receiver node beta</small></h1>
+                <p>Real-time SNSPD detector listener · dark fiber receiver</p>
+              </div>
+            </div>
+            <span className="transfer-listening">Listening</span>
+          </div>
+          <div className="transfer-receipts">
+            <div className="transfer-receipts-head">
+              <span className="eyebrow">Received payloads ({payloads.length})</span>
+              <span>Live receipt ledger</span>
+            </div>
+            {payloads.map((payload) => (
+              <article className={cn("transfer-receipt", payload.tone === "pqc" && "transfer-receipt-pqc")} key={payload.id}>
+                <div className="transfer-receipt-meta">
+                  <strong className={payload.tone === "pqc" ? "receipt-pqc" : ""}>{payload.verification}</strong>
+                  <span>{payload.id}</span>
+                  <time>{payload.time}</time>
+                </div>
+                <h2>{payload.title}</h2>
+                <pre>{payload.body}</pre>
+                <div className={cn("transfer-signature", payload.tone === "pqc" && "transfer-signature-pqc")}>
+                  <b>{payload.tone === "pqc" ? "PQC lattice signature / ML-DSA-65" : "Physical QDS attestation"}</b>
+                  <code>{payload.signature}</code>
+                </div>
+                <footer>
+                  <span>QBER: <b className={payload.metricTone}>{payload.qber}</b></span>
+                  <span>CHSH: <b className={payload.metricTone}>S={payload.chsh}</b></span>
+                  <span>Pauli: <b>{payload.pauli}</b></span>
+                  <button onClick={() => { navigator.clipboard?.writeText(payload.body + "\n" + payload.signature); toast.success("Receipt evidence copied"); }}><Copy size={13} /> Copy</button>
+                </footer>
+              </article>
+            ))}
+          </div>
+          <div className="transfer-bob-foot">
+            Verification engine: FastAPI core + Hoeffding audit <strong className={eveActive ? "text-copper" : "status-text-good"}>{eveActive ? "PQC fallback integrity active" : "100% byte integrity assured"}</strong>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
 }
 
 function SandboxPage() {
+
   const [active, setActive] = useState("MitM attack");
   const [running, setRunning] = useState(false);
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
