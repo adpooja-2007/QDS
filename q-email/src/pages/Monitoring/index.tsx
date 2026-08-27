@@ -214,7 +214,7 @@ export const defaultIncidentRecords: IncidentDetailItem[] = [
         title: 'Escalated to L3 Core',
         title_color: '#BA1A1A',
         dot_color: '#BA1A1A',
-        description: 'Security incident escalated to L3 Quantum Cryptanalyst A. Smith for forensic pcap inspection.'
+        description: 'Security incident escalated to L3 Quantum Cryptanalyst A. Smith for forensic JSON inspection.'
       }
     ]
   },
@@ -2876,7 +2876,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                                 title="Export incident forensic report JSON"
                               >
                                 <FileDown className="w-3 h-3 text-[#0058BE]" />
-                                <span>EXPORT PCAP</span>
+                                <span>EXPORT JSON</span>
                               </button>
                             </div>
                           </div>
