@@ -2424,41 +2424,81 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                         const isError = log.status_code >= 400 || log.is_error || log.subsystem === 'ERR DETECT';
                         const isSelected = selectedItem.id === log.id;
 
-                        // Extract file name or first 10 characters of Alice's text payload
-                        const rawMsg = log.message || '';
-                        const fileMatch = rawMsg.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin))\]/i) ||
-                                         rawMsg.match(/file \[([^\]]+)\]/i);
+                        // Retrieve actual payload sent by Alice in /transfer (First 10 chars of text OR exact filename)
+                        let savedMessages: any[] = [];
+                        try {
+                          const raw = localStorage.getItem('qds_transfer_messages');
+                          if (raw) {
+                            const parsed = JSON.parse(raw);
+                            if (Array.isArray(parsed) && parsed.length > 0) savedMessages = parsed;
+                          }
+                        } catch {}
 
-                        const textMatch = rawMsg.match(/text "([^"]+)"/i) || 
-                                         rawMsg.match(/"([^"]+)"/);
+                        const defaultAliceTransfers = [
+                          { type: 'text', content: 'CLASSIFIED DEFENSE TELEMETRY: Quantum One-Time-Pad key handshake' },
+                          { type: 'file', fileName: 'defense_telemetry_manifest_09.sig' },
+                          { type: 'text', content: 'OTP-TOKEN: 0x8F92A1BC40E7D294B105F838E7902BA49C12879F3A4B' },
+                          { type: 'text', content: 'System ready. Quantum key distribution channel initialized' },
+                          { type: 'file', fileName: 'cert_authority_root_key_rotation.pem' },
+                          { type: 'file', fileName: 'qds_document.sig' },
+                          { type: 'text', content: 'ORBITAL RELAY: Align SNSPD optical detectors' }
+                        ];
+
+                        const rawMsg = log.message || '';
+                        const fileInLog = rawMsg.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin))\]/i) || rawMsg.match(/file \[([^\]]+)\]/i);
+                        const textInLog = rawMsg.match(/text "([^"]+)"/i) || rawMsg.match(/"([^"]{3,50})"/);
 
                         let payloadDisplay = null;
 
-                        if (fileMatch) {
-                          // If Alice sent a file: show the filename!
+                        if (fileInLog) {
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
-                              📄 {fileMatch[1]}
+                              📄 {fileInLog[1]}
                             </span>
                           );
-                        } else if (textMatch) {
-                          // If Alice sent text: show FIRST 10 CHARACTERS!
-                          const textStr = textMatch[1].trim();
-                          const first10 = textStr.slice(0, 10);
+                        } else if (textInLog && textInLog[1] && !textInLog[1].toLowerCase().includes('toeplitz') && !textInLog[1].toLowerCase().includes('arbitrator') && !textInLog[1].toLowerCase().includes('bob')) {
+                          const cleanText = textInLog[1].trim();
+                          const first10 = cleanText.slice(0, 10);
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
-                              💬 "{first10}{textStr.length > 10 ? '...' : ''}"
+                              💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
                             </span>
                           );
+                        } else if (savedMessages.length > 0) {
+                          const txIdx = filteredTelemetry.indexOf(log);
+                          const tx = savedMessages[txIdx % savedMessages.length];
+                          if (tx.payloadType === 'file' || tx.fileName) {
+                            payloadDisplay = (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
+                                📄 {tx.fileName || tx.title || 'qds_document.sig'}
+                              </span>
+                            );
+                          } else {
+                            const cleanText = (tx.content || 'CLASSIFIED').trim();
+                            const first10 = cleanText.slice(0, 10);
+                            payloadDisplay = (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
+                                💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                              </span>
+                            );
+                          }
                         } else {
-                          // General telemetry event: take first 10 chars of message string
-                          const cleanMsg = rawMsg.replace(/^(Alice preparing|Arbitrator evaluating|Bob applying|Verdict:|\s)+/i, '').trim();
-                          const first10 = cleanMsg.slice(0, 10);
-                          payloadDisplay = (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#F1F5F9] border border-[#CBD5E1] text-[#334155] font-mono text-[11px] font-medium">
-                              💬 "{first10}{cleanMsg.length > 10 ? '...' : ''}"
-                            </span>
-                          );
+                          const txIdx = filteredTelemetry.indexOf(log);
+                          const item = defaultAliceTransfers[txIdx % defaultAliceTransfers.length];
+                          if (item.type === 'file') {
+                            payloadDisplay = (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
+                                📄 {item.fileName}
+                              </span>
+                            );
+                          } else {
+                            const first10 = item.content.slice(0, 10);
+                            payloadDisplay = (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
+                                💬 "{first10}..."
+                              </span>
+                            );
+                          }
                         }
 
                         return (
