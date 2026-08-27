@@ -42,7 +42,7 @@ import {
   QuantumNode, 
   SecurityIncident 
 } from '../../types/sentinel';
-import { sentinelService, formatISTTime } from '../../services/sentinelService';
+import { sentinelService, formatISTTime, classifyQuantumData } from '../../services/sentinelService';
 import { apiClient } from '../../api/client';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -2547,8 +2547,9 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                     <thead>
                       <tr className="border-b border-[#E2E8F0] bg-[#FBF8FA]">
                         <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-36 uppercase tracking-wider">Timestamp</th>
-                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-40 uppercase tracking-wider">Subsystem</th>
-                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-44 uppercase tracking-wider">Event</th>
+                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-36 uppercase tracking-wider">Subsystem</th>
+                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-40 uppercase tracking-wider">Event</th>
+                        <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] w-44 uppercase tracking-wider">Classifier Verdict</th>
                         <th className="py-2.5 px-4 text-left font-mono text-[10.5px] font-medium text-[#75777D] uppercase tracking-wider">Transferred Text / Message Content</th>
                         <th className="py-2.5 px-4 text-right font-mono text-[10.5px] font-medium text-[#75777D] w-24 uppercase tracking-wider">Latency</th>
                         <th className="py-2.5 px-4 text-right font-mono text-[10.5px] font-medium text-[#75777D] w-24 uppercase tracking-wider">Status</th>
@@ -2571,6 +2572,12 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
 
                         const rawMsg = log.message || '';
                         const logAny = log as any;
+
+                        const rowCls = logAny.classification || classifyQuantumData(
+                          logAny.qber || (isError ? 14.2 : 1.8),
+                          logAny.chsh_score || (isError ? 1.76 : 2.78),
+                          log.event_type || log.subsystem
+                        );
 
                         const fileInLog = rawMsg.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin|ps1|md))\]/i) || rawMsg.match(/file \[([^\]]+)\]/i) || logAny.fileName;
                         const textInLog = rawMsg.match(/text "([^"]+)"/i) || logAny.transferContent;
@@ -2668,6 +2675,16 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                             </td>
                             <td className={`py-2 px-4 ${isError ? 'text-[#BA1A1A]' : 'text-[#1B1B1D]'}`}>
                               {log.event_type}
+                            </td>
+                            <td className="py-2 px-4">
+                              <span className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold border uppercase ${
+                                rowCls.threat_level === 'CRITICAL' ? 'bg-[#FEE2E2] border-[#FCA5A5] text-[#BA1A1A]' :
+                                rowCls.threat_level === 'HIGH'     ? 'bg-[#FFEDD5] border-[#FDBA74] text-[#C2540A]' :
+                                rowCls.threat_level === 'MEDIUM'   ? 'bg-[#EBF3FF] border-[#BFDBFE] text-[#0058BE]' :
+                                'bg-[#E6F4EA] border-[#A7F3D0] text-[#065F46]'
+                              }`}>
+                                {rowCls.code}
+                              </span>
                             </td>
                             <td className="py-2 px-4">
                               {payloadDisplay}
@@ -4007,6 +4024,44 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
               </button>
             </div>
             <div className="p-5 space-y-3 font-mono text-[12px]">
+              {(() => {
+                const itemCls = (selectedTelemetryDetail as any).classification || classifyQuantumData(
+                  selectedTelemetryDetail.qber,
+                  selectedTelemetryDetail.chsh_score,
+                  selectedTelemetryDetail.event_type
+                );
+                return (
+                  <div className="p-3 bg-[#F6F3F5] border border-[#E2E8F0] rounded-[2px] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-[#75777D] uppercase tracking-wider">
+                        AUTOMATIC QUANTUM CLASSIFIER:
+                      </span>
+                      <span className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase ${
+                        itemCls.threat_level === 'CRITICAL' ? 'bg-[#BA1A1A] text-white' :
+                        itemCls.threat_level === 'HIGH'     ? 'bg-[#C2540A] text-white' :
+                        itemCls.threat_level === 'MEDIUM'   ? 'bg-[#0058BE] text-white' :
+                        'bg-[#065F46] text-white'
+                      }`}>
+                        {itemCls.code} ({itemCls.confidence}%)
+                      </span>
+                    </div>
+                    <div className="text-[12px] font-bold text-[#091426] leading-tight font-sans">
+                      {itemCls.title}
+                    </div>
+                    <p className="text-[10.5px] text-[#45474C] font-mono leading-relaxed">
+                      {itemCls.label}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-[10px] font-mono pt-1.5 border-t border-[#E2E8F0] text-[#75777D]">
+                      <div>Helstrom Bound: <strong className="text-[#091426]">P_e ≥ {itemCls.helstrom_bound}</strong></div>
+                      <div>Trace Distance (D): <strong className="text-[#091426]">{itemCls.trace_distance}</strong></div>
+                    </div>
+                    <div className="text-[10px] font-mono text-[#0058BE] font-bold pt-1 border-t border-[#E2E8F0]">
+                      Mitigation: {itemCls.recommendation}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-2 gap-2 text-[11px] text-[#75777D]">
                 <div>Timestamp: <strong className="text-[#091426]">{selectedTelemetryDetail.timestamp}</strong></div>
                 <div>Status Code: <strong className="text-[#091426]">{selectedTelemetryDetail.status_code} ({selectedTelemetryDetail.is_error ? '0xFA' : '0x00'})</strong></div>

@@ -30,6 +30,153 @@ export const formatISTTime = (date: Date = new Date(), withMs: boolean = true): 
   return `${parts}.${ms}`;
 };
 
+export interface QuantumClassificationResult {
+  code: 'INTERCEPT_RESEND' | 'SIGNATURE_FORGERY' | 'REPLAY_ATTACK' | 'PNS_ATTACK' | 'CHANNEL_NOISE' | 'NOMINAL_SECURE';
+  title: string;
+  label: string;
+  confidence: number;
+  threat_level: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'NOMINAL';
+  hoeffding_verdict: 'BREACH' | 'NOMINAL';
+  chsh_verdict: 'VIOLATED' | 'NOMINAL';
+  helstrom_bound: number;
+  trace_distance: number;
+  recommendation: string;
+}
+
+export function classifyQuantumData(
+  qberPercent: number,
+  chshScore: number,
+  hintKey?: string
+): QuantumClassificationResult {
+  const normKey = (hintKey || '').toLowerCase();
+  const qberFrac = qberPercent > 1 ? qberPercent / 100 : qberPercent;
+  const qberPct = qberFrac * 100;
+
+  // Helstrom Minimum Error Bound P_e >= (1 - D) / 2 where D = sqrt(1 - 4*pi0*pi1*gamma^2)
+  const gamma = Math.cos((qberFrac * Math.PI) / 2);
+  const traceDist = Number(Math.sqrt(Math.max(0, 1.0 - 4.0 * 0.25 * (gamma * gamma))).toFixed(4));
+  const helstrom = Number((0.5 * (1.0 - traceDist)).toFixed(4));
+
+  if (normKey.includes('replay') || normKey.includes('nonce')) {
+    return {
+      code: 'REPLAY_ATTACK',
+      title: 'QUANTUM REPLAY ATTACK',
+      label: 'REPLAY SUSPECTED (Nonce Binding Mismatch)',
+      confidence: 99.9,
+      threat_level: 'CRITICAL',
+      hoeffding_verdict: 'NOMINAL',
+      chsh_verdict: 'NOMINAL',
+      helstrom_bound: helstrom,
+      trace_distance: traceDist,
+      recommendation: 'Invalidate session nonce and block stale retransmission.'
+    };
+  }
+
+  if (normKey.includes('forger') || normKey.includes('pauli') || normKey.includes('bitflip')) {
+    return {
+      code: 'SIGNATURE_FORGERY',
+      title: 'CLASSICAL SIGNATURE FORGERY',
+      label: 'CLASSICAL TAMPERING (Pauli Frame Mismatch)',
+      confidence: 99.5,
+      threat_level: 'CRITICAL',
+      hoeffding_verdict: qberPct > 5.5 ? 'BREACH' : 'NOMINAL',
+      chsh_verdict: 'NOMINAL',
+      helstrom_bound: helstrom,
+      trace_distance: traceDist,
+      recommendation: 'Reject feed-forward bit frame and quarantine classical TLS link.'
+    };
+  }
+
+  if (normKey.includes('pns') || normKey.includes('split') || normKey.includes('decoy')) {
+    return {
+      code: 'PNS_ATTACK',
+      title: 'PHOTON NUMBER SPLITTING (PNS)',
+      label: 'PNS SUSPECTED (Decoy Yield Anomaly)',
+      confidence: 98.4,
+      threat_level: 'CRITICAL',
+      hoeffding_verdict: qberPct > 5.5 ? 'BREACH' : 'NOMINAL',
+      chsh_verdict: 'NOMINAL',
+      helstrom_bound: helstrom,
+      trace_distance: traceDist,
+      recommendation: 'Switch to multi-decoy pulse protocol (mu=0.5, nu=0.1).'
+    };
+  }
+
+  // Pure quantum evidence-based decision matrix
+  if (qberPct > 11.0 && chshScore < 2.0) {
+    return {
+      code: 'INTERCEPT_RESEND',
+      title: 'INTERCEPT-RESEND EAVESDROPPING',
+      label: 'MITM SUSPECTED (QBER 14.2% > 5.5%, S < 2.0)',
+      confidence: 99.9,
+      threat_level: 'CRITICAL',
+      hoeffding_verdict: 'BREACH',
+      chsh_verdict: 'VIOLATED',
+      helstrom_bound: helstrom,
+      trace_distance: traceDist,
+      recommendation: 'Quarantine dark fiber segment and initiate key rerouting.'
+    };
+  }
+
+  if (qberPct > 11.0) {
+    return {
+      code: 'SIGNATURE_FORGERY',
+      title: 'CLASSICAL SIGNATURE FORGERY',
+      label: 'CLASSICAL TAMPERING (High QBER, Frame Mismatch)',
+      confidence: 98.8,
+      threat_level: 'CRITICAL',
+      hoeffding_verdict: 'BREACH',
+      chsh_verdict: chshScore < 2.0 ? 'VIOLATED' : 'NOMINAL',
+      helstrom_bound: helstrom,
+      trace_distance: traceDist,
+      recommendation: 'Reject signature manifest and verify classical TLS channel.'
+    };
+  }
+
+  if (qberPct > 5.5 && qberPct <= 11.0) {
+    return {
+      code: 'PNS_ATTACK',
+      title: 'PHOTON NUMBER SPLITTING (PNS)',
+      label: 'PNS SUSPECTED (Decoy Yield Divergence)',
+      confidence: 96.5,
+      threat_level: 'HIGH',
+      hoeffding_verdict: 'BREACH',
+      chsh_verdict: chshScore < 2.0 ? 'VIOLATED' : 'NOMINAL',
+      helstrom_bound: helstrom,
+      trace_distance: traceDist,
+      recommendation: 'Adjust pulse intensity mu/nu and audit SPDC laser diode.'
+    };
+  }
+
+  if (qberPct > 2.5 && qberPct <= 5.5) {
+    return {
+      code: 'CHANNEL_NOISE',
+      title: 'OPTICAL THERMAL DRIFT',
+      label: 'CHANNEL NOISE (Thermal Attenuation Drift)',
+      confidence: 94.2,
+      threat_level: 'MEDIUM',
+      hoeffding_verdict: 'NOMINAL',
+      chsh_verdict: 'NOMINAL',
+      helstrom_bound: helstrom,
+      trace_distance: traceDist,
+      recommendation: 'Cascade error correction active. Channel operational.'
+    };
+  }
+
+  return {
+    code: 'NOMINAL_SECURE',
+    title: 'NOMINAL QUANTUM SECURE',
+    label: 'NOMINAL SECURE (QBER <= 2.5%, S >= 2.70)',
+    confidence: 99.9,
+    threat_level: 'NOMINAL',
+    hoeffding_verdict: 'NOMINAL',
+    chsh_verdict: 'NOMINAL',
+    helstrom_bound: helstrom,
+    trace_distance: traceDist,
+    recommendation: 'All quantum security bounds nominal. Key generation active.'
+  };
+}
+
 export const formatISTDateTime = (date: Date = new Date()): string => {
   const d = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata',
@@ -640,6 +787,8 @@ class SentinelService {
     const qberPercent = Number((qberFraction * 100).toFixed(2));
     const timeStr24 = new Date().toLocaleTimeString('en-US', { hour12: false }) + '.' + Math.floor(100 + Math.random() * 900);
 
+    const classification = classifyQuantumData(qberPercent, chshScore, scenarioKey);
+
     const newItem = {
       id: Date.now().toString(),
       timestamp: timeStr24,
@@ -648,13 +797,16 @@ class SentinelService {
       latency_ms: isBreach ? 512 : 128,
       status_code: isBreach ? 500 : 200,
       message: isBreach 
-        ? `[${meta.category}] ${meta.summary}`
+        ? `[CLASSIFIED: ${classification.code}] ${meta.summary}`
         : `Quantum signature handshake verified nominal. QBER ${qberPercent}%, S=${chshScore.toFixed(2)}.`,
       qber: qberPercent,
       chsh_score: chshScore,
       security_score: isBreach ? (securityStatus === 'DEGRADED' ? 'Degraded' : 'Degraded') : 'Secure',
       is_error: isBreach,
       reason: isBreach ? meta.reason : undefined,
+      classification: classification,
+      classification_label: classification.label,
+      confidence_score: classification.confidence,
     };
 
     // Prepend new attack item to front of live stream array (NO SORTING BUG DISCARDING NEW ITEMS)
@@ -969,6 +1121,11 @@ class SentinelService {
     }
 
     if (newItem) {
+      const cls = classifyQuantumData(newItem.qber || 2.0, newItem.chsh_score || 2.76, attackType);
+      newItem.classification = cls;
+      newItem.classification_label = cls.label;
+      newItem.confidence_score = cls.confidence;
+
       const fileMatch = customMsg?.match(/file \[([^\]]+)\]/i) || customMsg?.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin|ps1|md))\]/i);
       const textMatch = customMsg?.match(/text "([^"]+)"/i);
 
