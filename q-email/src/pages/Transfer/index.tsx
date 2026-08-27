@@ -78,25 +78,52 @@ export const TransferPage: React.FC<TransferPageProps> = ({
   const [copiedHash, setCopiedHash] = useState<boolean>(false);
   const [copiedContentId, setCopiedContentId] = useState<string | null>(null);
 
-  // History of Transferred Messages
-  const [messages, setMessages] = useState<TransferredMessage[]>([
-    {
-      id: 'TX-9021',
-      timestamp: formatISTTime(new Date(Date.now() - 120000)),
-      sender: 'Alice',
-      receiver: 'Bob',
-      payloadType: 'text',
-      title: 'INITIAL PROTOCOL HANDSHAKE',
-      content: 'System ready. Quantum key distribution channel initialized over 1550nm fiber link.',
-      sha256Hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-      qber: 1.85,
-      chshScore: 2.78,
-      isEveActive: false,
-      status: 'VERIFIED',
-      pauliOperators: 'σ_x · σ_z',
-      bellState: '|Φ+⟩'
-    }
-  ]);
+  // History of Transferred Messages (Persisted in localStorage & Reset Control)
+  const [messages, setMessages] = useState<TransferredMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem('qds_transfer_messages');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [
+      {
+        id: 'TX-9021',
+        timestamp: formatISTTime(new Date(Date.now() - 120000)),
+        sender: 'Alice',
+        receiver: 'Bob',
+        payloadType: 'text',
+        title: 'INITIAL PROTOCOL HANDSHAKE',
+        content: 'System ready. Quantum key distribution channel initialized over 1550nm fiber link.',
+        sha256Hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        qber: 1.85,
+        chshScore: 2.78,
+        isEveActive: false,
+        status: 'VERIFIED',
+        pauliOperators: 'σ_x · σ_z',
+        bellState: '|Φ+⟩'
+      }
+    ];
+  });
+
+  // Save transferred messages to localStorage on state mutation
+  useEffect(() => {
+    try {
+      localStorage.setItem('qds_transfer_messages', JSON.stringify(messages));
+    } catch {}
+  }, [messages]);
+
+  // Reset Transfer History Function
+  const handleResetTransfer = () => {
+    setMessages([]);
+    setTextInput('CLASSIFIED DEFENSE TELEMETRY: Quantum One-Time-Pad key handshake verified for orbital satellite relay Alpha-09.');
+    setSelectedFile(null);
+    try {
+      localStorage.removeItem('qds_transfer_messages');
+    } catch {}
+    sentinelService.pushDemonstrationEvent(1, false, undefined, 'Transfer history reset to clean state.');
+  };
 
   // Compute live SHA-256 simulation hash
   useEffect(() => {
@@ -313,30 +340,41 @@ export const TransferPage: React.FC<TransferPageProps> = ({
           </div>
         </div>
 
-        {/* EVE INTERCEPTION TAP TOGGLE */}
-        <div className="flex items-center gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-full px-4 py-1.5">
-          <div className="flex items-center gap-2">
-            {isEveActive ? (
-              <ShieldAlert className="w-4 h-4 text-[#BA1A1A] animate-pulse" />
-            ) : (
-              <Lock className="w-4 h-4 text-[#065F46]" />
-            )}
-            <span className="text-[12px] font-medium text-[#091426]">
-              Eve Interception Tap:
-            </span>
+        {/* EVE INTERCEPTION TAP TOGGLE & RESET SESSION CONTROL */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-full px-4 py-1.5">
+            <div className="flex items-center gap-2">
+              {isEveActive ? (
+                <ShieldAlert className="w-4 h-4 text-[#BA1A1A] animate-pulse" />
+              ) : (
+                <Lock className="w-4 h-4 text-[#065F46]" />
+              )}
+              <span className="text-[12px] font-medium text-[#091426]">
+                Eve Interception Tap:
+              </span>
+            </div>
+
+            <Switch
+              checked={isEveActive}
+              onCheckedChange={setIsEveActive}
+              className="data-[state=checked]:bg-[#BA1A1A]"
+            />
+
+            <Badge className={`rounded-full text-[10.5px] font-mono font-bold px-2.5 py-0.5 ${
+              isEveActive ? 'bg-[#FEE2E2] text-[#BA1A1A] border-[#FCA5A5]' : 'bg-[#E6F4EA] text-[#065F46] font-medium'
+            }`}>
+              {isEveActive ? '35% TAP ACTIVE' : 'SECURE LINE'}
+            </Badge>
           </div>
 
-          <Switch
-            checked={isEveActive}
-            onCheckedChange={setIsEveActive}
-            className="data-[state=checked]:bg-[#BA1A1A]"
-          />
-
-          <Badge className={`rounded-full text-[10.5px] font-mono font-bold px-2.5 py-0.5 ${
-            isEveActive ? 'bg-[#FEE2E2] text-[#BA1A1A] border-[#FCA5A5]' : 'bg-[#E6F4EA] text-[#065F46] font-medium'
-          }`}>
-            {isEveActive ? '35% TAP ACTIVE' : 'SECURE LINE'}
-          </Badge>
+          <button
+            onClick={handleResetTransfer}
+            className="flex items-center gap-1.5 bg-[#FFFFFF] hover:bg-[#F1F5F9] border border-[#CBD5E1] text-[#475569] hover:text-[#091426] px-3.5 py-1.5 rounded-full text-[11.5px] font-medium transition-colors cursor-pointer"
+            title="Reset transferred messages and clear localStorage storage"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>RESET SESSION</span>
+          </button>
         </div>
       </div>
 
