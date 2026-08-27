@@ -25,12 +25,27 @@ from app.schemas.security import (
     AuditThreat,
 )
 from app.services.security_service import security_service
+from app.security_engine import security_orchestrator, TelemetryData, RemediationReport
 
 router = APIRouter(
     prefix="/security",
     tags=["Security"],
     responses={404: {"description": "Session not found"}},
 )
+
+
+@router.post(
+    "/audit-and-remediate",
+    response_model=RemediationReport,
+    summary="SIH 2026 Hybrid PQC Fallback & Cognitive AI Remediation Gateway",
+    description=(
+        "Evaluates Hoeffding threshold & CHSH metrics. If breached, activates "
+        "CRYSTALS-Dilithium3 (ML-DSA-65) post-quantum signature fallback and fetches "
+        "local Ollama / AI cognitive remediation diagnosis."
+    ),
+)
+async def audit_and_remediate(data: TelemetryData):
+    return await security_orchestrator.audit_and_remediate(data)
 
 
 @router.post(
