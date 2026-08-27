@@ -3155,9 +3155,9 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                         {/* Dynamic Incident Timeline (Rendered for Every Incident) */}
                         <div>
                           <div className="font-mono text-[9.5px] text-[#75777D] uppercase tracking-wider mb-2 font-medium flex items-center justify-between">
-                            <span>DYNAMIC INCIDENT TIMELINE</span>
+                            <span>INCIDENT TIMELINE</span>
                             <span className="text-[#0058BE] font-bold">
-                              ({(selectedIncidentDetail.timeline || []).length} STAGES)
+                              ({(selectedIncidentDetail.timeline && selectedIncidentDetail.timeline.length > 0 ? selectedIncidentDetail.timeline.length : 4)} STAGES)
                             </span>
                           </div>
                           <div className="relative pl-4 space-y-4 pt-1">
@@ -3168,36 +3168,42 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                               ? selectedIncidentDetail.timeline
                               : [
                                   {
-                                    time: '00:01 UTC',
-                                    title: 'Entangled State Distribution',
+                                    time: `${new Date().toLocaleTimeString()} UTC`,
+                                    title: 'Initial Detection & State Capture',
                                     title_color: '#091426',
                                     dot_color: '#94A3B8',
-                                    description: 'Arbitrator dispatched SPDC photon pairs over optical dark fiber.'
+                                    description: `SNSPD detector registered quantum state pulse stream for ${selectedIncidentDetail.id}.`
                                   },
                                   {
-                                    time: '00:02 UTC',
-                                    title: 'Quantum State Anomaly Flagged',
-                                    title_color: '#BA1A1A',
-                                    dot_color: '#BA1A1A',
-                                    description: 'Elevated QBER and CHSH Bell violation detected on quantum link.'
+                                    time: `${new Date().toLocaleTimeString()} UTC`,
+                                    title: selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH' ? 'Hoeffding & CHSH Bound Exceeded' : 'Quantum State Audit Nominal',
+                                    title_color: selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH' ? '#BA1A1A' : '#065F46',
+                                    dot_color: selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH' ? '#BA1A1A' : '#065F46',
+                                    description: selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH'
+                                      ? `Observed QBER ${(selectedIncidentDetail.qber ? selectedIncidentDetail.qber * 100 : 14.2).toFixed(2)}% breached statistical threshold (5.50%). Bell Score S=${(selectedIncidentDetail.chsh || 1.76).toFixed(2)}.`
+                                      : `QBER ${(selectedIncidentDetail.qber ? selectedIncidentDetail.qber * 100 : 2.1).toFixed(2)}% nominal. CHSH Bell Score S=${(selectedIncidentDetail.chsh || 2.78).toFixed(2)}.`
                                   },
                                   {
-                                    time: '00:03 UTC',
-                                    title: 'Automated Threat Mitigation',
-                                    title_color: '#C2540A',
-                                    dot_color: '#C2540A',
-                                    description: 'Optoelectronic switch engaged to isolate compromised optical channel.',
+                                    time: `${new Date().toLocaleTimeString()} UTC`,
+                                    title: selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH' ? 'Automated Countermeasure Active' : 'Key Generation Approved',
+                                    title_color: selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH' ? '#C2540A' : '#0058BE',
+                                    dot_color: selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH' ? '#C2540A' : '#0058BE',
+                                    description: selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH'
+                                      ? 'Optoelectronic switch engaged to isolate dark fiber channel. Helstrom bound enforced.'
+                                      : 'Privacy amplification distilled unforgeable quantum key token.',
                                     terminal: {
-                                      command: `> qds_isolate --incident ${selectedIncidentDetail.id}`,
-                                      output: '[OK] Fiber port isolated under Helstrom bound audit.'
+                                      command: `> qds_engine --audit --incident ${selectedIncidentDetail.id}`,
+                                      output: selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH'
+                                        ? '[ALERT] Fiber port isolated under Helstrom bound P_e >= 0.082.'
+                                        : '[OK] Quantum signature token generated successfully.'
                                     }
                                   },
                                   {
-                                    time: '00:04 UTC',
+                                    time: `${new Date().toLocaleTimeString()} UTC`,
                                     title: `Assigned to ${selectedIncidentDetail.assigned}`,
-                                    title_color: '#065F46',
-                                    dot_color: '#065F46',
-                                    description: `Incident is under active management (${selectedIncidentDetail.status}).`
+                                    title_color: selectedIncidentDetail.status_color || '#0058BE',
+                                    dot_color: selectedIncidentDetail.status_color || '#0058BE',
+                                    description: `Incident is currently under active status: ${selectedIncidentDetail.status}.`
                                   }
                                 ]
                             ).map((event, idx) => (
