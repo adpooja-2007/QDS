@@ -2424,7 +2424,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                         const isError = log.status_code >= 400 || log.is_error || log.subsystem === 'ERR DETECT';
                         const isSelected = selectedItem.id === log.id;
 
-                        // Retrieve actual payload sent by Alice in /transfer (First 10 chars of text OR exact filename)
+                        // Retrieve saved transferred messages from localStorage (NO DUPLICATE MODULO REPEATING)
                         let savedMessages: any[] = [];
                         try {
                           const raw = localStorage.getItem('qds_transfer_messages');
@@ -2434,18 +2434,8 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                           }
                         } catch {}
 
-                        const defaultAliceTransfers = [
-                          { type: 'text', content: 'CLASSIFIED DEFENSE TELEMETRY: Quantum One-Time-Pad key handshake' },
-                          { type: 'file', fileName: 'defense_telemetry_manifest_09.sig' },
-                          { type: 'text', content: 'OTP-TOKEN: 0x8F92A1BC40E7D294B105F838E7902BA49C12879F3A4B' },
-                          { type: 'text', content: 'System ready. Quantum key distribution channel initialized' },
-                          { type: 'file', fileName: 'cert_authority_root_key_rotation.pem' },
-                          { type: 'file', fileName: 'qds_document.sig' },
-                          { type: 'text', content: 'ORBITAL RELAY: Align SNSPD optical detectors' }
-                        ];
-
                         const rawMsg = log.message || '';
-                        const fileInLog = rawMsg.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin))\]/i) || rawMsg.match(/file \[([^\]]+)\]/i);
+                        const fileInLog = rawMsg.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin|ps1|md))\]/i) || rawMsg.match(/file \[([^\]]+)\]/i);
                         const textInLog = rawMsg.match(/text "([^"]+)"/i) || rawMsg.match(/"([^"]{3,50})"/);
 
                         let payloadDisplay = null;
@@ -2456,7 +2446,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                               📄 {fileInLog[1]}
                             </span>
                           );
-                        } else if (textInLog && textInLog[1] && !textInLog[1].toLowerCase().includes('toeplitz') && !textInLog[1].toLowerCase().includes('arbitrator') && !textInLog[1].toLowerCase().includes('bob')) {
+                        } else if (textInLog && textInLog[1]) {
                           const cleanText = textInLog[1].trim();
                           const first10 = cleanText.slice(0, 10);
                           payloadDisplay = (
@@ -2464,38 +2454,33 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                               💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
                             </span>
                           );
-                        } else if (savedMessages.length > 0) {
-                          const txIdx = filteredTelemetry.indexOf(log);
-                          const tx = savedMessages[txIdx % savedMessages.length];
-                          if (tx.payloadType === 'file' || tx.fileName) {
-                            payloadDisplay = (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
-                                📄 {tx.fileName || tx.title || 'qds_document.sig'}
-                              </span>
-                            );
-                          } else {
-                            const cleanText = (tx.content || 'CLASSIFIED').trim();
-                            const first10 = cleanText.slice(0, 10);
-                            payloadDisplay = (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
-                                💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
-                              </span>
-                            );
-                          }
                         } else {
+                          // Check if row index strictly matches a real transferred message in savedMessages (NO MODULO REPEATING)
                           const txIdx = filteredTelemetry.indexOf(log);
-                          const item = defaultAliceTransfers[txIdx % defaultAliceTransfers.length];
-                          if (item.type === 'file') {
-                            payloadDisplay = (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
-                                📄 {item.fileName}
-                              </span>
-                            );
+                          if (savedMessages.length > 0 && txIdx < savedMessages.length) {
+                            const tx = savedMessages[txIdx];
+                            if (tx.payloadType === 'file' || tx.fileName) {
+                              payloadDisplay = (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
+                                  📄 {tx.fileName || tx.title || 'qds_document.sig'}
+                                </span>
+                              );
+                            } else {
+                              const cleanText = (tx.content || 'CLASSIFIED').trim();
+                              const first10 = cleanText.slice(0, 10);
+                              payloadDisplay = (
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
+                                  💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                                </span>
+                              );
+                            }
                           } else {
-                            const first10 = item.content.slice(0, 10);
+                            // General telemetry event: take clean first 10 chars of event/subsystem message
+                            const cleanMsg = rawMsg.replace(/^(Alice preparing|Arbitrator evaluating|Bob applying|Verdict:|\s)+/i, '').trim() || log.event_type || log.subsystem;
+                            const first10 = cleanMsg.slice(0, 10);
                             payloadDisplay = (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
-                                💬 "{first10}..."
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#F1F5F9] border border-[#CBD5E1] text-[#334155] font-mono text-[11px] font-medium">
+                                💬 "{first10}{cleanMsg.length > 10 ? '...' : ''}"
                               </span>
                             );
                           }
