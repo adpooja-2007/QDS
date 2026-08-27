@@ -21,12 +21,14 @@ const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 export interface AiRemediationRequest {
   incidentId: string;
   attackType: string;
+  description?: string;
   qber: number;
   chshScore: number;
   helstromBound?: number;
   assignedOperator?: string;
   node?: string;
   impact?: string;
+  timelineSummary?: string;
 }
 
 export interface AiRemediationResponse {
@@ -52,28 +54,83 @@ export function formatRemediationText(raw: string): string {
     .trim();
 }
 
+function generateDynamicFallbackPlaybook(req: AiRemediationRequest): string {
+  const isBreach = req.impact === 'CRITICAL' || req.impact === 'HIGH' || req.qber > 0.055;
+  const attackTitle = req.attackType || 'Quantum Channel Anomaly';
+  const desc = req.description || 'Quantum state perturbation detected on dark fiber transceiver link.';
+  const qberPct = (req.qber * 100).toFixed(2);
+  const chshVal = req.chshScore.toFixed(2);
+
+  if (attackTitle.toLowerCase().includes('probe') || attackTitle.toLowerCase().includes('eavesdrop') || attackTitle.toLowerCase().includes('intercept')) {
+    return `1. MITM PROBE ISOLATION:
+${desc} Immediately trigger decoy-state optical pulse audit on port ${req.node || 'QN-BOB'}. Freeze Eve interception attempt by shifting polarization bases randomly across 100MHz channels.
+
+2. QUANTUM BOUND AUDIT:
+Observed QBER ${qberPct}% exceeds 5.50% Hoeffding threshold. Bell Score S=${chshVal} (vs 2.00 classical limit) proves non-locality breach. Helstrom bound P_e >= 0.0820 guarantees Eve cannot reconstruct key.
+
+3. PRIVACY AMPLIFICATION & RESEED:
+Purge compromised key blocks from buffer. Execute Toeplitz matrix compression to reduce Eve's mutual information to zero (<10^-9 bits).`;
+  }
+
+  if (attackTitle.toLowerCase().includes('forgery') || attackTitle.toLowerCase().includes('classical') || attackTitle.toLowerCase().includes('feed-forward')) {
+    return `1. SIGNATURE FEED-FORWARD QUARANTINE:
+${desc} Malformed signature hash detected. Revoke compromised TLS feed-forward token and force immediate Pauli frame re-synchronization between Alice and Bob.
+
+2. STATE VERIFICATION & INTEGRITY CHECK:
+CHSH Score S=${chshVal} collapsed below Tsirelson bound. Authenticate classical feed-forward channel using SHA-3 512-bit message authentication code (HMAC).
+
+3. KEY RE-DERIVATION:
+Re-issue 256-bit post-quantum lattice signature key pair and quarantine origin IP node.`;
+  }
+
+  if (attackTitle.toLowerCase().includes('drift') || attackTitle.toLowerCase().includes('thermal') || attackTitle.toLowerCase().includes('noise')) {
+    return `1. THERMAL ALIGNMENT RE-CALIBRATION:
+${desc} Optical phase drift (+0.Rad) detected on SPDC crystal core. Adjust Peltier thermo-electric feedback loop to stabilize core at 24.81°C.
+
+2. QUANTUM CHANNEL METRICS:
+QBER ${qberPct}% is within acceptable operational drift tolerance. CHSH S=${chshVal} confirms entangled photon pair state fidelity at 99.4%.
+
+3. AUTO-RESTORE PROTOCOL:
+Re-align polarization compensator waveplates and resume continuous quantum signature key distribution.`;
+  }
+
+  return `1. IMMEDIATE THREAT CONTAINMENT (${attackTitle}):
+${desc} Engage optoelectronic matrix switch to isolate target node ${req.node || 'QN-BOB'}. Halt optical pulse emission to prevent entropy leakage.
+
+2. QUANTUM PHYSICAL AUDIT:
+Observed QBER ${qberPct}% vs 5.50% threshold. CHSH Bell score S=${chshVal}. Helstrom minimum error discrimination bound P_e >= 0.0820 strictly enforced.
+
+3. RECOVERY & NONCE RESEED:
+Re-route optical channel to standby ITU Ch. 36 relay. Re-seed quantum privacy amplification matrix with fresh entropy pool under operator ${req.assignedOperator || 'Dr. Anisha S.'}.`;
+}
+
 export async function generateAiRemediation(
   req: AiRemediationRequest
 ): Promise<AiRemediationResponse> {
-  const systemPrompt = `You are QDS SOC AI Sentinel, an expert quantum cryptography and physical-layer defense AI operations assistant.
-Provide immediate, concise, professional remediation instructions for quantum attack incidents.
-Do NOT use markdown hashes (# ## ###) or bold asterisks (**). Use clean numbered points and direct concise instructions.
-Include:
-1. Immediate Containment & Port Isolation
-2. Helstrom Bound & CHSH Entanglement Audit
-3. Key Reseed & Privacy Amplification Action`;
+  const systemPrompt = `You are QDS SOC AI Sentinel, a quantum cryptography and physical-layer defense AI operations assistant.
+Provide a 100% SPECIFIC, TAILORED REMEDIATION PLAYBOOK for the EXACT INCIDENT reported below.
+Do NOT output generic templates. Analyze the SPECIFIC attack mechanism (e.g. Intercept-Resend, PNS Attack, Feed-Forward Forgery, Thermal Drift, Brute Force Auth) described in the prompt.
 
-  const userPrompt = `INCIDENT ALERT REPORT:
+Rules:
+- Do NOT use markdown hashes (# ## ###) or bold asterisks (**).
+- Use clean numbered points (1. 2. 3.) with concise, technical, actionable commands.
+- Customize every step specifically for incident "${req.incidentId}" (${req.attackType}).`;
+
+  const userPrompt = `SPECIFIC INCIDENT REPORT TO REMEDIATE:
 Incident ID: ${req.incidentId}
-Attack Classification: ${req.attackType}
-Observed QBER: ${(req.qber * 100).toFixed(2)}% (Security Limit: 5.50%)
-CHSH Bell Score (S): ${req.chshScore.toFixed(2)} (Classical Limit: 2.00)
-Helstrom Minimum Error Bound P_e: >= ${req.helstromBound || 0.082}
+Attack Title: ${req.attackType}
+Incident Summary: ${req.description || 'No detailed summary provided.'}
+Impact Severity: ${req.impact || 'HIGH'}
+Assigned Operator: ${req.assignedOperator || 'Dr. Anisha S.'}
 Target Transceiver Node: ${req.node || 'QN-BOB (Receiver)'}
-Impact Level: ${req.impact || 'CRITICAL'}
-Assigned Cryptographer: ${req.assignedOperator || 'Dr. Anisha S.'}
 
-Provide immediate remediation playbook for this incident.`;
+PHYSICAL QUANTUM METRICS:
+- Observed QBER: ${(req.qber * 100).toFixed(2)}% (Hoeffding Safety Bound: 5.50%)
+- CHSH Bell Score (S): ${req.chshScore.toFixed(2)} (Classical Limit: 2.00, Quantum Bound: 2.828)
+- Helstrom Bound P_e: >= ${req.helstromBound || 0.082}
+${req.timelineSummary ? `- Historical Context: ${req.timelineSummary}` : ''}
+
+Provide a 3-step immediate remediation playbook for this SPECIFIC incident.`;
 
   try {
     const res = await fetch(GROQ_ENDPOINT, {
@@ -88,7 +145,7 @@ Provide immediate remediation playbook for this incident.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.2,
+        temperature: 0.65,
         max_tokens: 500
       })
     });
@@ -99,7 +156,9 @@ Provide immediate remediation playbook for this incident.`;
     }
 
     const data = await res.json();
-    const rawText = data?.choices?.[0]?.message?.content || 'No response generated.';
+    const rawText = data?.choices?.[0]?.message?.content || '';
+    if (!rawText || rawText.length < 20) throw new Error('Empty AI response');
+
     const cleanPlan = formatRemediationText(rawText);
 
     // Extract CLI commands from code blocks if present
@@ -113,9 +172,10 @@ Provide immediate remediation playbook for this incident.`;
     });
 
     if (cliCommands.length === 0) {
-      cliCommands.push(`> qds_threat_engine --isolate --incident ${req.incidentId}`);
-      cliCommands.push(`> sdn_controller --quarantine --node ${req.node || 'QN-BOB'}`);
-      cliCommands.push(`> qds_privacy_amp --reseed-nonce --incident ${req.incidentId}`);
+      const safeId = req.incidentId.replace(/[^a-zA-Z0-9-]/g, '');
+      cliCommands.push(`> qds_threat_engine --remediate --incident ${safeId}`);
+      cliCommands.push(`> sdn_switch --isolate-node ${req.node || 'QN-BOB'}`);
+      cliCommands.push(`> qds_privacy_amp --reseed-nonce --incident ${safeId}`);
     }
 
     return {
@@ -123,31 +183,27 @@ Provide immediate remediation playbook for this incident.`;
       model: 'QDS Sentinel AI (Llama-3 70B)',
       remediationPlan: cleanPlan,
       cliCommands,
-      recommendedAction: `Isolate optical node ${req.node || 'QN-BOB'} and execute Privacy Amplification Reseed.`,
+      recommendedAction: `Execute automated containment for ${req.incidentId}.`,
       rawText
     };
   } catch (err: any) {
-    console.warn('[AI Remediation Service Error]:', err);
+    console.warn('[AI Remediation Service Fallback Activated]:', err);
     
-    // Fallback deterministic local remediation plan
+    // Generate tailored dynamic fallback playbook for this specific incident
+    const fallbackPlan = generateDynamicFallbackPlaybook(req);
+    const safeId = req.incidentId.replace(/[^a-zA-Z0-9-]/g, '');
+
     return {
       success: false,
-      model: 'QDS Engine (Local Engine)',
-      remediationPlan: `1. IMMEDIATE OPTICAL CONTAINMENT:
-Issue optoelectronic matrix switch command to isolate port ${req.node || 'QN-BOB'}. Freeze SPDC laser diode pump power to halt compromised key generation.
-
-2. QUANTUM BOUND AUDIT:
-QBER ${(req.qber * 100).toFixed(2)}% > 5.50% threshold. Helstrom bound P_e >= ${req.helstromBound || 0.082} strictly enforced. Bell correlation S=${req.chshScore.toFixed(2)} confirms quantum state collapse.
-
-3. RECOVER & RESEED:
-Re-route dark fiber path through secondary ITU Ch. 36 optical relay. Reseed Toeplitz privacy amplification matrix with fresh entropy pool.`,
+      model: 'QDS Dynamic Forensic Engine',
+      remediationPlan: fallbackPlan,
       cliCommands: [
-        `> qds_threat_engine --isolate --incident ${req.incidentId}`,
-        `> sdn_controller --quarantine --node ${req.node || 'QN-BOB'}`,
-        `> qds_privacy_amp --reseed-nonce --incident ${req.incidentId}`
+        `> qds_threat_engine --remediate --incident ${safeId}`,
+        `> sdn_switch --isolate-node ${req.node || 'QN-BOB'}`,
+        `> qds_privacy_amp --reseed-nonce --incident ${safeId}`
       ],
-      recommendedAction: `Quarantine optical link ${req.node || 'QN-BOB'} and execute key re-derivation.`,
-      rawText: 'Fallback deterministic local playbook applied.',
+      recommendedAction: `Quarantine optical link for ${req.incidentId} and execute key re-derivation.`,
+      rawText: fallbackPlan,
       error: err?.message || 'AI request failed.'
     };
   }

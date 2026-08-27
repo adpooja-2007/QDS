@@ -556,15 +556,21 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
   const handleFetchAiRemediation = async (inc: IncidentDetailItem) => {
     setLoadingAiIncidentId(inc.id);
     try {
+      const timelineSummary = Array.isArray(inc.timeline) && inc.timeline.length > 0
+        ? inc.timeline.map(t => `${t.time}: ${t.title}`).join(' -> ')
+        : undefined;
+
       const res = await generateAiRemediation({
         incidentId: inc.id,
         attackType: inc.title || 'Quantum State Intrusion',
-        qber: inc.qber || (inc.impact === 'CRITICAL' ? 0.142 : 0.021),
-        chshScore: inc.chsh || (inc.impact === 'CRITICAL' ? 1.76 : 2.78),
+        description: inc.description,
+        qber: inc.qber || (inc.impact === 'CRITICAL' ? 0.142 : inc.impact === 'HIGH' ? 0.084 : 0.021),
+        chshScore: inc.chsh || (inc.impact === 'CRITICAL' ? 1.76 : inc.impact === 'HIGH' ? 1.92 : 2.78),
         helstromBound: 0.082,
         assignedOperator: inc.assigned,
         node: 'QN-BOB (Receiver)',
-        impact: inc.impact
+        impact: inc.impact,
+        timelineSummary
       });
       setAiRemediationMap(prev => ({ ...prev, [inc.id]: res }));
       showToast(`AI Remediation playbook generated for ${inc.id}.`);
