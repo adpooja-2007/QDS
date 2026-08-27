@@ -2424,8 +2424,29 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                         const isError = log.status_code >= 400 || log.is_error || log.subsystem === 'ERR DETECT';
                         const isSelected = selectedItem.id === log.id;
 
-                        // Display the exact transferred text / message string
-                        const transferredText = log.message || 'Quantum One-Time-Pad state vector transmitted over 1550nm channel.';
+                        // Extract file name or first 10 characters of Alice's text payload
+                        const rawMsg = log.message || '';
+                        const fileMatch = rawMsg.match(/\[?([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin))\]?/i);
+
+                        let payloadDisplay = null;
+
+                        if (fileMatch) {
+                          // If Alice sent a file: show the filename!
+                          payloadDisplay = (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
+                              📄 {fileMatch[1]}
+                            </span>
+                          );
+                        } else {
+                          // If Alice sent text: show FIRST 10 CHARACTERS!
+                          const cleanText = rawMsg.replace(/^["']|["']$/g, '').trim();
+                          const first10 = cleanText.slice(0, 10);
+                          payloadDisplay = (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
+                              💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                            </span>
+                          );
+                        }
 
                         return (
                           <tr 
@@ -2458,8 +2479,8 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                             <td className={`py-2 px-4 ${isError ? 'text-[#BA1A1A]' : 'text-[#1B1B1D]'}`}>
                               {log.event_type}
                             </td>
-                            <td className={`py-2 px-4 ${isError ? 'text-[#BA1A1A] font-semibold' : 'text-[#334155]'}`}>
-                              {transferredText}
+                            <td className="py-2 px-4">
+                              {payloadDisplay}
                             </td>
                             <td className="py-2 px-4 text-right text-[#1B1B1D]">
                               {log.latency_ms}ms
