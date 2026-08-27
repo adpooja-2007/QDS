@@ -49,9 +49,72 @@ import { toast } from "sonner";
 import { DemonstrationDesk } from "./DemonstrationDesk";
 import { apiClient } from "@/lib/apiClient";
 
-const MARK = "/manus-storage/qds-sentinel-mark_81058a94.png";
-const HERO = "/manus-storage/qds-sentinel-hero_77975680.png";
-const NETWORK = "/manus-storage/qds-sentinel-network_2c79b0d7.png";
+const MARK = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <rect width="100" height="100" rx="16" fill="#091426"/>
+  <circle cx="50" cy="50" r="32" stroke="#0058BE" stroke-width="6" opacity="0.6"/>
+  <circle cx="50" cy="50" r="20" stroke="#C2540A" stroke-width="6"/>
+  <circle cx="50" cy="50" r="7" fill="#F6F3F5"/>
+  <path d="M50 10 L50 22 M50 78 L50 90 M10 50 L22 50 M78 50 L90 50" stroke="#0058BE" stroke-width="4" stroke-linecap="round"/>
+</svg>
+`)}`;
+
+const HERO = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none">
+  <rect width="800" height="500" rx="12" fill="#091426"/>
+  <defs>
+    <radialGradient id="heroGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#C2540A" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#0058BE" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#091426" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="laserBeam" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#C2540A" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#34D399" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#heroGlow)"/>
+  <line x1="50" y1="250" x2="750" y2="250" stroke="#1E293B" stroke-width="2" stroke-dasharray="8 6"/>
+  <path d="M 50 250 Q 150 150 250 250 T 450 250 T 650 250 T 750 250" stroke="#0058BE" stroke-width="4" fill="none" opacity="0.7"/>
+  <path d="M 50 250 Q 150 350 250 250 T 450 250 T 650 250 T 750 250" stroke="#C2540A" stroke-width="4" fill="none" opacity="0.8"/>
+  <path d="M 50 250 L 750 250" stroke="url(#laserBeam)" stroke-width="8" fill="none"/>
+  <circle cx="250" cy="250" r="14" fill="#C2540A" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="250" cy="250" r="28" stroke="#C2540A" stroke-width="2" opacity="0.5" stroke-dasharray="4 4"/>
+  <circle cx="650" cy="250" r="14" fill="#34D399" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="650" cy="250" r="28" stroke="#34D399" stroke-width="2" opacity="0.5" stroke-dasharray="4 4"/>
+  <path d="M0 100 H800 M0 200 H800 M0 300 H800 M0 400 H800 M200 0 V500 M400 0 V500 M600 0 V500" stroke="#1E293B" stroke-width="1" opacity="0.3"/>
+  <text x="250" y="300" fill="#F6F3F5" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">PHOTON A (1550nm)</text>
+  <text x="650" y="300" fill="#F6F3F5" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">PHOTON B (1550nm)</text>
+  <text x="400" y="440" fill="#94A3B8" font-family="monospace" font-size="12" text-anchor="middle">SPDC EPR PAIR EMISSION CHANNEL /// 1.024 kpps</text>
+</svg>
+`)}`;
+
+const NETWORK = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none">
+  <rect width="800" height="500" rx="12" fill="#091426"/>
+  <path d="M 400 120 L 180 320" stroke="#34D399" stroke-width="3" stroke-dasharray="6 4"/>
+  <path d="M 400 120 L 620 320" stroke="#38BDF8" stroke-width="3"/>
+  <path d="M 180 320 L 620 320" stroke="#0058BE" stroke-width="3"/>
+  <path d="M 400 120 L 400 390" stroke="#EF4444" stroke-width="3" stroke-dasharray="4 4"/>
+  <circle cx="400" cy="120" r="32" fill="#091426" stroke="#38BDF8" stroke-width="4"/>
+  <circle cx="400" cy="120" r="12" fill="#38BDF8"/>
+  <text x="400" y="70" fill="#F6F3F5" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">ARBITRATOR CORE</text>
+  <text x="400" y="170" fill="#94A3B8" font-family="monospace" font-size="11" text-anchor="middle">12ms · SPDC Source</text>
+  <circle cx="180" cy="320" r="28" fill="#091426" stroke="#34D399" stroke-width="4"/>
+  <circle cx="180" cy="320" r="10" fill="#34D399"/>
+  <text x="180" y="375" fill="#F6F3F5" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">ALICE (Signer)</text>
+  <text x="180" y="395" fill="#94A3B8" font-family="monospace" font-size="11" text-anchor="middle">18ms · QN-ALICE-01</text>
+  <circle cx="620" cy="320" r="28" fill="#091426" stroke="#0058BE" stroke-width="4"/>
+  <circle cx="620" cy="320" r="10" fill="#0058BE"/>
+  <text x="620" y="375" fill="#F6F3F5" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle">BOB (Verifier)</text>
+  <text x="620" y="395" fill="#94A3B8" font-family="monospace" font-size="11" text-anchor="middle">20ms · QN-BOB-02</text>
+  <circle cx="400" cy="390" r="24" fill="#091426" stroke="#EF4444" stroke-width="3" stroke-dasharray="4 2"/>
+  <circle cx="400" cy="390" r="8" fill="#EF4444"/>
+  <text x="400" y="435" fill="#EF4444" font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle">EVE (Quarantined Probe)</text>
+  <text x="400" y="452" fill="#94A3B8" font-family="monospace" font-size="10" text-anchor="middle">ISOLATED · QBER 14.2%</text>
+</svg>
+`)}`;
 
 const navItems = [
   { href: "/home", label: "Home portal", code: "00", icon: HomeIcon },
