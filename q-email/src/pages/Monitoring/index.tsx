@@ -1491,6 +1491,47 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
     });
   }, [isStreamPaused]);
 
+  // Continuous polling and event listener for attacks launched from Attack Sandbox or background FastAPI tasks
+  useEffect(() => {
+    const handleStreamSync = () => {
+      if (isStreamPaused) return;
+      try {
+        const live = sentinelService.getLiveStream();
+        if (live && live.length > 0) {
+          setTelemetryStream(live);
+          if (live[0] && (!selectedItem || selectedItem.id !== live[0].id)) {
+            setSelectedItem(live[0]);
+          }
+          return;
+        }
+        const stored = localStorage.getItem('qds_latest_stream');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTelemetryStream(parsed);
+            if (parsed[0] && (!selectedItem || selectedItem.id !== parsed[0].id)) {
+              setSelectedItem(parsed[0]);
+            }
+          }
+        }
+      } catch {}
+    };
+
+    handleStreamSync();
+    const interval = setInterval(handleStreamSync, 500);
+
+    window.addEventListener('storage', handleStreamSync);
+    window.addEventListener('qds_attack_launched', handleStreamSync);
+    window.addEventListener('qds:telemetry-update', handleStreamSync);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStreamSync);
+      window.removeEventListener('qds_attack_launched', handleStreamSync);
+      window.removeEventListener('qds:telemetry-update', handleStreamSync);
+    };
+  }, [isStreamPaused, selectedItem]);
+
   // Filtered Telemetry Stream based on graphTimeRange ('1M' | '5M' | '15M' | 'ALL')
   const filteredStream = useMemo(() => {
     switch (graphTimeRange) {

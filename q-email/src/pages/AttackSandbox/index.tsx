@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, Settings, Bell, User, Check, X, Copy, Maximize2, Terminal, Sliders, Info, Activity, RefreshCw } from 'lucide-react';
 import { sentinelService } from '../../services/sentinelService';
+import { apiClient } from '../../api/client';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/card';
@@ -405,6 +406,15 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
     const chosen = ATTACK_SCENARIOS[key];
     const totalLines = chosen.arbitratorLogs.length;
     let current = 0;
+
+    // Trigger backend FastAPI REST API endpoint for attack simulation
+    apiClient.runWorkflow({
+      attack_type: key,
+      is_eve_active: chosen.securityStatus !== 'SECURE',
+      document_name: `${key}_attack_probe.sig`,
+      file_size_kb: 64.0
+    }).catch(() => null);
+
     const interval = setInterval(() => {
       current += 1;
       setVisibleLinesCount(current);
@@ -430,6 +440,14 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
     setVisibleLinesCount(0);
     setIsSimulating(true);
     setSimulationPhase('DISTRIBUTING PHOTONS (N=' + photonBatchSize + ')...');
+
+    // Trigger backend FastAPI REST API endpoint for attack simulation
+    apiClient.runWorkflow({
+      attack_type: selectedScenarioKey,
+      is_eve_active: scenario.securityStatus !== 'SECURE',
+      document_name: `${selectedScenarioKey}_attack_probe.sig`,
+      file_size_kb: 64.0
+    }).catch(() => null);
 
     const totalLines = scenario.arbitratorLogs.length;
     let current = 0;
