@@ -638,12 +638,11 @@ class SentinelService {
     const isBreach = securityStatus !== 'SECURE';
     const meta = this.resolveAttackMetadata(scenarioName || scenarioKey, isBreach);
     const qberPercent = Number((qberFraction * 100).toFixed(2));
-    const timeStr = formatISTTime(new Date(), true);
-    const nowIso = new Date().toISOString();
+    const timeStr24 = new Date().toLocaleTimeString('en-US', { hour12: false }) + '.' + Math.floor(100 + Math.random() * 900);
 
     const newItem = {
       id: Date.now().toString(),
-      timestamp: timeStr,
+      timestamp: timeStr24,
       subsystem: isBreach ? meta.subsystem : 'ARBITRATOR',
       event_type: isBreach ? meta.eventType : 'Quantum Handshake Verified',
       latency_ms: isBreach ? 512 : 128,
@@ -658,9 +657,8 @@ class SentinelService {
       reason: isBreach ? meta.reason : undefined,
     };
 
-    this.liveStream = [newItem, ...this.liveStream.filter(i => i.id !== newItem.id)]
-      .sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0) || b.timestamp.localeCompare(a.timestamp))
-      .slice(0, 10);
+    // Prepend new attack item to front of live stream array (NO SORTING BUG DISCARDING NEW ITEMS)
+    this.liveStream = [newItem, ...this.liveStream.filter(i => i.id !== newItem.id)].slice(0, 15);
 
     this.telemetry.unshift({
       id: newItem.id,
@@ -673,6 +671,7 @@ class SentinelService {
     });
     if (this.telemetry.length > 50) this.telemetry.pop();
 
+    const nowIso = new Date().toISOString();
     const sessId = `QDS-${new Date().getFullYear()}-${isBreach ? scenarioKey.toUpperCase() : 'CLEAN'}-${Date.now().toString().slice(-4)}`;
     const newSession: QuantumSession = {
       session_id: sessId,
