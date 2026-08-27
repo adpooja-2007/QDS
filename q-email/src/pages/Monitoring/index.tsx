@@ -588,6 +588,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
   const [sihAiReport, setSihAiReport] = useState<string>("No anomalies detected. QDS teleportation keys are active and verified. Quantum channel running at optimal coherence.");
   const [sihFallbackSig, setSihFallbackSig] = useState<string>("");
   const [sihLoading, setSihLoading] = useState<boolean>(false);
+  const [showPqcModelDialog, setShowPqcModelDialog] = useState<boolean>(false);
 
   const handleTriggerSihClean = async () => {
     setSihLoading(true);
@@ -2103,6 +2104,14 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setShowPqcModelDialog(true)}
+                        className="px-3 py-1 bg-[#FFFFFF] border border-[#0058BE] hover:bg-[#F4F8FF] text-[#0058BE] font-mono text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
+                        title="View PQC Architecture Model & Cryptographic Specifications"
+                      >
+                        <Cpu className="w-3 h-3 text-[#0058BE]" />
+                        <span>VIEW PQC MODEL</span>
+                      </button>
                       <button
                         onClick={handleTriggerSihClean}
                         disabled={sihLoading}
@@ -5110,6 +5119,88 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* ─── 13.5 PQC ARCHITECTURE & MODEL SPECIFICATIONS DIALOG ─── */}
+      {showPqcModelDialog && (
+        <Dialog open={showPqcModelDialog} onOpenChange={setShowPqcModelDialog}>
+          <DialogContent className="max-w-2xl bg-[#FFFFFF] border border-[#E2E8F0] p-6 rounded-[2px] font-mono">
+            <DialogHeader className="border-b border-[#E2E8F0] pb-3">
+              <DialogTitle className="text-[14px] font-bold text-[#091426] uppercase tracking-wider flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-[#0058BE]" />
+                HYBRID PQC FALLBACK ARCHITECTURE MODEL (SIH PS-26141)
+              </DialogTitle>
+              <DialogDescription className="text-[11px] text-[#75777D] mt-1 font-sans">
+                Deterministic Hoeffding Threat Gate &amp; NIST Post-Quantum Cryptography Handover
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-3 text-[11px]">
+              {/* Architecture Flow Banner */}
+              <div className="bg-[#F6F3F5] border border-[#E2E8F0] p-3 rounded-[2px] space-y-1.5">
+                <div className="font-bold text-[#091426] text-[10px] uppercase tracking-wider">SYSTEM HANDOVER SEQUENCE:</div>
+                <div className="text-[11px] font-mono text-[#0058BE] font-bold">
+                  Physical QDS Fiber Link ──(Hoeffding QBER &gt; 5.5% / CHSH S &lt; 2.0)──► Purge RAM Keys ──► CRYSTALS-Dilithium3 (ML-DSA-65) Fallback
+                </div>
+              </div>
+
+              {/* Specifications Table */}
+              <div className="space-y-1.5">
+                <div className="font-bold text-[#091426] text-[10.5px] uppercase tracking-wider">NIST PQC SPECIFICATIONS:</div>
+                <div className="border border-[#E2E8F0] rounded-[2px] overflow-hidden text-[10.5px]">
+                  <div className="grid grid-cols-2 p-2 bg-[#F6F3F5] border-b border-[#E2E8F0] font-bold text-[#091426]">
+                    <span>CRYPTOGRAPHIC SPECIFICATION</span>
+                    <span>ACTIVE ENGINE VALUE</span>
+                  </div>
+                  <div className="grid grid-cols-2 p-2 border-b border-[#E2E8F0]">
+                    <span className="text-[#75777D]">Digital Signature Scheme:</span>
+                    <strong className="text-[#065F46]">ML-DSA-65 (CRYSTALS-Dilithium3)</strong>
+                  </div>
+                  <div className="grid grid-cols-2 p-2 border-b border-[#E2E8F0]">
+                    <span className="text-[#75777D]">Key Encapsulation Mechanism:</span>
+                    <strong className="text-[#0058BE]">ML-KEM-768 (CRYSTALS-Kyber)</strong>
+                  </div>
+                  <div className="grid grid-cols-2 p-2 border-b border-[#E2E8F0]">
+                    <span className="text-[#75777D]">Hardness Assumption:</span>
+                    <strong className="text-[#091426]">Module Learning-With-Errors (MLWE) &amp; SIS</strong>
+                  </div>
+                  <div className="grid grid-cols-2 p-2 border-b border-[#E2E8F0]">
+                    <span className="text-[#75777D]">Public Key Size:</span>
+                    <span className="font-bold">1,952 Bytes</span>
+                  </div>
+                  <div className="grid grid-cols-2 p-2">
+                    <span className="text-[#75777D]">Signature Output Size:</span>
+                    <span className="font-bold">3,293 Bytes</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Active Status */}
+              <div className="p-3 bg-[#FAF8FF] border border-[#D8B4FE] rounded-[2px] flex justify-between items-center">
+                <div>
+                  <span className="text-[#75777D] text-[9.5px] font-bold block uppercase">CURRENT LIVE STATUS</span>
+                  <strong className={sihSystemState === 'QUANTUM_SECURE' ? 'text-[#065F46]' : 'text-[#BA1A1A]'}>
+                    {sihSystemState}
+                  </strong>
+                </div>
+                <div className="text-right">
+                  <span className="text-[#75777D] text-[9.5px] font-bold block uppercase">AIR-GAPPED AI DIAGNOSIS</span>
+                  <span className="text-[#0058BE] font-bold text-[10px]">OLLAMA (LOCAL PHI-3) ACTIVE</span>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="border-t border-[#E2E8F0] pt-3">
+              <Button
+                type="button"
+                onClick={() => setShowPqcModelDialog(false)}
+                className="w-full bg-[#0058BE] hover:bg-[#00479E] text-white font-mono text-[10.5px] font-bold uppercase tracking-wider rounded-[2px]"
+              >
+                CLOSE MODEL SPECIFICATIONS
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* ─── 14. FLOATING ACTION TOAST NOTIFICATION ─── */}
