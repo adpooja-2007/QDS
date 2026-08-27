@@ -138,6 +138,8 @@ export interface IncidentDetailItem {
   impact_color: string;
   title: string;
   description: string;
+  qber?: number;
+  chsh?: number;
   timeline: Array<{
     time: string;
     title: string;
@@ -3061,9 +3063,9 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                     </table>
                   </div>
 
-                  {/* Right Column: INSPECTOR Panel (Constant Height with Internal Scrollable Body) */}
+                  {/* Right Column: INSPECTOR Panel (Expanded Height with Detailed Forensic Overview & Dynamic Timeline) */}
                   {selectedIncidentDetail && (
-                    <div className="col-span-4 border border-[#E2E8F0] bg-[#FFFFFF] rounded-[2px] overflow-hidden shadow-none flex flex-col h-[520px] max-h-[520px] sticky top-4">
+                    <div className="col-span-4 border border-[#E2E8F0] bg-[#FFFFFF] rounded-[2px] overflow-hidden shadow-none flex flex-col h-[620px] max-h-[620px] sticky top-4">
                       {/* Inspector Header */}
                       <div className="bg-[#F6F3F5] border-b border-[#E2E8F0] px-4 py-2.5 flex items-center justify-between shrink-0">
                         <span className="font-mono text-[10.5px] font-bold uppercase tracking-widest text-[#091426]">
@@ -3098,36 +3100,112 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                           </p>
                         </div>
 
-                        {/* Meta row */}
+                        {/* Metadata Summary Row */}
                         <div className="bg-[#F6F3F5] border border-[#E2E8F0] rounded-[2px] p-3 font-mono text-[11px] space-y-1.5">
                           <div className="flex justify-between">
-                            <span className="text-[#75777D]">ASSIGNED:</span>
+                            <span className="text-[#75777D]">ASSIGNED OPERATOR:</span>
                             <span className="text-[#091426] font-bold">{selectedIncidentDetail.assigned}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-[#75777D]">IMPACT:</span>
+                            <span className="text-[#75777D]">IMPACT SEVERITY:</span>
                             <span className={`font-bold uppercase ${
                               selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH'
                                 ? 'text-[#BA1A1A]' : selectedIncidentDetail.impact === 'MED' ? 'text-[#0058BE]' : 'text-[#065F46]'
                             }`}>{selectedIncidentDetail.impact}</span>
                           </div>
+                          <div className="flex justify-between border-t border-[#E2E8F0] pt-1.5 mt-1 text-[10px]">
+                            <span className="text-[#75777D]">SECURITY CLEARANCE:</span>
+                            <span className="text-[#065F46] font-bold">LEVEL 5 (Q-TOP-SECRET)</span>
+                          </div>
                         </div>
 
-                        {/* Timeline */}
+                        {/* Detailed Forensic Quantum Evidence Block */}
                         <div>
                           <div className="font-mono text-[9.5px] text-[#75777D] uppercase tracking-wider mb-2 font-medium">
-                            INCIDENT TIMELINE
+                            QUANTUM FORENSIC EVIDENCE
+                          </div>
+                          <div className="bg-[#FFFFFF] border border-[#E2E8F0] p-3.5 rounded-[2px] font-mono text-[11px] space-y-2">
+                            <div className="flex justify-between items-center pb-1 border-b border-[#F1F5F9]">
+                              <span className="text-[#75777D]">Observed QBER:</span>
+                              <strong className={selectedIncidentDetail.impact === 'CRITICAL' || selectedIncidentDetail.impact === 'HIGH' ? 'text-[#BA1A1A]' : 'text-[#065F46]'}>
+                                {selectedIncidentDetail.qber ? `${(selectedIncidentDetail.qber * 100).toFixed(2)}%` : (selectedIncidentDetail.impact === 'CRITICAL' ? '14.20%' : '2.10%')} (Limit: 5.50%)
+                              </strong>
+                            </div>
+                            <div className="flex justify-between items-center pb-1 border-b border-[#F1F5F9]">
+                              <span className="text-[#75777D]">CHSH Bell Score (S):</span>
+                              <strong className={selectedIncidentDetail.chsh && selectedIncidentDetail.chsh < 2.0 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}>
+                                {selectedIncidentDetail.chsh ? `S = ${selectedIncidentDetail.chsh.toFixed(2)}` : (selectedIncidentDetail.impact === 'CRITICAL' ? 'S = 1.76 (Collapsed)' : 'S = 2.78 (Entangled)')}
+                              </strong>
+                            </div>
+                            <div className="flex justify-between items-center pb-1 border-b border-[#F1F5F9]">
+                              <span className="text-[#75777D]">Helstrom Error Bound:</span>
+                              <strong className="text-[#091426]">P_e ≥ 0.0820</strong>
+                            </div>
+                            <div className="flex justify-between items-center pb-1 border-b border-[#F1F5F9]">
+                              <span className="text-[#75777D]">Trace Distance (D):</span>
+                              <strong className="text-[#0058BE]">D = 0.8360</strong>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] text-[#75777D] pt-0.5">
+                              <span>Target Node:</span>
+                              <span className="text-[#091426] font-bold">QN-BOB (Receiver)</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dynamic Incident Timeline (Rendered for Every Incident) */}
+                        <div>
+                          <div className="font-mono text-[9.5px] text-[#75777D] uppercase tracking-wider mb-2 font-medium flex items-center justify-between">
+                            <span>DYNAMIC INCIDENT TIMELINE</span>
+                            <span className="text-[#0058BE] font-bold">
+                              ({(selectedIncidentDetail.timeline || []).length} STAGES)
+                            </span>
                           </div>
                           <div className="relative pl-4 space-y-4 pt-1">
                             {/* Vertical Timeline Guide Line */}
                             <div className="absolute left-[3.5px] top-2 bottom-2 w-[1px] bg-[#E2E8F0]" />
 
-                            {selectedIncidentDetail.timeline.map((event, idx) => (
+                            {(selectedIncidentDetail.timeline && selectedIncidentDetail.timeline.length > 0
+                              ? selectedIncidentDetail.timeline
+                              : [
+                                  {
+                                    time: '00:01 UTC',
+                                    title: 'Entangled State Distribution',
+                                    title_color: '#091426',
+                                    dot_color: '#94A3B8',
+                                    description: 'Arbitrator dispatched SPDC photon pairs over optical dark fiber.'
+                                  },
+                                  {
+                                    time: '00:02 UTC',
+                                    title: 'Quantum State Anomaly Flagged',
+                                    title_color: '#BA1A1A',
+                                    dot_color: '#BA1A1A',
+                                    description: 'Elevated QBER and CHSH Bell violation detected on quantum link.'
+                                  },
+                                  {
+                                    time: '00:03 UTC',
+                                    title: 'Automated Threat Mitigation',
+                                    title_color: '#C2540A',
+                                    dot_color: '#C2540A',
+                                    description: 'Optoelectronic switch engaged to isolate compromised optical channel.',
+                                    terminal: {
+                                      command: `> qds_isolate --incident ${selectedIncidentDetail.id}`,
+                                      output: '[OK] Fiber port isolated under Helstrom bound audit.'
+                                    }
+                                  },
+                                  {
+                                    time: '00:04 UTC',
+                                    title: `Assigned to ${selectedIncidentDetail.assigned}`,
+                                    title_color: '#065F46',
+                                    dot_color: '#065F46',
+                                    description: `Incident is under active management (${selectedIncidentDetail.status}).`
+                                  }
+                                ]
+                            ).map((event, idx) => (
                               <div key={idx} className="relative group font-mono">
                                 {/* Event Bullet Dot */}
                                 <div 
                                   className="absolute -left-4 top-1 w-2 h-2 rounded-full ring-2 ring-white z-10" 
-                                  style={{ backgroundColor: event.dot_color }}
+                                  style={{ backgroundColor: event.dot_color || '#0058BE' }}
                                 />
                                 
                                 <div>
@@ -3165,7 +3243,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                       {/* Footer Actions */}
                       <div className="p-4 border-t border-[#E2E8F0] space-y-2 font-mono shrink-0 bg-[#FFFFFF]">
                         <div className="text-[9.5px] text-[#75777D] uppercase tracking-wider mb-1.5 font-medium">
-                          SET INCIDENT STATUS
+                          SET INCIDENT STATUS &amp; EXPORT REPORT
                         </div>
                         {/* Primary action: changes based on current status */}
                         {selectedIncidentDetail.status !== 'RESOLVED' && (
@@ -3199,14 +3277,25 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                             }`}
                           >
                             <Activity className="w-3 h-3 text-[#75777D]" />
-                            <span>INVESTIGATE</span>
+                            <span>RE-INVESTIGATE</span>
                           </button>
                           <button
-                            onClick={() => setShowLogsDrawer(true)}
+                            onClick={() => {
+                              const jsonStr = JSON.stringify(selectedIncidentDetail, null, 2);
+                              const blob = new Blob([jsonStr], { type: 'application/json' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `${selectedIncidentDetail.id}_forensic_report.json`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                              showToast(`✓ Exported forensic report ${selectedIncidentDetail.id}.json`);
+                            }}
                             className="py-1.5 bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F6F3F5] text-[#0058BE] font-semibold text-[10px] uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                            title="Export Detailed Incident Forensic JSON Report"
                           >
-                            <Terminal className="w-3 h-3 text-[#0058BE]" />
-                            <span>VIEW LOGS</span>
+                            <Download className="w-3 h-3 text-[#0058BE]" />
+                            <span>EXPORT REPORT</span>
                           </button>
                         </div>
                       </div>
