@@ -1,0 +1,11 @@
+{
+  "name": "qds-sentinel-workspace",
+  "version": "2.0.0",
+  "description": "Quantum Digital Signatures (QDS) Sentinel Console - SIH PS-26141",
+  "scripts": {
+    "dev": "npm run dev --prefix qds-sentinel",
+    "dev:backend": "cd backend && uvicorn app.main:app --reload --port 8000",
+    "build": "npm run build --prefix qds-sentinel",
+    "check": "npm run check --prefix qds-sentinel"
+  }
+}
