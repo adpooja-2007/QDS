@@ -1913,7 +1913,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
                 <div className="max-h-80 overflow-y-auto divide-y divide-[#E2E8F0] bg-white">
                   {incidents.length === 0 && !isQberBreach ? (
                     <div className="p-6 text-center text-[#75777D] text-[12px] font-mono flex flex-col items-center gap-2">
-                      <span className="w-8 h-8 rounded-full bg-[#F6F3F5] border border-[#E2E8F0] text-[#065F46] flex items-center justify-center font-bold">✓</span>
+                      <span className="w-8 h-8 rounded-full bg-[#F6F3F5] border border-[#E2E8F0] text-[#065F46] flex items-center justify-center font-bold font-mono text-[12px]">OK</span>
                       <span>No active security threats detected. All quantum sessions nominal.</span>
                     </div>
                   ) : (
@@ -1963,7 +1963,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
                           title="Click to view incident (Ctrl+Click to open in new tab)"
                         >
                           <div className="w-6 h-6 rounded bg-[#F6F3F5] border border-[#E2E8F0] text-[#BA1A1A] flex items-center justify-center shrink-0 mt-0.5 font-mono text-[11px] font-bold">
-                            ⚡
+                            !
                           </div>
                           <div className="flex-1 min-w-0 font-mono text-[11px]">
                             <div className="flex items-center justify-between">
@@ -3076,7 +3076,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
                         localStorage.removeItem('qds_incidents_list');
                         setIncidentsList(defaultIncidentRecords);
                         setSelectedIncidentId(defaultIncidentRecords[2].id);
-                        showToast('✓ Incident ledger reset to default clean state.');
+                        showToast('Incident ledger reset to default clean state.');
                       }}
                       className="px-3 py-1 bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F6F3F5] text-[#45474C] font-mono text-[10.5px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
                       title="Reset Incident Ledger to default clean state"
@@ -3435,7 +3435,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
                               a.download = `${selectedIncidentDetail.id}_forensic_report.json`;
                               a.click();
                               URL.revokeObjectURL(url);
-                              showToast(`✓ Exported forensic report ${selectedIncidentDetail.id}.json`);
+                              showToast(`Exported forensic report ${selectedIncidentDetail.id}.json`);
                             }}
                             className="py-1.5 bg-[#FFFFFF] border border-[#E2E8F0] hover:bg-[#F6F3F5] text-[#0058BE] font-semibold text-[10px] uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                             title="Export Detailed Incident Forensic JSON Report"

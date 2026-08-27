@@ -221,7 +221,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <div className="max-h-80 overflow-y-auto divide-y divide-[#E2E8F0] bg-white">
                   {totalAlertsCount === 0 ? (
                     <div className="p-6 text-center text-[#75777D] text-[12px] font-mono flex flex-col items-center gap-2">
-                      <span className="w-8 h-8 rounded-full bg-[#F6F3F5] border border-[#E2E8F0] text-[#065F46] flex items-center justify-center font-bold">✓</span>
+                      <span className="w-8 h-8 rounded-full bg-[#F6F3F5] border border-[#E2E8F0] text-[#065F46] flex items-center justify-center font-bold font-mono text-[12px]">OK</span>
                       <span>No active security threats detected. All quantum sessions nominal.</span>
                     </div>
                   ) : (
@@ -261,7 +261,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                           className="p-3.5 hover:bg-[#F6F3F5] transition-colors cursor-pointer flex items-start gap-3 group border-b border-[#E2E8F0] last:border-b-0"
                         >
                           <div className="w-6 h-6 rounded bg-[#F6F3F5] border border-[#E2E8F0] text-[#BA1A1A] flex items-center justify-center shrink-0 mt-0.5 font-mono text-[11px] font-bold">
-                            ⚡
+                            !
                           </div>
                           <div className="flex-1 min-w-0 font-mono text-[11px]">
                             <div className="flex items-center justify-between">
@@ -357,7 +357,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                         onClick={handleCopyPublicKey}
                         className="text-[#0058BE] hover:underline font-bold cursor-pointer"
                       >
-                        {copiedKeyToast ? '✓ Copied' : 'Copy Key'}
+                        {copiedKeyToast ? 'Copied' : 'Copy Key'}
                       </button>
                     </div>
                     <div className="p-2 bg-[#F6F3F5] rounded-[2px] text-[10px] text-[#1B1B1D] truncate select-all border border-[#E2E8F0] font-mono">
