@@ -2537,30 +2537,39 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
 
                         const rawMsg = log.message || '';
                         const logAny = log as any;
-                        const isExplicitDemo = logAny.source === 'demonstration' || logAny.isDemonstration === true;
-                        const fileInLog = rawMsg.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin|ps1|md))\]/i) || rawMsg.match(/file \[([^\]]+)\]/i);
-                        const textInLog = rawMsg.match(/text "([^"]+)"/i) || rawMsg.match(/"([^"]{3,50})"/);
+
+                        const fileInLog = rawMsg.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin|ps1|md))\]/i) || rawMsg.match(/file \[([^\]]+)\]/i) || logAny.fileName;
+                        const textInLog = rawMsg.match(/text "([^"]+)"/i) || logAny.transferContent;
 
                         let payloadDisplay = null;
 
-                        if (isExplicitDemo && !fileInLog && !textInLog) {
-                          payloadDisplay = (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#F3E8FF] border border-[#D8B4FE] text-[#7E22CE] font-mono text-[11px] font-bold">
-                              💬 "demonstrated"
-                            </span>
-                          );
-                        } else if (fileInLog) {
+                        if (fileInLog) {
+                          const fileNameStr = typeof fileInLog === 'string' ? fileInLog : (fileInLog[1] || fileInLog[0]);
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
-                              📄 {fileInLog[1]}
+                              📄 {fileNameStr}
                             </span>
                           );
-                        } else if (textInLog && textInLog[1]) {
-                          const cleanText = textInLog[1].trim();
+                        } else if (textInLog) {
+                          const cleanText = (typeof textInLog === 'string' ? textInLog : textInLog[1]).trim();
                           const first10 = cleanText.slice(0, 10);
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
                               💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                            </span>
+                          );
+                        } else if (logAny.source === 'transfer' || logAny.isTransfer) {
+                          const cleanText = (logAny.transferContent || 'CLASSIFIED').trim();
+                          const first10 = cleanText.slice(0, 10);
+                          payloadDisplay = (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
+                              💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                            </span>
+                          );
+                        } else if (logAny.source === 'demonstration' || logAny.isDemonstration) {
+                          payloadDisplay = (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#F3E8FF] border border-[#D8B4FE] text-[#7E22CE] font-mono text-[11px] font-bold">
+                              💬 "demonstrated"
                             </span>
                           );
                         } else {

@@ -962,8 +962,18 @@ class SentinelService {
     }
 
     if (newItem) {
-      newItem.source = 'demonstration';
-      newItem.isDemonstration = true;
+      const fileMatch = customMsg?.match(/file \[([^\]]+)\]/i) || customMsg?.match(/\[([a-zA-Z0-9_\-]+\.(?:sig|pdf|txt|json|pem|bin|ps1|md))\]/i);
+      const textMatch = customMsg?.match(/text "([^"]+)"/i);
+
+      if (fileMatch || textMatch) {
+        newItem.source = 'transfer';
+        newItem.isTransfer = true;
+        if (fileMatch) newItem.fileName = fileMatch[1];
+        if (textMatch) newItem.transferContent = textMatch[1];
+      } else {
+        newItem.source = 'demonstration';
+        newItem.isDemonstration = true;
+      }
     }
 
     this.liveStream = [newItem, ...this.liveStream.filter(i => i.id !== newItem.id)].slice(0, 15);
