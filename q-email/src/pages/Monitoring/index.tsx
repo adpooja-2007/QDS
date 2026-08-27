@@ -44,6 +44,7 @@ import {
 } from '../../types/sentinel';
 import { sentinelService, formatISTTime, classifyQuantumData } from '../../services/sentinelService';
 import { apiClient } from '../../api/client';
+import { generateGroqRemediation, GroqRemediationResponse } from '../../services/groqAiService';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/card';
@@ -548,6 +549,31 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
   const selectedIncidentDetail = useMemo(() => {
     return incidentsList.find(i => i.id === selectedIncidentId) || incidentsList[0] || defaultIncidentRecords[2];
   }, [incidentsList, selectedIncidentId]);
+
+  const [groqAiRemediationMap, setGroqAiRemediationMap] = useState<{ [incidentId: string]: GroqRemediationResponse }>({});
+  const [loadingGroqAiIncidentId, setLoadingGroqAiIncidentId] = useState<string | null>(null);
+
+  const handleFetchGroqRemediation = async (inc: IncidentDetailItem) => {
+    setLoadingGroqAiIncidentId(inc.id);
+    try {
+      const res = await generateGroqRemediation({
+        incidentId: inc.id,
+        attackType: inc.title || 'Quantum State Intrusion',
+        qber: inc.qber || (inc.impact === 'CRITICAL' ? 0.142 : 0.021),
+        chshScore: inc.chsh || (inc.impact === 'CRITICAL' ? 1.76 : 2.78),
+        helstromBound: 0.082,
+        assignedOperator: inc.assigned,
+        node: 'QN-BOB (Receiver)',
+        impact: inc.impact
+      });
+      setGroqAiRemediationMap(prev => ({ ...prev, [inc.id]: res }));
+      showToast(`Groq AI Llama-3 Remediation playbook generated for ${inc.id}.`);
+    } catch (err: any) {
+      showToast(`Groq AI Remediation error: ${err.message}`);
+    } finally {
+      setLoadingGroqAiIncidentId(null);
+    }
+  };
 
   const lastProcessedIncidentStreamIdRef = useRef<string | null>(null);
 
@@ -3150,6 +3176,45 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                               <span className="text-[#091426] font-bold">QN-BOB (Receiver)</span>
                             </div>
                           </div>
+                        </div>
+
+                        {/* Groq AI Immediate Remediation Assistant Block */}
+                        <div>
+                          <div className="font-mono text-[9.5px] text-[#75777D] uppercase tracking-wider mb-2 font-medium flex items-center justify-between">
+                            <span>GROQ AI REMEDIATION ASSISTANT</span>
+                            <span className="text-[#7E22CE] font-bold">LLAMA-3 70B</span>
+                          </div>
+
+                          {groqAiRemediationMap[selectedIncidentDetail.id] ? (
+                            <div className="bg-[#F8F5FF] border border-[#D8B4FE] p-3.5 rounded-[2px] font-mono text-[11px] space-y-2">
+                              <div className="flex justify-between items-center pb-1 border-b border-[#E9D5FF]">
+                                <span className="text-[#7E22CE] font-bold">REMEDIATION PLAYBOOK:</span>
+                                <span className="text-[9.5px] bg-[#7E22CE] text-white px-2 py-0.5 rounded font-bold">
+                                  {groqAiRemediationMap[selectedIncidentDetail.id].model}
+                                </span>
+                              </div>
+                              <div className="text-[#091426] text-[11px] font-mono whitespace-pre-wrap leading-relaxed max-h-[160px] overflow-y-auto">
+                                {groqAiRemediationMap[selectedIncidentDetail.id].remediationPlan}
+                              </div>
+                              {groqAiRemediationMap[selectedIncidentDetail.id].cliCommands.length > 0 && (
+                                <div className="bg-[#091426] text-[#A7F3D0] p-2.5 rounded-[2px] font-mono text-[10.5px] space-y-1">
+                                  <div className="text-[#94A3B8] text-[9.5px] font-bold uppercase">Automated Execution Commands:</div>
+                                  {groqAiRemediationMap[selectedIncidentDetail.id].cliCommands.map((cmd, cIdx) => (
+                                    <div key={cIdx} className="text-[#38BDF8] font-bold">{cmd}</div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleFetchGroqRemediation(selectedIncidentDetail)}
+                              disabled={loadingGroqAiIncidentId === selectedIncidentDetail.id}
+                              className="w-full py-2 bg-[#7E22CE] hover:bg-[#6B21A8] text-white font-mono text-[11px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center justify-center gap-2"
+                            >
+                              <Zap className="w-3.5 h-3.5 text-[#FDE047]" />
+                              <span>{loadingGroqAiIncidentId === selectedIncidentDetail.id ? 'ANALYZING VIA GROQ LLAMA-3...' : 'GENERATE GROQ AI REMEDIATION'}</span>
+                            </button>
+                          )}
                         </div>
 
                         {/* Dynamic Incident Timeline (Rendered for Every Incident) */}
