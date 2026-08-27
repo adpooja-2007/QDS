@@ -315,11 +315,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                 {/* Header */}
                 <div className="bg-[#F6F3F5] border-b border-[#E2E8F0] p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#FFFFFF] border border-[#E2E8F0] text-[#091426] flex items-center justify-center font-mono font-bold text-[12px]">
-                      VS
+                    <div className="w-9 h-9 rounded-full bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] flex items-center justify-center font-mono font-bold text-[12px]">
+                      AS
                     </div>
                     <div>
-                      <h3 className="font-bold text-[14px] text-[#091426]">Dr. Vikramaditya S.</h3>
+                      <h3 className="font-bold text-[14px] text-[#091426]">Dr. Anisha S.</h3>
                       <p className="font-mono text-[10px] text-[#75777D]">Lead Cryptographer &amp; SOC Lead</p>
                     </div>
                   </div>

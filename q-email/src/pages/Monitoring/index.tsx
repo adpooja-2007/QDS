@@ -1327,7 +1327,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
         active_qber: `${activeQber.toFixed(2)}%`,
         hoeffding_alpha: hoeffdingAlpha,
         quarantined_nodes: quarantinedNodes,
-        soc_operator: 'Dr. Vikramaditya S.'
+        soc_operator: 'Dr. Anisha S.'
       }
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
@@ -1861,17 +1861,13 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
             )}
           </div>
 
-          {/* User Avatar Trigger (Dr. Vikramaditya S.) */}
+          {/* User Avatar Trigger (Dr. Anisha S.) */}
           <div 
             onClick={() => setShowUserProfilePopover(!showUserProfilePopover)}
-            className="w-7 h-7 rounded-full bg-[#F6F3F5] border border-[#E2E8F0] flex items-center justify-center overflow-hidden cursor-pointer ml-1 hover:ring-1 hover:ring-[#0058BE] transition-all"
-            title="Operator Profile • Dr. Vikramaditya S."
+            className="w-7 h-7 rounded-full bg-[#F6F3F5] border border-[#E2E8F0] flex items-center justify-center overflow-hidden cursor-pointer ml-1 hover:ring-1 hover:ring-[#0058BE] transition-all font-mono font-bold text-[10px] text-[#0058BE]"
+            title="Operator Profile • Dr. Anisha S."
           >
-            <img 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWUKUkX4iAVRyPxnlWNMdHiJG4-IjNkujLi3tD4aL7gH0UcHME5ys0-EMolJR6YZYiXVDeQBAS41uPLQYb_nryde5Uhd5ET9dYyvIQUi39SXjuGakqaOPhMryiTsokjYT50hOpYmT54YzFWAgNneJrtFqGuLprSxKMQ-lEiQPhySi3wkPic8Ahgn_YDjWPbxWzAPIT9_W6p5D0Zi-UpRfrIfnlqu84OpWL5AG5ZAeEe9BdnSnRrS-h" 
-              alt="Avatar" 
-              className="w-full h-full object-cover"
-            />
+            AS
           </div>
         </div>
       </header>
@@ -4135,11 +4131,11 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
           {/* Header */}
           <div className="bg-[#F6F3F5] border-b border-[#E2E8F0] p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#FFFFFF] border border-[#E2E8F0] text-[#091426] flex items-center justify-center font-mono font-bold text-[12px]">
-                VS
+              <div className="w-9 h-9 rounded-full bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] flex items-center justify-center font-mono font-bold text-[12px]">
+                AS
               </div>
               <div>
-                <h3 className="font-bold text-[14px] text-[#091426] font-sans">Dr. Vikramaditya S.</h3>
+                <h3 className="font-bold text-[14px] text-[#091426] font-sans">Dr. Anisha S.</h3>
                 <p className="font-mono text-[10px] text-[#75777D]">Lead Cryptographer &amp; SOC Lead</p>
               </div>
             </div>
