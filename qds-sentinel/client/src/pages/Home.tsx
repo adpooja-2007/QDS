@@ -357,7 +357,7 @@ function LegacyDemonstrationPage() {
 }
 
 function DemonstrationPage() {
-  return <DemonstrationDesk />;
+  return <LegacyDemonstrationPage />;
 }
 
 function SandboxMetricChart({ title, value, detail, threat, mode }: { title: string; value: string; detail: string; threat: boolean; mode: "qber" | "chsh" }) {
