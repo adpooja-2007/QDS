@@ -55,7 +55,7 @@ import { Switch } from '../../components/ui/switch';
 import { Progress } from '../../components/ui/progress';
 import { ButtonGroup } from '../../components/ui/button-group';
 
-type MonitoringTab = 'overview' | 'threats' | 'incidents' | 'sessions' | 'network';
+type MonitoringTab = 'overview' | 'threats' | 'incidents' | 'sessions' | 'network' | 'pqc';
 
 interface TelemetryStreamItem {
   id: string;
@@ -2034,6 +2034,11 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                   label: 'NETWORK', 
                   icon: <Network className="w-4 h-4" />
                 },
+                { 
+                  key: 'pqc', 
+                  label: 'PQC DEFENSE', 
+                  icon: <Cpu className="w-4 h-4" />
+                },
               ].map((item) => {
                 const isSelected = activeTab === item.key;
                 return (
@@ -2092,99 +2097,6 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
             {/* ─── TAB: OVERVIEW (EXACT HUB-THEMED REPLICA) ─── */}
             {activeTab === 'overview' && (
               <div className="space-y-4">
-
-                {/* SIH 2026 HYBRID PQC FALLBACK & COGNITIVE AI REMEDIATION PANEL (SIH PS-26141) */}
-                <div className="border border-[#E2E8F0] bg-[#FFFFFF] rounded-[2px] overflow-hidden shadow-none font-mono">
-                  {/* Panel Header Bar */}
-                  <div className="bg-[#F6F3F5] border-b border-[#E2E8F0] px-4 py-2.5 flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className={`w-4 h-4 ${sihSystemState === 'QUANTUM_SECURE' ? 'text-[#065F46]' : 'text-[#BA1A1A]'}`} />
-                      <span className="font-mono text-[10.5px] font-bold uppercase tracking-widest text-[#091426]">
-                        SIH 2026 COGNITIVE DEFENSE CONTROL · HYBRID PQC FALLBACK GATEWAY (PS-26141)
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setShowPqcModelDialog(true)}
-                        className="px-3 py-1 bg-[#FFFFFF] border border-[#0058BE] hover:bg-[#F4F8FF] text-[#0058BE] font-mono text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
-                        title="View PQC Architecture Model & Cryptographic Specifications"
-                      >
-                        <Cpu className="w-3 h-3 text-[#0058BE]" />
-                        <span>VIEW PQC MODEL</span>
-                      </button>
-                      <button
-                        onClick={handleTriggerSihClean}
-                        disabled={sihLoading}
-                        className="px-3 py-1 bg-[#FFFFFF] border border-[#065F46] hover:bg-[#F0FDF4] text-[#065F46] font-mono text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
-                      >
-                        <RefreshCw className={`w-3 h-3 ${sihLoading ? 'animate-spin' : ''}`} />
-                        <span>RESET CLEAN CHANNEL</span>
-                      </button>
-                      <button
-                        onClick={handleTriggerSihAttack}
-                        disabled={sihLoading}
-                        className="px-3 py-1 bg-[#BA1A1A] hover:bg-[#991B1B] text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Zap className="w-3 h-3 text-[#FDE047]" />
-                        <span>TRIGGER ATTACK SIMULATION</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Panel Body */}
-                  <div className="p-4 space-y-3.5 bg-[#FFFFFF]">
-                    {/* 4-Card Metrics Grid */}
-                    <div className="grid grid-cols-4 gap-3 text-[11px]">
-                      <div className={`p-3 rounded-[2px] border ${sihSystemState === 'QUANTUM_SECURE' ? 'bg-[#F0FDF4] border-[#BBF7D0]' : 'bg-[#FEF2F2] border-[#FCA5A5]'}`}>
-                        <span className="text-[#75777D] text-[9.5px] uppercase tracking-wider font-bold block mb-0.5">ACTIVE SYSTEM MODE</span>
-                        <strong className={`text-[12.5px] font-extrabold ${sihSystemState === 'QUANTUM_SECURE' ? 'text-[#065F46]' : 'text-[#BA1A1A]'}`}>
-                          {sihSystemState}
-                        </strong>
-                      </div>
-
-                      <div className="p-3 rounded-[2px] bg-[#F6F3F5] border border-[#E2E8F0]">
-                        <span className="text-[#75777D] text-[9.5px] uppercase tracking-wider font-bold block mb-0.5">QBER / HOEFFDING BOUND</span>
-                        <strong className={`text-[12.5px] font-extrabold ${sihQber > 0.055 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
-                          {(sihQber * 100).toFixed(1)}% <span className="text-[10px] font-normal text-[#75777D]">(Limit: 5.5%)</span>
-                        </strong>
-                      </div>
-
-                      <div className="p-3 rounded-[2px] bg-[#F6F3F5] border border-[#E2E8F0]">
-                        <span className="text-[#75777D] text-[9.5px] uppercase tracking-wider font-bold block mb-0.5">CHSH BELL METRIC (S)</span>
-                        <strong className={`text-[12.5px] font-extrabold ${sihChsh < 2.0 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
-                          S = {sihChsh.toFixed(2)} <span className="text-[10px] font-normal text-[#75777D]">{sihChsh >= 2.0 ? '(Quantum)' : '(Collapsed)'}</span>
-                        </strong>
-                      </div>
-
-                      <div className="p-3 rounded-[2px] bg-[#F6F3F5] border border-[#E2E8F0]">
-                        <span className="text-[#75777D] text-[9.5px] uppercase tracking-wider font-bold block mb-0.5">PQC ALGORITHM</span>
-                        <strong className="text-[12px] font-bold text-[#0058BE]">
-                          Dilithium3 (ML-DSA-65)
-                        </strong>
-                      </div>
-                    </div>
-
-                    {/* AI Cognitive Incident Explainer Box (Light Theme) */}
-                    <div className="bg-[#F6F3F5] border border-[#E2E8F0] p-3.5 rounded-[2px] text-[11px] space-y-2 font-mono">
-                      <div className="flex items-center justify-between text-[#75777D] border-b border-[#E2E8F0] pb-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <Terminal className="w-3.5 h-3.5 text-[#0058BE]" />
-                          <span className="font-bold text-[#091426] text-[10px] uppercase tracking-wider">AI COGNITIVE INCIDENT EXPLAINER (LOCAL OLLAMA ENGINE)</span>
-                        </div>
-                        <span className="text-[#0058BE] text-[9.5px] font-bold uppercase tracking-wider">OFFLINE AIR-GAPPED CONTROL</span>
-                      </div>
-                      <div className="text-[#091426] font-mono text-[10.5px] leading-relaxed whitespace-pre-line max-h-[140px] overflow-y-auto p-1">
-                        {sihAiReport}
-                      </div>
-                      {sihFallbackSig && (
-                        <div className="pt-1.5 border-t border-[#E2E8F0] text-[10px] text-[#75777D] flex items-center justify-between font-mono">
-                          <span>Backup CRYSTALS-Dilithium Public Signature Hash:</span>
-                          <span className="text-[#0058BE] font-bold">{sihFallbackSig}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
 
                 {/* 1. DYNAMIC CRITICAL ALARM BANNER */}
                 {isQberBreach ? (
@@ -4309,6 +4221,216 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                 </div>
               );
             })()}
+
+            {/* ─── TAB 6: PQC DEFENSE OPERATIONS CONTROL (DEDICATED SECTION SIH PS-26141) ─── */}
+            {activeTab === 'pqc' && (
+              <div className="space-y-4 font-mono">
+                {/* Header & Status Legend Row */}
+                <div className="flex justify-between items-baseline border-b border-[#E2E8F0] pb-2.5">
+                  <div>
+                    <h1 className="text-[24px] font-bold text-[#091426] tracking-tight leading-none uppercase font-sans">
+                      PQC DEFENSE OPERATIONS CONTROL
+                    </h1>
+                    <div className="text-[11px] text-[#75777D] mt-1 font-sans">
+                      SIH 2026 Deterministic Hoeffding Threat Gate &amp; NIST Post-Quantum Cryptography Handover (PS-26141)
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowPqcModelDialog(true)}
+                      className="px-3 py-1.5 bg-[#FFFFFF] border border-[#0058BE] hover:bg-[#F4F8FF] text-[#0058BE] text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Cpu className="w-3.5 h-3.5 text-[#0058BE]" />
+                      <span>VIEW PQC ARCHITECTURE MODEL</span>
+                    </button>
+                    <button
+                      onClick={handleTriggerSihClean}
+                      disabled={sihLoading}
+                      className="px-3 py-1.5 bg-[#FFFFFF] border border-[#065F46] hover:bg-[#F0FDF4] text-[#065F46] text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${sihLoading ? 'animate-spin' : ''}`} />
+                      <span>RESET CLEAN CHANNEL</span>
+                    </button>
+                    <button
+                      onClick={handleTriggerSihAttack}
+                      disabled={sihLoading}
+                      className="px-3 py-1.5 bg-[#BA1A1A] hover:bg-[#991B1B] text-white text-[10px] font-bold uppercase tracking-wider rounded-[2px] transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-[#FDE047]" />
+                      <span>TRIGGER ATTACK SIMULATION</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 4-Metric System KPI Cards */}
+                <div className="grid grid-cols-4 gap-3 text-[11px]">
+                  <div className={`p-4 rounded-[2px] border ${sihSystemState === 'QUANTUM_SECURE' ? 'bg-[#F0FDF4] border-[#BBF7D0]' : 'bg-[#FEF2F2] border-[#FCA5A5]'}`}>
+                    <span className="text-[#75777D] text-[10px] uppercase tracking-wider font-bold block mb-1">ACTIVE SYSTEM MODE</span>
+                    <strong className={`text-[15px] font-extrabold ${sihSystemState === 'QUANTUM_SECURE' ? 'text-[#065F46]' : 'text-[#BA1A1A]'}`}>
+                      {sihSystemState}
+                    </strong>
+                    <span className="text-[10px] text-[#75777D] block mt-1">
+                      {sihSystemState === 'QUANTUM_SECURE' ? 'Pristine QDS Teleportation' : 'CRYSTALS-Dilithium3 Fallback Active'}
+                    </span>
+                  </div>
+
+                  <div className="p-4 rounded-[2px] bg-[#F6F3F5] border border-[#E2E8F0]">
+                    <span className="text-[#75777D] text-[10px] uppercase tracking-wider font-bold block mb-1">QBER / HOEFFDING BOUND</span>
+                    <strong className={`text-[15px] font-extrabold ${sihQber > 0.055 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
+                      {(sihQber * 100).toFixed(1)}%
+                    </strong>
+                    <span className="text-[10px] text-[#75777D] block mt-1">
+                      Statistical Cutoff Limit: 5.50%
+                    </span>
+                  </div>
+
+                  <div className="p-4 rounded-[2px] bg-[#F6F3F5] border border-[#E2E8F0]">
+                    <span className="text-[#75777D] text-[10px] uppercase tracking-wider font-bold block mb-1">CHSH BELL METRIC (S)</span>
+                    <strong className={`text-[15px] font-extrabold ${sihChsh < 2.0 ? 'text-[#BA1A1A]' : 'text-[#065F46]'}`}>
+                      S = {sihChsh.toFixed(2)}
+                    </strong>
+                    <span className="text-[10px] text-[#75777D] block mt-1">
+                      {sihChsh >= 2.0 ? 'Quantum Non-Locality Verified (S ≥ 2.0)' : 'State Collapsed (Classical S < 2.0)'}
+                    </span>
+                  </div>
+
+                  <div className="p-4 rounded-[2px] bg-[#F6F3F5] border border-[#E2E8F0]">
+                    <span className="text-[#75777D] text-[10px] uppercase tracking-wider font-bold block mb-1">PQC ALGORITHM (NIST)</span>
+                    <strong className="text-[14px] font-bold text-[#0058BE]">
+                      Dilithium3 (ML-DSA-65)
+                    </strong>
+                    <span className="text-[10px] text-[#75777D] block mt-1">
+                      Key Exchange: Kyber768 (ML-KEM)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Main 2-Column Section */}
+                <div className="grid grid-cols-12 gap-4">
+                  {/* Left Column (8 cols): AI Explainer & NIST Specifications */}
+                  <div className="col-span-8 space-y-4">
+                    {/* Air-Gapped AI Cognitive Explainer Console */}
+                    <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[2px] overflow-hidden shadow-none">
+                      <div className="bg-[#F6F3F5] border-b border-[#E2E8F0] px-4 py-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Terminal className="w-4 h-4 text-[#0058BE]" />
+                          <span className="font-bold text-[#091426] text-[11px] uppercase tracking-wider">
+                            AIR-GAPPED COGNITIVE INCIDENT DIAGNOSIS (OLLAMA PHI-3 ENGINE)
+                          </span>
+                        </div>
+                        <span className="text-[#0058BE] text-[9.5px] font-bold uppercase tracking-wider bg-[#F4F8FF] border border-[#BFDBFE] px-2 py-0.5 rounded-[2px]">
+                          OFFLINE AIR-GAPPED CONTROL
+                        </span>
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <div className="bg-[#F6F3F5] border border-[#E2E8F0] p-4 rounded-[2px] text-[#091426] font-mono text-[11px] leading-relaxed whitespace-pre-line min-h-[160px] overflow-y-auto">
+                          {sihAiReport}
+                        </div>
+                        {sihFallbackSig && (
+                          <div className="p-3 bg-[#FAF8FF] border border-[#D8B4FE] rounded-[2px] text-[10.5px] flex items-center justify-between">
+                            <span className="text-[#75777D]">Backup CRYSTALS-Dilithium Public Signature Hash:</span>
+                            <span className="font-mono text-[#0058BE] font-bold">{sihFallbackSig}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* NIST PQC Specifications & Mathematical Parameters */}
+                    <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[2px] p-4 space-y-3">
+                      <div className="font-bold text-[#091426] text-[11px] uppercase tracking-wider border-b border-[#E2E8F0] pb-2 flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-[#065F46]" />
+                        <span>NIST POST-QUANTUM CRYPTOGRAPHY SPECIFICATIONS (ML-DSA-65)</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-[11px]">
+                        <div className="p-3 bg-[#F6F3F5] border border-[#E2E8F0] rounded-[2px] space-y-1">
+                          <span className="text-[#75777D] text-[10px] font-bold block">MATHEMATICAL HARDNESS ASSUMPTION</span>
+                          <strong className="text-[#091426]">Module Learning-With-Errors (MLWE) &amp; Short Integer Solution (SIS)</strong>
+                        </div>
+                        <div className="p-3 bg-[#F6F3F5] border border-[#E2E8F0] rounded-[2px] space-y-1">
+                          <span className="text-[#75777D] text-[10px] font-bold block">NIST SECURITY LEVEL</span>
+                          <strong className="text-[#065F46]">Category 3 (Equivalent to AES-192 / RSA-4096 Quantum Resistance)</strong>
+                        </div>
+                        <div className="p-3 bg-[#F6F3F5] border border-[#E2E8F0] rounded-[2px] space-y-1">
+                          <span className="text-[#75777D] text-[10px] font-bold block">PUBLIC KEY SIZE / SIGNATURE SIZE</span>
+                          <strong className="text-[#0058BE]">1,952 Bytes Public Key / 3,293 Bytes Signature</strong>
+                        </div>
+                        <div className="p-3 bg-[#F6F3F5] border border-[#E2E8F0] rounded-[2px] space-y-1">
+                          <span className="text-[#75777D] text-[10px] font-bold block">QUANTUM RESISTANCE MARGIN</span>
+                          <strong className="text-[#065F46]">Immune to Shor's Polynomial Quantum Factoring Algorithm</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column (4 cols): Sequence Diagram & Live Hashes */}
+                  <div className="col-span-4 space-y-4">
+                    {/* System Handover Sequence Visualizer */}
+                    <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[2px] p-4 space-y-3">
+                      <div className="font-bold text-[#091426] text-[11px] uppercase tracking-wider border-b border-[#E2E8F0] pb-2 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-[#0058BE]" />
+                        <span>HANDOVER SEQUENCE DIAGRAM</span>
+                      </div>
+                      <div className="space-y-2 text-[10.5px]">
+                        <div className={`p-2.5 rounded-[2px] border flex items-center gap-2.5 ${sihSystemState === 'QUANTUM_SECURE' ? 'bg-[#F0FDF4] border-[#BBF7D0]' : 'bg-[#F6F3F5] border-[#E2E8F0]'}`}>
+                          <span className="w-5 h-5 rounded-full bg-[#065F46] text-white flex items-center justify-center font-bold text-[10px]">1</span>
+                          <div>
+                            <div className="font-bold text-[#091426]">1. Physical QDS Link</div>
+                            <div className="text-[9.5px] text-[#75777D]">EPR Entangled Photons active</div>
+                          </div>
+                        </div>
+
+                        <div className={`p-2.5 rounded-[2px] border flex items-center gap-2.5 ${sihQber > 0.055 ? 'bg-[#FEF2F2] border-[#FCA5A5]' : 'bg-[#F6F3F5] border-[#E2E8F0]'}`}>
+                          <span className="w-5 h-5 rounded-full bg-[#BA1A1A] text-white flex items-center justify-center font-bold text-[10px]">2</span>
+                          <div>
+                            <div className="font-bold text-[#091426]">2. Hoeffding Audit Gate</div>
+                            <div className="text-[9.5px] text-[#75777D]">QBER &gt; 5.5% / CHSH S &lt; 2.0</div>
+                          </div>
+                        </div>
+
+                        <div className={`p-2.5 rounded-[2px] border flex items-center gap-2.5 ${sihSystemState === 'PQC_FALLBACK_ACTIVE' ? 'bg-[#FEF2F2] border-[#FCA5A5]' : 'bg-[#F6F3F5] border-[#E2E8F0]'}`}>
+                          <span className="w-5 h-5 rounded-full bg-[#C2540A] text-white flex items-center justify-center font-bold text-[10px]">3</span>
+                          <div>
+                            <div className="font-bold text-[#091426]">3. Zeroize RAM Keys</div>
+                            <div className="text-[9.5px] text-[#75777D]">Purge un-amplified key buffers</div>
+                          </div>
+                        </div>
+
+                        <div className={`p-2.5 rounded-[2px] border flex items-center gap-2.5 ${sihSystemState === 'PQC_FALLBACK_ACTIVE' ? 'bg-[#F4F8FF] border-[#BFDBFE]' : 'bg-[#F6F3F5] border-[#E2E8F0]'}`}>
+                          <span className="w-5 h-5 rounded-full bg-[#0058BE] text-white flex items-center justify-center font-bold text-[10px]">4</span>
+                          <div>
+                            <div className="font-bold text-[#091426]">4. PQC Signature Handover</div>
+                            <div className="text-[9.5px] text-[#0058BE] font-bold">Dilithium3 Classical Fallback</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Live Cryptographic Token & Hash Inspector */}
+                    <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[2px] p-4 space-y-3">
+                      <div className="font-bold text-[#091426] text-[11px] uppercase tracking-wider border-b border-[#E2E8F0] pb-2 flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-[#0058BE]" />
+                        <span>LIVE KEY TOKEN INSPECTOR</span>
+                      </div>
+                      <div className="space-y-2 text-[10.5px]">
+                        <div>
+                          <span className="text-[#75777D] text-[9.5px] font-bold block uppercase">CURRENT ALICE PUBLIC KEY HASH</span>
+                          <div className="p-2 bg-[#F6F3F5] border border-[#E2E8F0] rounded-[2px] font-mono text-[9.5px] text-[#091426] break-all">
+                            0x8f3c719e4a2d810b5c4f3a1e9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="text-[#75777D] text-[9.5px] font-bold block uppercase">BOB PQC KEY ENCAPSULATION NONCE</span>
+                          <div className="p-2 bg-[#F6F3F5] border border-[#E2E8F0] rounded-[2px] font-mono text-[9.5px] text-[#0058BE] break-all">
+                            0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
           </div>
         </main>
