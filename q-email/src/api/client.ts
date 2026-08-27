@@ -194,6 +194,36 @@ class ApiClient {
     });
   }
 
+  public async injectAttack(type: string, sessionId?: string): Promise<any> {
+    const sess = sessionId || 'QKD-20260827-0001';
+    let endpoint = '/attacks/intercept-resend';
+    let body: any = { session_id: sess, attack_fraction: 0.5 };
+
+    const norm = (type || '').toLowerCase();
+    if (norm.includes('forger')) {
+      endpoint = '/attacks/forgery';
+      body = { session_id: sess, attack_fraction: 0.5 };
+    } else if (norm.includes('replay')) {
+      endpoint = '/attacks/replay';
+      body = { session_id: sess, replay_session_id: 'QKD-20260827-0001' };
+    } else if (norm.includes('noise') || norm.includes('thermal')) {
+      endpoint = '/attacks/noise';
+      body = { session_id: sess, qber_boost: 0.08 };
+    } else if (norm.includes('pns') || norm.includes('split')) {
+      endpoint = '/attacks/pns';
+      body = { session_id: sess, split_fraction: 0.4 };
+    }
+
+    if (this.useMock) {
+      return { success: true, message: `Attack ${type} injected via mock` };
+    }
+
+    return this.fetchApi(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+  }
+
   public async getIncidents(): Promise<{ success: boolean; total_incidents: number; incidents: any[] }> {
     return this.fetchApi('/security/incidents');
   }

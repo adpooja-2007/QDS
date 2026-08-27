@@ -407,7 +407,8 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
     const totalLines = chosen.arbitratorLogs.length;
     let current = 0;
 
-    // Trigger backend FastAPI REST API endpoint for attack simulation
+    // Trigger live FastAPI backend REST API attack injection endpoints (/api/v1/attacks/*)
+    apiClient.injectAttack(key).catch(() => null);
     apiClient.runWorkflow({
       attack_type: key,
       is_eve_active: chosen.securityStatus !== 'SECURE',
@@ -441,7 +442,8 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
     setIsSimulating(true);
     setSimulationPhase('DISTRIBUTING PHOTONS (N=' + photonBatchSize + ')...');
 
-    // Trigger backend FastAPI REST API endpoint for attack simulation
+    // Trigger live FastAPI backend REST API attack injection endpoints (/api/v1/attacks/*)
+    apiClient.injectAttack(selectedScenarioKey).catch(() => null);
     apiClient.runWorkflow({
       attack_type: selectedScenarioKey,
       is_eve_active: scenario.securityStatus !== 'SECURE',
