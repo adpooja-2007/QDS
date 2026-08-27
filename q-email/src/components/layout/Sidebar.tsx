@@ -42,50 +42,50 @@ const NAV_ITEMS: NavItemConfig[] = [
     id: 'home',
     label: 'HOME PORTAL',
     icon: LayoutGrid,
-    symbol: '⊞',
+    symbol: '',
   },
   {
     id: 'demonstration',
     label: 'DEMONSTRATION (A ↔ B)',
     icon: Zap,
-    symbol: '⚡',
+    symbol: '',
   },
   {
     id: 'monitoring',
     label: 'SOC MONITOR & LOGS',
     icon: BarChart3,
-    symbol: '📊',
+    symbol: '',
   },
 
   {
     id: 'quantum-signature',
     label: 'QUANTUM SIGNATURE',
     icon: KeyRound,
-    symbol: '◈',
+    symbol: '',
   },
   {
     id: 'threat-detection',
     label: 'THREAT DETECTION',
     icon: ShieldAlert,
-    symbol: '⚠',
+    symbol: '',
   },
   {
     id: 'investigations',
     label: 'INVESTIGATIONS',
     icon: Search,
-    symbol: '◎',
+    symbol: '',
   },
   {
     id: 'quantum-network',
     label: 'QUANTUM NETWORK',
     icon: Network,
-    symbol: '◇',
+    symbol: '',
   },
   {
     id: 'sessions',
     label: 'SESSION EXPLORER',
     icon: Database,
-    symbol: '▤',
+    symbol: '',
   },
 ];
 

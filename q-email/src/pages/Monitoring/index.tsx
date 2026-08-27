@@ -2581,7 +2581,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                           const fileNameStr = typeof fileInLog === 'string' ? fileInLog : (fileInLog[1] || fileInLog[0]);
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
-                              📄 {fileNameStr}
+                              {fileNameStr}
                             </span>
                           );
                         } else if (textInLog) {
@@ -2589,7 +2589,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                           const first10 = cleanText.slice(0, 10);
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
-                              💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                              "{first10}{cleanText.length > 10 ? '...' : ''}"
                             </span>
                           );
                         } else if (logAny.source === 'transfer' || logAny.isTransfer) {
@@ -2597,13 +2597,13 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                           const first10 = cleanText.slice(0, 10);
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
-                              💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                              "{first10}{cleanText.length > 10 ? '...' : ''}"
                             </span>
                           );
                         } else if (logAny.source === 'demonstration' || logAny.isDemonstration) {
                           payloadDisplay = (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#F3E8FF] border border-[#D8B4FE] text-[#7E22CE] font-mono text-[11px] font-bold">
-                              💬 "demonstrated"
+                              "demonstrated"
                             </span>
                           );
                         } else {
@@ -2614,7 +2614,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                             if (tx.payloadType === 'file' || tx.fileName) {
                               payloadDisplay = (
                                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#EBF3FF] border border-[#BFDBFE] text-[#0058BE] font-mono text-[11px] font-bold">
-                                  📄 {tx.fileName || tx.title || 'qds_document.sig'}
+                                  {tx.fileName || tx.title || 'qds_document.sig'}
                                 </span>
                               );
                             } else {
@@ -2622,7 +2622,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                               const first10 = cleanText.slice(0, 10);
                               payloadDisplay = (
                                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#E6F4EA] border border-[#A7F3D0] text-[#065F46] font-mono text-[11px] font-bold">
-                                  💬 "{first10}{cleanText.length > 10 ? '...' : ''}"
+                                  "{first10}{cleanText.length > 10 ? '...' : ''}"
                                 </span>
                               );
                             }
@@ -2632,7 +2632,7 @@ export const MonitoringPage: React.FC<MonitoringPageProps> = ({
                             const first10 = cleanMsg.slice(0, 10);
                             payloadDisplay = (
                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#F1F5F9] border border-[#CBD5E1] text-[#334155] font-mono text-[11px] font-medium">
-                                💬 "{first10}{cleanMsg.length > 10 ? '...' : ''}"
+                                "{first10}{cleanMsg.length > 10 ? '...' : ''}"
                               </span>
                             );
                           }

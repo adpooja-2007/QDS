@@ -489,10 +489,10 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
         setSimulationPhase('');
 
         if (chosen.securityStatus === 'SECURE') {
-          showToast('✓ Handshake verified: Zero eavesdropping detected. QDS signature ACCEPT.');
+          showToast('Handshake verified: Zero eavesdropping detected. QDS signature ACCEPT.');
           sentinelService.pushAttackIncident(key, chosen.name, chosen.qber, chosen.chsh, chosen.securityStatus, chosen.arbitratorLogs);
         } else {
-          showToast(`⚠ Threat Detected: ${chosen.name} flagged. Handshake REJECTED.`);
+          showToast(`Threat Detected: ${chosen.name} flagged. Handshake REJECTED.`);
           sentinelService.pushAttackIncident(key, chosen.name, chosen.qber, chosen.chsh, chosen.securityStatus, chosen.arbitratorLogs);
         }
       }
@@ -526,10 +526,10 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
         setSimulationPhase('');
 
         if (scenario.securityStatus === 'SECURE') {
-          showToast('✓ Handshake verified: Zero eavesdropping detected. QDS signature ACCEPT.');
+          showToast('Handshake verified: Zero eavesdropping detected. QDS signature ACCEPT.');
           sentinelService.pushAttackIncident(selectedScenarioKey, scenario.name, scenario.qber, scenario.chsh, scenario.securityStatus, scenario.arbitratorLogs);
         } else {
-          showToast(`⚠ Security Breach: ${scenario.name} detected. Handshake REJECTED.`);
+          showToast(`Security Breach: ${scenario.name} detected. Handshake REJECTED.`);
           sentinelService.pushAttackIncident(selectedScenarioKey, scenario.name, scenario.qber, scenario.chsh, scenario.securityStatus, scenario.arbitratorLogs);
         }
       }

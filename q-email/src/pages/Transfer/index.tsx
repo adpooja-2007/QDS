@@ -621,12 +621,12 @@ export const TransferPage: React.FC<TransferPageProps> = ({
                   <span className="text-[#38BDF8]">STEP {transmitStep}/4</span>
                 </div>
 
-                {transmitStep >= 1 && <p className="text-[#34D399]">✓ [STEP 1] Photons captured on port SNSPD-01 (λ=1550nm)...</p>}
-                {transmitStep >= 2 && <p className="text-[#38BDF8]">✓ [STEP 2] Received classical feed-forward bits (b1=1, b2=0)...</p>}
-                {transmitStep >= 3 && <p className="text-[#FBBF24]">✓ [STEP 3] Applying Pauli unitary operator σ_x · σ_z...</p>}
+                {transmitStep >= 1 && <p className="text-[#34D399]">[STEP 1] Photons captured on port SNSPD-01 (λ=1550nm)...</p>}
+                {transmitStep >= 2 && <p className="text-[#38BDF8]">[STEP 2] Received classical feed-forward bits (b1=1, b2=0)...</p>}
+                {transmitStep >= 3 && <p className="text-[#FBBF24]">[STEP 3] Applying Pauli unitary operator σ_x · σ_z...</p>}
                 {transmitStep >= 4 && (
                   <p className={isEveActive ? 'text-[#EF4444] font-bold' : 'text-[#34D399] font-bold'}>
-                    {isEveActive ? '✖ [STEP 4] VERIFICATION FAILED! QBER 14.2% > 5.5% (EVE DETECTED)' : '✓ [STEP 4] SHA-256 MATCH CONFIRMED (100% BYTE INTEGRITY)'}
+                    {isEveActive ? '[STEP 4] VERIFICATION FAILED! QBER 14.2% > 5.5% (EVE DETECTED)' : '[STEP 4] SHA-256 MATCH CONFIRMED (100% BYTE INTEGRITY)'}
                   </p>
                 )}
               </div>
@@ -659,7 +659,7 @@ export const TransferPage: React.FC<TransferPageProps> = ({
                             ? 'bg-[#E6F4EA] text-[#065F46] border-[#A7F3D0]'
                             : 'bg-[#FEE2E2] text-[#BA1A1A] border-[#FCA5A5]'
                         }`}>
-                          {msg.status === 'VERIFIED' ? '✓ VERIFIED & MATCHED' : '✖ REJECTED (EVE TAP)'}
+                          {msg.status === 'VERIFIED' ? 'VERIFIED & MATCHED' : 'REJECTED (EVE TAP)'}
                         </Badge>
                         <span className="text-[11px] font-mono text-[#64748B]">{msg.id}</span>
                       </div>
