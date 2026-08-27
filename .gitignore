@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.log
+*.zip
+node_modules/
+dist/
+q-email/node_modules/
+q-email/dist/
+frontend/node_modules/
+frontend/dist/
+db-dashboard/node_modules/
+db-dashboard/dist/
+.tempmediaStorage/
+

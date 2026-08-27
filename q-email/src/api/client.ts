@@ -1,0 +1,240 @@
+import {
+  QuantumSession,
+  SecurityReport,
+  SignatureInfo,
+  SystemNode,
+  ProtocolEvent,
+  TelemetryEvent,
+  CreateSessionPayload,
+  MockScenarioType
+} from '../types';
+import { mockApiClient } from './mockClient';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+const USE_MOCK = import.meta.env.VITE_USE_MOCK_API === 'true';
+
+class ApiClient {
+  private useMock: boolean = USE_MOCK;
+
+  public isMockMode(): boolean {
+    return this.useMock;
+  }
+
+  public setMockMode(enabled: boolean): void {
+    this.useMock = enabled;
+  }
+
+  public setMockScenario(scenario: MockScenarioType): void {
+    mockApiClient.setScenario(scenario);
+  }
+
+  public getMockScenario(): MockScenarioType {
+    return mockApiClient.getScenario();
+  }
+
+  private async fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    try {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+        ...options,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.detail || errorBody.message || `API Error: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        throw new Error(`[Security Console API] ${err.message}`);
+      }
+      throw new Error('[Security Console API] An unexpected network error occurred.');
+    }
+  }
+
+  public async getHealth(): Promise<{ status: string; module?: string; version: string; active_sessions?: number; telemetry_entries?: number }> {
+    if (this.useMock) return mockApiClient.getHealth();
+    return this.fetchApi('/health');
+  }
+
+  public async getNodes(): Promise<any[]> {
+    if (this.useMock) return mockApiClient.getNodes();
+    return this.fetchApi('/nodes');
+  }
+
+  public async runWorkflow(payload: {
+    document_name?: string;
+    file_size_kb?: number;
+    num_pairs?: number;
+    baseline_noise?: number;
+    alpha?: number;
+    is_eve_active?: boolean;
+    attack_type?: string;
+    attack_fraction?: number;
+  }): Promise<any> {
+    return this.fetchApi('/sessions/run-workflow', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  public async getSessions(): Promise<any> {
+    if (this.useMock) return { sessions: [] };
+    return this.fetchApi('/arbitrator/sessions');
+  }
+
+  public async getTelemetryLog(): Promise<any> {
+    if (this.useMock) return { entries: [] };
+    return this.fetchApi('/sessions/telemetry/recent');
+  }
+
+  public async sendStepTelemetry(payload: {
+    step: number;
+    step_name?: string;
+    is_eve_active?: boolean;
+    attack_type?: string;
+  }): Promise<any> {
+    if (this.useMock) return { success: true };
+    return this.fetchApi('/sessions/step-telemetry', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }).catch(() => ({ success: false }));
+  }
+
+
+  public async createSession(payload: CreateSessionPayload): Promise<QuantumSession> {
+    if (this.useMock) return mockApiClient.createSession(payload);
+    return this.fetchApi('/sessions', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  public async getSession(sessionId: string): Promise<QuantumSession> {
+    if (this.useMock) return mockApiClient.getSession(sessionId);
+    return this.fetchApi(`/sessions/${sessionId}`);
+  }
+
+  public async runSession(sessionId: string): Promise<{ session_id: string; status: string; steps_completed: string[] }> {
+    if (this.useMock) return mockApiClient.runSession(sessionId);
+    return this.fetchApi(`/sessions/${sessionId}/run`, {
+      method: 'POST'
+    });
+  }
+
+  public async signDocument(payload: { session_id: string; document_name: string }): Promise<SignatureInfo> {
+    if (this.useMock) return mockApiClient.signDocument(payload);
+    return this.fetchApi('/alice/sign', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  public async verifySession(payload: { session_id: string }): Promise<{ verified: boolean; status: string }> {
+    if (this.useMock) return mockApiClient.verifySession(payload);
+    return this.fetchApi('/bob/verify', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  public async runSecurityAudit(sessionId: string): Promise<SecurityReport> {
+    if (this.useMock) return mockApiClient.runSecurityAudit(sessionId);
+    return this.fetchApi('/security/threshold-audit', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId })
+    });
+  }
+
+  public async getSecurityReport(sessionId: string): Promise<SecurityReport> {
+    if (this.useMock) return mockApiClient.getSecurityReport(sessionId);
+    return this.fetchApi(`/security/report/${sessionId}`);
+  }
+
+  public async getEvents(sessionId: string): Promise<ProtocolEvent[]> {
+    if (this.useMock) return mockApiClient.getEvents(sessionId);
+    return this.fetchApi(`/events/${sessionId}`);
+  }
+
+  public async getTelemetry(sessionId: string): Promise<TelemetryEvent[]> {
+    if (this.useMock) return mockApiClient.getTelemetry(sessionId);
+    return this.fetchApi(`/telemetry/${sessionId}`);
+  }
+
+  public async getQberRuns(sessionId: string): Promise<{ run: number; observed: number; baseline: number; threshold: number }[]> {
+    if (this.useMock) return mockApiClient.getQberRuns(sessionId);
+    return this.fetchApi(`/telemetry/${sessionId}/qber-runs`);
+  }
+
+  public async getThreatAnomalies(): Promise<{ success: boolean; total_anomalies: number; anomalies: any[] }> {
+    return this.fetchApi('/security/threat-anomalies');
+  }
+
+  public async deployCountermeasure(payload: { protocol: string; target_node?: string; session_id?: string }): Promise<any> {
+    return this.fetchApi('/security/countermeasure/deploy', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  public async quarantineNode(payload: { node_id: string; action: 'quarantine' | 'restore' }): Promise<{ success: boolean; message: string; quarantined_nodes: string[] }> {
+    return this.fetchApi('/security/nodes/quarantine', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  public async purgeQubitBuffer(): Promise<{ success: boolean; message: string; purged_at: string }> {
+    return this.fetchApi('/security/buffer/purge', {
+      method: 'POST'
+    });
+  }
+
+  public async getIncidents(): Promise<{ success: boolean; total_incidents: number; incidents: any[] }> {
+    return this.fetchApi('/security/incidents');
+  }
+
+  public async resolveIncident(payload: { incident_id: string; resolution_note?: string }): Promise<{ success: boolean; message: string; incident: any }> {
+    return this.fetchApi('/security/incidents/resolve', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  public async getSessionChannels(): Promise<{ success: boolean; total_active_streams: number; channels: any[] }> {
+    return this.fetchApi('/security/sessions');
+  }
+
+  public async triggerSessionChannelAction(payload: { channel_id: string; action: 'sync' | 'terminate' }): Promise<{ success: boolean; message: string; channel: any }> {
+    return this.fetchApi('/security/sessions/action', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  public async createSessionChannel(payload: { endpoint: string; status?: string; fidelity_type?: string; key_rate?: number }): Promise<{ success: boolean; message: string; channel: any }> {
+    return this.fetchApi('/security/sessions/create', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  public async closeSession(sessionId: string): Promise<{ session_id: string; status: string }> {
+    if (this.useMock) return mockApiClient.closeSession(sessionId);
+    return this.fetchApi(`/sessions/${sessionId}/close`, {
+      method: 'POST'
+    });
+  }
+
+  public resetMockSession(): void {
+    mockApiClient.resetToClean();
+  }
+}
+
+export const apiClient = new ApiClient();
+
+

@@ -1,0 +1,232 @@
+@font-face {
+  font-family: 'Zegion';
+  src: url('/fonts/Zegion.otf') format('opentype'),
+       url('/fonts/Zegion.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Zegion';
+  src: url('/fonts/Zegion-Oblique.otf') format('opentype'),
+       url('/fonts/Zegion-Oblique.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* ─── KINETIC PRECISION LIGHT ─── */
+  --surface: #fbf8fa;
+  --surface-dim: #dcd9db;
+  --surface-bright: #fbf8fa;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f5f3f4;
+  --surface-container: #f0edef;
+  --surface-container-high: #eae7e9;
+  --surface-container-highest: #e4e2e3;
+  --on-surface: #1b1b1d;
+  --on-surface-variant: #45474c;
+  --outline: #75777d;
+  --outline-variant: #c5c6cd;
+  --surface-tint: #545f73;
+  --primary: #091426;
+  --on-primary: #ffffff;
+  --primary-container: #1e293b;
+  --on-primary-container: #8590a6;
+  --secondary: #516072;
+  --on-secondary: #ffffff;
+  --secondary-container: #d2e1f7;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --border-subtle: #e2e8f0;
+  --card-bg: #ffffff;
+  --header-bg: #ffffff;
+  --sidebar-bg: #ffffff;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Zegion', sans-serif !important;
+  }
+
+  html, body {
+    background-color: #fbf8fa;
+    color: #1b1b1d;
+    font-family: 'Zegion', sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, select, textarea, label, table, th, td, code, pre, b, strong, i, em {
+    font-family: 'Zegion', sans-serif !important;
+  }
+
+  /* Universal Rounded-Full Button Rule & Pointer */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+    border-radius: 9999px;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #ffffff;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #E2E8F0;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #75777d;
+  }
+}
+
+@layer components {
+  /* UI Panels */
+  .ui-panel {
+    border: 1px solid #E2E8F0;
+    background-color: #fbf8fa;
+    border-radius: 0.25rem;
+  }
+
+  .ui-btn-primary {
+    background-color: #1e293b;
+    color: #ffffff;
+    border-radius: 0.25rem;
+    padding: 4px 16px;
+    font-family: 'Zegion', sans-serif !important;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .ui-btn-primary:hover {
+    opacity: 0.9;
+  }
+
+  .ui-btn-secondary {
+    background-color: transparent;
+    color: #1e293b;
+    border: 1px solid #1e293b;
+    border-radius: 0.25rem;
+    padding: 4px 16px;
+    font-family: 'Zegion', sans-serif !important;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .ui-btn-secondary:hover {
+    border-color: #0058be;
+    color: #0058be;
+  }
+
+  .ui-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.25rem;
+    color: #1e293b;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+  .ui-btn-icon:hover {
+    border-color: #0058be;
+    color: #0058be;
+    background-color: #e4e2e4;
+  }
+
+  .sentinel-card {
+    background-color: #ffffff;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.25rem;
+  }
+
+  .sentinel-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #091426;
+    font-family: 'Zegion', sans-serif !important;
+  }
+
+  .sentinel-card-subtitle {
+    font-size: 11px;
+    color: #45474c;
+    font-family: 'Zegion', sans-serif !important;
+  }
+
+  .sentinel-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #45474c;
+    font-family: 'Zegion', sans-serif !important;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .font-display, .font-heading, .font-body, .font-sans, .font-mono, .font-data-mono, .font-label-mono {
+    font-family: 'Zegion', sans-serif !important;
+  }
+}
+
+/* Smooth Radix UI Animations */
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0)
+      scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1));
+  }
+}
+@keyframes exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0)
+      scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1));
+  }
+}
+
+.animate-in {
+  animation: enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.animate-out {
+  animation: exit 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fade-in-0 {
+  --tw-enter-opacity: 0;
+}
+.fade-out-0 {
+  --tw-exit-opacity: 0;
+}
+.zoom-in-95 {
+  --tw-enter-scale: 0.95;
+}
+.zoom-out-95 {
+  --tw-exit-scale: 0.95;
+}
+
