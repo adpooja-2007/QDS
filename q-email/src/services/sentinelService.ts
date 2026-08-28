@@ -785,11 +785,12 @@ class SentinelService {
     const isBreach = securityStatus !== 'SECURE';
     const meta = this.resolveAttackMetadata(scenarioName || scenarioKey, isBreach);
     const qberPercent = Number((qberFraction * 100).toFixed(2));
-    const timeStr24 = new Date().toLocaleTimeString('en-US', { hour12: false }) + '.' + Math.floor(100 + Math.random() * 900);
+    const nowTime = new Date();
+    const timeStr24 = formatISTTime(nowTime, true);
 
     const classification = classifyQuantumData(qberPercent, chshScore, scenarioKey);
 
-    const newItem = {
+    const mainEvent = {
       id: Date.now().toString(),
       timestamp: timeStr24,
       subsystem: isBreach ? meta.subsystem : 'ARBITRATOR',
@@ -801,7 +802,7 @@ class SentinelService {
         : `Quantum signature handshake verified nominal. QBER ${qberPercent}%, S=${chshScore.toFixed(2)}.`,
       qber: qberPercent,
       chsh_score: chshScore,
-      security_score: isBreach ? (securityStatus === 'DEGRADED' ? 'Degraded' : 'Degraded') : 'Secure',
+      security_score: isBreach ? 'Degraded' : 'Secure',
       is_error: isBreach,
       reason: isBreach ? meta.reason : undefined,
       classification: classification,
@@ -809,19 +810,72 @@ class SentinelService {
       confidence_score: classification.confidence,
     };
 
-    // Prepend new attack item to front of live stream array (NO SORTING BUG DISCARDING NEW ITEMS)
-    this.liveStream = [newItem, ...this.liveStream.filter(i => i.id !== newItem.id)].slice(0, 15);
+    let packetsToAdd: any[] = [mainEvent];
+    if (isBreach) {
+      packetsToAdd = [
+        mainEvent,
+        {
+          id: (Date.now() + 1).toString(),
+          timestamp: formatISTTime(new Date(nowTime.getTime() - 100), true),
+          subsystem: 'HOEFFDING CHK',
+          event_type: 'Statistical Bound Audit',
+          latency_ms: 14,
+          status_code: 500,
+          message: `Hoeffding bound breach: observed QBER ${qberPercent}% > 5.50% statistical threshold.`,
+          qber: qberPercent,
+          chsh_score: chshScore,
+          security_score: 'Degraded',
+          is_error: true,
+          reason: 'Hoeffding bound violation',
+          classification,
+        },
+        {
+          id: (Date.now() + 2).toString(),
+          timestamp: formatISTTime(new Date(nowTime.getTime() - 250), true),
+          subsystem: 'CHSH EVAL',
+          event_type: `Bell Test (S=${chshScore.toFixed(2)})`,
+          latency_ms: 19,
+          status_code: 500,
+          message: `CHSH Bell test failed: S=${chshScore.toFixed(2)} collapsed to classical limit (S < 2.00).`,
+          qber: qberPercent,
+          chsh_score: chshScore,
+          security_score: 'Degraded',
+          is_error: true,
+          reason: 'Bell non-locality collapsed',
+          classification,
+        },
+        {
+          id: (Date.now() + 3).toString(),
+          timestamp: formatISTTime(new Date(nowTime.getTime() - 400), true),
+          subsystem: 'PQC GATEWAY',
+          event_type: 'Dilithium3 Fallback Handover',
+          latency_ms: 6,
+          status_code: 200,
+          message: 'Hot-swap initiated: NIST CRYSTALS-Dilithium3 (ML-DSA-65) active for unforgeable payload delivery.',
+          qber: qberPercent,
+          chsh_score: chshScore,
+          security_score: 'Degraded',
+          is_error: false,
+          classification,
+        }
+      ];
+    }
 
-    this.telemetry.unshift({
-      id: newItem.id,
-      timestamp: newItem.timestamp,
-      subsystem: newItem.subsystem as any,
-      event_type: newItem.event_type,
-      latency_ms: newItem.latency_ms,
-      status_code: newItem.status_code,
-      message: newItem.message,
+    // Prepend all packets to front of live stream
+    this.liveStream = [...packetsToAdd, ...this.liveStream.filter(i => !packetsToAdd.some(p => p.id === i.id))].slice(0, 20);
+
+    packetsToAdd.forEach(p => {
+      this.telemetry.unshift({
+        id: p.id,
+        timestamp: p.timestamp,
+        subsystem: p.subsystem as any,
+        event_type: p.event_type,
+        latency_ms: p.latency_ms,
+        status_code: p.status_code,
+        message: p.message,
+      });
     });
-    if (this.telemetry.length > 50) this.telemetry.pop();
+    if (this.telemetry.length > 50) this.telemetry = this.telemetry.slice(0, 50);
 
     const nowIso = new Date().toISOString();
     const sessId = `QDS-${new Date().getFullYear()}-${isBreach ? scenarioKey.toUpperCase() : 'CLEAN'}-${Date.now().toString().slice(-4)}`;
@@ -900,17 +954,17 @@ class SentinelService {
 
     try {
       if (this.broadcastChannel) {
-        this.broadcastChannel.postMessage({ type: 'NEW_TELEMETRY_ITEM', payload: newItem });
+        this.broadcastChannel.postMessage({ type: 'NEW_TELEMETRY_ITEM', payload: mainEvent });
       }
     } catch {}
 
     try {
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('qds:telemetry-update', { detail: newItem }));
+        window.dispatchEvent(new CustomEvent('qds:telemetry-update', { detail: mainEvent }));
         window.dispatchEvent(new CustomEvent('qds_attack_launched', { 
           detail: { 
             newSession, 
-            newItem, 
+            newItem: mainEvent, 
             newIncident: isBreach ? newIncident : null,
             qberPercent,
             chshScore,
@@ -918,14 +972,73 @@ class SentinelService {
           } 
         }));
 
-        if (isBreach) {
+        if (isBreach && newIncident) {
           window.dispatchEvent(new CustomEvent('qds_incident_created', { detail: newIncident }));
           try {
             const saved = localStorage.getItem('qds_incidents_list');
             const list = saved ? JSON.parse(saved) : [];
-            const updatedList = [newIncident, ...list.filter((i: any) => i.id !== newIncident.id)];
+            const updatedList = [newIncident, ...list.filter((i: any) => i.id !== newIncident!.id)];
             localStorage.setItem('qds_incidents_list', JSON.stringify(updatedList));
             localStorage.setItem('qds_selected_incident_id', newIncident.id);
+          } catch {}
+
+          try {
+            const savedThreats = localStorage.getItem('qds_threat_anomalies');
+            const threatsList = savedThreats ? JSON.parse(savedThreats) : [];
+            const newThreat = {
+              id: `THR-LIVE-${Date.now().toString().slice(-4)}`,
+              severity: meta.severity,
+              origin_node: 'QN-EVE (Probe)',
+              anomaly_type: meta.category,
+              time: formatISTTime(new Date(), false),
+              title: meta.threatTitle,
+              telemetry: {
+                node: 'QN-BOB (Receiver)',
+                baseline_qber: '1.8%',
+                current_qber: `${qberPercent}%`,
+              },
+              risk_bars: [
+                { height: 95, color: '#BA1A1A' },
+                { height: 100, color: '#BA1A1A' },
+                { height: 85, color: '#BA1A1A' },
+                { height: 90, color: '#BA1A1A' },
+              ]
+            };
+            const updatedThreats = [newThreat, ...threatsList.filter((t: any) => t.id !== newThreat.id)];
+            localStorage.setItem('qds_threat_anomalies', JSON.stringify(updatedThreats));
+            localStorage.setItem('qds_selected_threat_anomaly', JSON.stringify(newThreat));
+          } catch {}
+
+          try {
+            const savedChannels = localStorage.getItem('qds_session_channels');
+            const chList = savedChannels ? JSON.parse(savedChannels) : [];
+            if (Array.isArray(chList) && chList.length > 0) {
+              const updatedChannels = chList.map((ch: any, idx: number) => idx === 0 ? {
+                ...ch,
+                status: 'DEGRADED',
+                statusColor: '#C2540A',
+                keyRate: '82.5',
+                fidelity_type: 'step_dip'
+              } : ch);
+              localStorage.setItem('qds_session_channels', JSON.stringify(updatedChannels));
+              window.dispatchEvent(new CustomEvent('qds_session_created', { detail: updatedChannels }));
+            }
+          } catch {}
+        } else {
+          try {
+            const savedChannels = localStorage.getItem('qds_session_channels');
+            const chList = savedChannels ? JSON.parse(savedChannels) : [];
+            if (Array.isArray(chList) && chList.length > 0) {
+              const updatedChannels = chList.map((ch: any, idx: number) => idx === 0 ? {
+                ...ch,
+                status: 'STABLE',
+                statusColor: '#065F46',
+                keyRate: '245.8',
+                fidelity_type: 'sine_tick'
+              } : ch);
+              localStorage.setItem('qds_session_channels', JSON.stringify(updatedChannels));
+              window.dispatchEvent(new CustomEvent('qds_session_created', { detail: updatedChannels }));
+            }
           } catch {}
         }
       }

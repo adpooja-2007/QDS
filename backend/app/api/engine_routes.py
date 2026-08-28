@@ -37,7 +37,7 @@ from app.models.output_models import (
     StandardErrorResponse,
 )
 
-router = APIRouter(prefix=settings.API_PREFIX + "/security", tags=["Security Threat Engine"])
+router = APIRouter(prefix=settings.API_PREFIX + "/engine", tags=["Security Threat Engine"])
 
 
 @router.get("/health", summary="Module Health Check")

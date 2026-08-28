@@ -14,7 +14,7 @@ from app.schemas.common import BaseResponse
 
 class InterceptResendRequest(BaseModel):
     """Request to inject an intercept-resend (MitM) attack."""
-    session_id: str = Field(..., description="Target session ID")
+    session_id: str = Field(default="QKD-260827-91F4", description="Target session ID")
     attack_fraction: float = Field(
         default=0.25, ge=0.0, le=1.0,
         description="Fraction of qubits intercepted by Eve (0.0 to 1.0)"
@@ -29,7 +29,7 @@ class InterceptResendRequest(BaseModel):
 
 class ForgeryRequest(BaseModel):
     """Request to inject a classical signature forgery attack."""
-    session_id: str = Field(..., description="Target session ID")
+    session_id: str = Field(default="QKD-260827-91F4", description="Target session ID")
     attack_fraction: float = Field(
         default=0.10, ge=0.0, le=1.0,
         description="Fraction of classical feed-forward bits to modify"
@@ -41,10 +41,10 @@ class ForgeryRequest(BaseModel):
 class ReplayRequest(BaseModel):
     """Request to attempt a replay attack."""
     session_id: str = Field(
-        ..., description="Current active session to attack"
+        default="QKD-260827-91F4", description="Current active session to attack"
     )
     replay_session_id: str = Field(
-        ..., description="Previous session whose data to replay"
+        default="QKD-260827-8EE9", description="Previous session whose data to replay"
     )
 
 
@@ -52,7 +52,7 @@ class ReplayRequest(BaseModel):
 
 class NoiseRequest(BaseModel):
     """Request to inject physical channel noise."""
-    session_id: str = Field(..., description="Target session ID")
+    session_id: str = Field(default="QKD-260827-91F4", description="Target session ID")
     noise_model: str = Field(
         default="DEPOLARIZING",
         description="Noise model: DEPOLARIZING, BIT_FLIP, PHASE_FLIP, AMPLITUDE_DAMPING"
@@ -67,7 +67,7 @@ class NoiseRequest(BaseModel):
 
 class PNSRequest(BaseModel):
     """Request to inject a PNS attack."""
-    session_id: str = Field(..., description="Target session ID")
+    session_id: str = Field(default="QKD-260827-91F4", description="Target session ID")
     intensity: float = Field(
         default=0.20, ge=0.0, le=1.0,
         description="Multi-photon splitting intensity"

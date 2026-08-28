@@ -463,13 +463,22 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
     setSelectedScenarioKey(key);
     setVisibleLinesCount(0);
     setIsSimulating(true);
-    setSimulationPhase('INITIALIZING PROTOCOL...');
+    setSimulationPhase('INITIALIZING PROTOCOL (BB84 EXT)...');
 
     const chosen = ATTACK_SCENARIOS[key];
     const totalLines = chosen.arbitratorLogs.length;
     let current = 0;
 
-    // Trigger live FastAPI backend REST API attack injection endpoints (/api/v1/attacks/*)
+    // Immediately push to Sentinel Engine and Live Telemetry Stream
+    sentinelService.pushAttackIncident(key, chosen.name, chosen.qber, chosen.chsh, chosen.securityStatus, chosen.arbitratorLogs);
+
+    if (chosen.securityStatus === 'SECURE') {
+      showToast('Handshake verified: Clean quantum channel active.');
+    } else {
+      showToast(`Adversarial Injection Active: ${chosen.name}. Live SOC Telemetry synced.`);
+    }
+
+    // Trigger live FastAPI backend REST API attack injection endpoints
     apiClient.injectAttack(key).catch(() => null);
     apiClient.runWorkflow({
       attack_type: key,
@@ -481,22 +490,19 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
     const interval = setInterval(() => {
       current += 1;
       setVisibleLinesCount(current);
-      if (current === 2) setSimulationPhase('TRANSMITTING PHOTONS...');
-      if (current === 5) setSimulationPhase('EVALUATING BELL TEST...');
+      if (current === 2) setSimulationPhase('TRANSMITTING PHOTONS (N=1024, λ=1550nm)...');
+      if (current === 4) setSimulationPhase('RECONCILING MEASUREMENT BASES & SIFTING...');
+      if (current === 6) setSimulationPhase('EVALUATING HOEFFDING & CHSH BELL TEST...');
       if (current >= totalLines) {
         clearInterval(interval);
         setIsSimulating(false);
-        setSimulationPhase('');
-
-        if (chosen.securityStatus === 'SECURE') {
-          showToast('Handshake verified: Zero eavesdropping detected. QDS signature ACCEPT.');
-          sentinelService.pushAttackIncident(key, chosen.name, chosen.qber, chosen.chsh, chosen.securityStatus, chosen.arbitratorLogs);
-        } else {
-          showToast(`Threat Detected: ${chosen.name} flagged. Handshake REJECTED.`);
-          sentinelService.pushAttackIncident(key, chosen.name, chosen.qber, chosen.chsh, chosen.securityStatus, chosen.arbitratorLogs);
-        }
+        setSimulationPhase(
+          chosen.securityStatus === 'SECURE'
+            ? 'PROTOCOL VERIFIED · ACCEPT · QDS SEALED'
+            : `SECURITY BREACH · ${chosen.name.toUpperCase()} · PQC FALLBACK ENGAGED`
+        );
       }
-    }, 120);
+    }, 110);
   };
 
   const handleInitiateHandshake = () => {
@@ -504,7 +510,16 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
     setIsSimulating(true);
     setSimulationPhase('DISTRIBUTING PHOTONS (N=' + photonBatchSize + ')...');
 
-    // Trigger live FastAPI backend REST API attack injection endpoints (/api/v1/attacks/*)
+    // Immediately push to Sentinel Engine and Live Telemetry Stream
+    sentinelService.pushAttackIncident(selectedScenarioKey, scenario.name, scenario.qber, scenario.chsh, scenario.securityStatus, scenario.arbitratorLogs);
+
+    if (scenario.securityStatus === 'SECURE') {
+      showToast('Initiating handshake: Zero eavesdropping detected.');
+    } else {
+      showToast(`Security Breach Detected: ${scenario.name}. SOC Telemetry synced.`);
+    }
+
+    // Trigger live FastAPI backend REST API attack injection endpoints
     apiClient.injectAttack(selectedScenarioKey).catch(() => null);
     apiClient.runWorkflow({
       attack_type: selectedScenarioKey,
@@ -518,22 +533,18 @@ export const AttackSandboxPage: React.FC<AttackSandboxProps> = ({
     const interval = setInterval(() => {
       current += 1;
       setVisibleLinesCount(current);
-      if (current === 3) setSimulationPhase('RECONCILING MEASUREMENT BASES...');
+      if (current === 3) setSimulationPhase('RECONCILING MEASUREMENT BASES & SIFTING...');
       if (current === 6) setSimulationPhase('CALCULATING CHSH BELL INEQUALITY...');
       if (current >= totalLines) {
         clearInterval(interval);
         setIsSimulating(false);
-        setSimulationPhase('');
-
-        if (scenario.securityStatus === 'SECURE') {
-          showToast('Handshake verified: Zero eavesdropping detected. QDS signature ACCEPT.');
-          sentinelService.pushAttackIncident(selectedScenarioKey, scenario.name, scenario.qber, scenario.chsh, scenario.securityStatus, scenario.arbitratorLogs);
-        } else {
-          showToast(`Security Breach: ${scenario.name} detected. Handshake REJECTED.`);
-          sentinelService.pushAttackIncident(selectedScenarioKey, scenario.name, scenario.qber, scenario.chsh, scenario.securityStatus, scenario.arbitratorLogs);
-        }
+        setSimulationPhase(
+          scenario.securityStatus === 'SECURE'
+            ? 'HANDSHAKE ACCEPTED · QUANTUM NON-LOCALITY SEALED'
+            : `HANDSHAKE REJECTED · ${scenario.name.toUpperCase()} FLAGGED`
+        );
       }
-    }, 140);
+    }, 120);
   };
 
   const handleCopyTerminalLogs = (title: string, logs: string[]) => {
