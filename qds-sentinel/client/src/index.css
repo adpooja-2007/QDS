@@ -111,7 +111,7 @@ button:not(:disabled), a { cursor: pointer; }
 .topbar { min-height: 72px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 34px; }.topbar-heading { min-width: 0; }.topbar-identity { display: flex; align-items: center; gap: 7px; margin-bottom: 11px; color: var(--slate); font: 9px var(--mono); letter-spacing: .1em; }.topbar-identity img { width: 17px; height: 17px; padding: 2px; border-radius: 50%; background: var(--copper); }.topbar-identity i { width: 32px; height: 1px; display: inline-block; margin-left: 2px; background: var(--copper); }
 .topbar h1 { margin: 6px 0 8px; color: var(--ink); font: 400 clamp(30px, 3.2vw, 48px)/.98 var(--serif); letter-spacing: -.025em; }
 .topbar-subtitle { color: var(--slate); font-family: var(--sans); font-size: 12px; letter-spacing: .015em; text-transform: none; }
-.topbar-actions { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
+.topbar-actions { display: flex; align-items: center; gap: 12px; padding-top: 4px; padding-right: 28px; }
 .live-ping { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); color: var(--slate); font: 10px var(--mono); letter-spacing: .08em; }
 .live-ping strong { color: var(--ink); font-size: 11px; letter-spacing: 0; }
 .button { min-height: 38px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; font-size: 12px; transition: transform 160ms cubic-bezier(.23,1,.32,1), background 160ms ease, color 160ms ease, border 160ms ease; }
@@ -606,7 +606,8 @@ button:not(:disabled), a { cursor: pointer; }
 .network-v2-links .network-v2-link-tag text { font: 1.32px var(--mono); dominant-baseline: middle; }.network-v2-links .network-v2-link-tag rect { stroke-width: .12; }
 
 /* Monitoring utility lock: the control group keeps the same anchor and order in every SOC section. */
-.monitoring-page .topbar { display: grid; grid-template-columns: minmax(0, 1fr) max-content; align-items: start; gap: 28px; min-height: 104px; margin-bottom: 26px; }.monitoring-page .topbar-actions { width: max-content; min-width: 0; justify-content: flex-end; gap: 10px; padding-top: 0; }.monitoring-page .monitor-top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 0 0 auto; white-space: nowrap; }.monitoring-page .monitor-top-actions > * { flex: 0 0 auto; }.monitoring-page .live-ping, .monitoring-page .topbar-actions > .icon-button { flex: 0 0 auto; }
+.monitoring-page .topbar { display: grid; grid-template-columns: minmax(0, 1fr) max-content; align-items: start; gap: 28px; min-height: 104px; margin-bottom: 26px; }.monitoring-page .topbar-actions { width: max-content; min-width: 0; justify-content: flex-end; gap: 10px; padding-top: 0; padding-right: 28px; }.monitoring-page .monitor-top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 0 0 auto; white-space: nowrap; }.monitoring-page .monitor-top-actions > * { flex: 0 0 auto; }.monitoring-page .live-ping, .monitoring-page .topbar-actions > .icon-button { flex: 0 0 auto; }
+
 @media (max-width: 1220px) { .monitoring-page .topbar { grid-template-columns: 1fr; gap: 16px; min-height: 0; }.monitoring-page .topbar-actions { width: 100%; justify-content: flex-start; }.monitoring-page .monitor-top-actions { justify-content: flex-start; } }
 @media (max-width: 720px) { .monitoring-page .topbar-actions { align-items: stretch; flex-wrap: wrap; }.monitoring-page .monitor-top-actions { flex-wrap: wrap; }.monitoring-page .monitor-top-actions > span { width: 100%; }.monitoring-page .live-ping { margin-left: 0; } }
 
