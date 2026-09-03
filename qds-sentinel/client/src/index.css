@@ -858,3 +858,154 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   }
 }
 
+/* Signal Atelier — Universal Tactile Hover & Micro-Interaction System */
+
+/* 1. Global Transition & Cursor Defaults */
+button,
+a,
+[role="button"],
+.overview-v3-kpi,
+.pqc-metric,
+.sandbox-v2-metric,
+.overview-v3-chart,
+.overview-v3-ledger-row,
+.threats-v2-row,
+.incidents-v2-row,
+.sessions-v2-row,
+.network-connected-row,
+.sandbox-v2-scenario,
+.table-nav,
+.threat-filter-tab,
+.range-pill,
+.record-drawer,
+.json-block,
+.threat-telemetry-block,
+.incident-case-facts,
+.pqc-handover-stage,
+.demo-desk-phase-track button,
+.demo-desk-node {
+  transition: background 180ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+              color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 2. Primary & Secondary Buttons Hover */
+.button:hover:not(:disabled) {
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.button-copper:hover:not(:disabled) {
+  background: #a33f27;
+  border-color: #c74d30;
+  box-shadow: 0 6px 20px rgba(185, 74, 47, 0.35);
+}
+
+.button-outline:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: rgba(22, 24, 26, 0.06);
+  color: var(--ink);
+}
+
+.button-small:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.icon-button:hover:not(:disabled) {
+  border-color: var(--blue, #0058be);
+  color: var(--blue, #0058be);
+  background: rgba(47, 111, 133, 0.08);
+  transform: scale(1.06);
+}
+
+/* 3. KPI & Metric Cards Hover */
+.overview-v3-kpi:hover,
+.pqc-metric:hover,
+.sandbox-v2-metric:hover {
+  border-color: rgba(47, 111, 133, 0.45);
+  box-shadow: 0 8px 24px rgba(22, 24, 26, 0.08);
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.overview-v3-kpi-alert:hover {
+  border-color: rgba(185, 74, 47, 0.8);
+  box-shadow: 0 8px 24px rgba(185, 74, 47, 0.15);
+}
+
+/* 4. Ledger & Data Rows Hover */
+.overview-v3-ledger-row:not(.overview-v3-ledger-row-head):hover,
+.threats-v2-row:not(.threats-v2-row-head):hover,
+.incidents-v2-row:not(.incidents-v2-row-head):hover,
+.sessions-v2-row:not(.sessions-v2-row-head):hover,
+.network-connected-row:hover,
+.db-table tbody tr:hover td {
+  background: rgba(47, 111, 133, 0.07) !important;
+  transform: translateX(3px);
+  cursor: pointer;
+}
+
+.overview-v3-ledger-alert:hover,
+.threats-v2-row-selected:hover {
+  background: rgba(185, 74, 47, 0.08) !important;
+}
+
+/* 5. Filter Tabs & Range Pills Hover */
+.range-pill:hover,
+.threat-filter-tab:hover,
+.subnav-tab:hover {
+  border-color: var(--blue, #0058be);
+  color: var(--blue, #0058be);
+  background: rgba(47, 111, 133, 0.06);
+  transform: translateY(-1px);
+}
+
+.threat-filter-tab-active:hover {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+/* 6. Navigation & Links Hover */
+.text-link:hover,
+.ledger-export:hover,
+.demo-desk-home:hover {
+  color: var(--copper, #b94a2f) !important;
+  transform: translateX(2px);
+}
+
+.table-nav:hover:not(.table-nav-active) {
+  background: rgba(47, 111, 133, 0.06);
+  color: var(--ink);
+  transform: translateX(3px);
+}
+
+/* 7. Code & Evidence Blocks Hover */
+.json-block:hover,
+.threat-telemetry-block:hover,
+.incident-case-facts:hover,
+.pqc-diagnostic-copy:hover {
+  border-color: rgba(47, 111, 133, 0.35);
+  box-shadow: 0 4px 16px rgba(22, 24, 26, 0.04);
+}
+
+/* 8. Protocol Demo & Sandbox Scenario Hover */
+.demo-desk-phase-track button:hover:not(.demo-desk-phase-active) {
+  color: var(--blue, #0058be);
+  transform: translateY(-1px);
+}
+
+.sandbox-v2-scenario:hover {
+  border-color: var(--blue, #0058be);
+  background: rgba(47, 111, 133, 0.08);
+  transform: translateX(3px);
+}
+
+.sandbox-v2-scenario-copper:hover {
+  border-color: var(--copper, #b94a2f);
+  background: rgba(185, 74, 47, 0.08);
+}
+
+
