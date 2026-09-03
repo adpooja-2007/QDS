@@ -1580,11 +1580,8 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
         </div>
       </section>
       <aside className="network-v2-inventory">
-        <div className="network-inventory-head">
-          <span className="eyebrow">Node inventory</span>
-          <button className="icon-button" onClick={() => toast.success("Node inventory refreshed")} aria-label="Refresh node inventory"><RotateCcw size={14} /></button>
-        </div>
         <button className={cn("network-active-card", "network-active-card-" + active.tone)} onClick={() => setActiveNode(active.id)}>
+
           <div className="network-active-card-head">
             <span><Server size={15} /> {active.name}</span>
             <b className={rebootingNodeId === active.id ? "text-copper animate-pulse" : active.tone === "good" ? "status-text-good" : "text-copper"}>
