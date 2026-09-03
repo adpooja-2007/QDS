@@ -444,6 +444,17 @@ function PQCDefensePanel({ threat: localThreat, onThreat: localOnThreat }: { thr
   const [tokensRotated, setTokensRotated] = useState(false);
   const [pqcSigHash, setPqcSigHash] = useState<string>("0x8f3c719e4a2d810b5c4f3a1e9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c");
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && architectureOpen) {
+        setArchitectureOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [architectureOpen]);
+
+
   const stages = [
     ["Physical QDS link", "EPR-entangled photons active"],
     ["Hoeffding audit gate", "QBER < 5.5% · CHSH ≥ 2.0"],
@@ -582,6 +593,17 @@ function SandboxPage() {
       setIsClosingNode(false);
     }, 220);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && expandedNode) {
+        handleCloseExpanded();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expandedNode, isClosingNode]);
+
 
 
   const attacks = [
@@ -893,6 +915,17 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
   const { eveActive, qber: globalQber, chsh: globalChsh, activeAttack, pqcMode, remediationReport } = useSentinel();
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const [activePacket, setActivePacket] = useState<any | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && activePacket) {
+        setActivePacket(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activePacket]);
+
 
   const qberStr = (globalQber * 100).toFixed(2) + "%";
   const chshStr = globalChsh.toFixed(2);
@@ -1541,6 +1574,17 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
   const pendingPosition = useRef<{ id: string; x: number; y: number } | null>(null);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({ ALICE: { x: 22, y: 62 }, ARBITRATOR: { x: 51, y: 29 }, BOB: { x: 80, y: 62 }, EVE: { x: 51, y: 82 } });
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedNode) {
+        setSelectedNode(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedNode, setSelectedNode]);
+
+
   const handlePingNode = (nodeId: string, nodeName: string) => {
     setPingingNodeId(nodeId);
     toast.info(`PING ${nodeName}: Probing optical link round-trip time...`);
@@ -1758,9 +1802,23 @@ function LegacyDemonstrationPage() {
   const [executingLive, setExecutingLive] = useState(false);
   const [showCreateSession, setShowCreateSession] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
   const [simSpeed, setSimSpeed] = useState(1);
   const [showNotifications, setShowNotifications] = useState(false);
   const [nodePositions, setNodePositions] = useState({ alice: { x: 11, y: 48 }, arb: { x: 49, y: 27 }, bob: { x: 87, y: 48 }, eve: { x: 63, y: 72 } });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (showCreateSession) setShowCreateSession(false);
+        if (showSettings) setShowSettings(false);
+        if (showNotifications) setShowNotifications(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showCreateSession, showSettings, showNotifications]);
+
   const stageRef = useRef<HTMLDivElement>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const nodeDragFrame = useRef<number | null>(null);

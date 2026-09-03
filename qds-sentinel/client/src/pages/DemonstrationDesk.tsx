@@ -29,8 +29,17 @@ const matrixRows = Array.from({ length: 8 }, (_, index) => ({
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 function DeskModal({ title, eyebrow, children, onClose }: { title: string; eyebrow: string; children: React.ReactNode; onClose: () => void }) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return <div className="modal-backdrop" onClick={onClose}><section className="modal-card demo-desk-modal" role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}><header className="modal-head"><div><span className="eyebrow">{eyebrow}</span><h3>{title}</h3></div><button className="icon-button" aria-label={`Close ${title}`} onClick={onClose}><X size={15} /></button></header>{children}</section></div>;
 }
+
 
 export function DemonstrationDesk() {
   const [step, setStep] = useState(0);
