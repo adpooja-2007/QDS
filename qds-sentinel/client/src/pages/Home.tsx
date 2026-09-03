@@ -698,21 +698,8 @@ function SandboxPage() {
           <Pane title="ALICE NODE" nodeKey="alice" variant="good" lines={consoleLines.alice} />
           <Pane title="BOB NODE" nodeKey="bob" variant="good" lines={consoleLines.bob} />
           <Pane title="EVE INTERCEPT" nodeKey="eve" variant={threatened ? "copper" : "blue"} lines={consoleLines.eve} />
-
-          {remediationReport && (
-            <div className="col-span-2 p-4 bg-white border border-[#E2E8F0] rounded-[2px] shadow-sm mt-2 text-[11px] font-mono">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0] mb-2">
-                <span className="font-bold text-[#0058BE] uppercase flex items-center gap-1.5">
-                  <ShieldCheck size={14} /> Ollama AI Cognitive Remediation Report
-                </span>
-                <span className={cn("px-2 py-0.5 text-[9px] font-bold uppercase", threatened ? "bg-[#C2540A]/10 text-[#C2540A]" : "bg-[#34D399]/10 text-[#065F46]")}>
-                  {pqcMode ? "PQC_FALLBACK_ACTIVE" : "QUANTUM_SECURE"}
-                </span>
-              </div>
-              <pre className="whitespace-pre-wrap text-[#1E293B] leading-relaxed font-mono">{remediationReport}</pre>
-            </div>
-          )}
         </main>
+
 
         <aside className="sandbox-v2-telemetry">
           <span className="eyebrow">Telemetry & PQC Status</span>
