@@ -5,6 +5,7 @@ import {
   Activity,
   AlertTriangle,
   ArrowLeft,
+  ArrowUp,
   ArrowUpRight,
   Bell,
   Check,
@@ -2395,6 +2396,67 @@ function DatabasePage() {
   );
 }
 
+function BackToTopButton() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const windowScroll = window.scrollY || document.documentElement.scrollTop;
+      const mainShellScroll = document.querySelector(".main-shell")?.scrollTop || 0;
+      const appShellScroll = document.querySelector(".app-shell")?.scrollTop || 0;
+      const demoScroll = document.querySelector(".demonstration-desk-page")?.scrollTop || 0;
+      const sandboxScroll = document.querySelector(".sandbox-v2-main")?.scrollTop || 0;
+      
+      const maxScroll = Math.max(windowScroll, mainShellScroll, appShellScroll, demoScroll, sandboxScroll);
+      setVisible(maxScroll > 160);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    document.addEventListener("scroll", handleScroll, { passive: true, capture: true });
+
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("scroll", handleScroll, { capture: true });
+    };
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const selectors = [
+      ".main-shell",
+      ".app-shell",
+      ".demonstration-desk-page",
+      ".sandbox-v2-main",
+      ".monitoring-v2-layout",
+      ".transfer-v2-layout",
+      ".db-v2-layout"
+    ];
+    selectors.forEach((sel) => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  };
+
+  return (
+    <button
+      className={cn(
+        "back-to-top-btn",
+        visible ? "back-to-top-visible" : "back-to-top-hidden"
+      )}
+      onClick={scrollToTop}
+      aria-label="Back to Top"
+      title="Back to Top"
+    >
+      <ArrowUp size={14} />
+      <span>TOP</span>
+    </button>
+  );
+}
+
 export default function Home() {
   const [location] = useLocation();
   useEffect(() => { document.title = "QDS Sentinel — Quantum signature assurance"; }, []);
@@ -2403,5 +2465,21 @@ export default function Home() {
   const isSandbox = location === "/attack-sandbox";
   const isTransfer = location === "/transfer";
   const isChromeFree = isPortal || isSandbox || isTransfer;
-  return <div className={cn("app-shell", isPortal && "app-shell-portal", isSandbox && "app-shell-sandbox", isTransfer && "app-shell-transfer")}>{!isChromeFree && <Sidebar location={location} />}<main className="main-shell">{page}{!isSandbox && !isTransfer && <footer className="page-footer"><span className="footer-brand"><img src={MARK} alt="" /> QDS SENTINEL / v1.0.0</span><span>fastapi gateway <b>3001 OK</b></span><span>© 2026 quantum assurance lab</span></footer>}</main></div>;
+  return (
+    <div className={cn("app-shell", isPortal && "app-shell-portal", isSandbox && "app-shell-sandbox", isTransfer && "app-shell-transfer")}>
+      {!isChromeFree && <Sidebar location={location} />}
+      <main className="main-shell">
+        {page}
+        {!isSandbox && !isTransfer && (
+          <footer className="page-footer">
+            <span className="footer-brand"><img src={MARK} alt="" /> QDS SENTINEL / v1.0.0</span>
+            <span>fastapi gateway <b>3001 OK</b></span>
+            <span>© 2026 quantum assurance lab</span>
+          </footer>
+        )}
+      </main>
+      <BackToTopButton />
+    </div>
+  );
 }
+
