@@ -1208,10 +1208,10 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
               strokeDasharray="2 2"
             />
 
-            {/* Dynamic Threat-Specific Equalizer Bars */}
+            {/* Dynamic Threat-Specific Equalizer Bars (Static SVG rects that transition on threat click) */}
             {threatProfile.heights.map((h, i) => (
               <rect
-                key={`${item?.id || 'threat'}-bar-${i}`}
+                key={i}
                 x={20 + i * 55}
                 y={85 - h}
                 width="34"
@@ -1219,21 +1219,9 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
                 fill={threatProfile.barColors[i]}
                 opacity="0.88"
                 rx="2"
-              >
-                <animate
-                  attributeName="height"
-                  values={`${h};${Math.max(8, h - (10 + (i % 3) * 4))};${h}`}
-                  dur={threatProfile.animDurs[i]}
-                  repeatCount="indefinite"
-                />
-                <animate
-                  attributeName="y"
-                  values={`${85 - h};${85 - Math.max(8, h - (10 + (i % 3) * 4))};${85 - h}`}
-                  dur={threatProfile.animDurs[i]}
-                  repeatCount="indefinite"
-                />
-              </rect>
+              />
             ))}
+
 
             {/* Threshold Line */}
             <line x1="0" y1="35" x2="300" y2="35" stroke="#b94a2f" strokeWidth="1.5" strokeDasharray="4 4" />
