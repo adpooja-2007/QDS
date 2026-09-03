@@ -1205,29 +1205,16 @@ function IncidentsPanel({ selectedIncident, setSelectedIncident }: any) {
               {/* Action buttons */}
               <div style={{ display: "flex", gap: "8px", marginTop: "2px" }}>
                 <button
-                  className="button button-copper button-small"
-                  style={{ flex: 1, minHeight: "33px", fontSize: "10px", letterSpacing: "0.05em", textTransform: "uppercase" }}
-                  onClick={async () => {
-                    try {
-                      await apiClient.auditAndRemediate({ qber_override: active?.qber ? parseFloat(active.qber) / 100 : 0.142 });
-                      toast.success(`Executed remediation for ${active.id}: Optical isolation & PQC Fallback active!`);
-                    } catch {
-                      toast.success(`Executed CLI remediation sequence for ${active.id}`);
-                    }
-                  }}
-                >
-                  <Check size={13} /> Apply Remediation
-                </button>
-                <button
                   className="button button-outline button-small"
-                  style={{ minHeight: "33px", fontSize: "10px", letterSpacing: "0.05em", textTransform: "uppercase" }}
+                  style={{ flex: 1, minHeight: "33px", fontSize: "10px", letterSpacing: "0.05em", textTransform: "uppercase" }}
                   onClick={() => {
                     navigator.clipboard?.writeText(currentPlaybook.remediationPlan + "\n\n" + currentPlaybook.cliCommands.join("\n"));
                     toast.success("AI Playbook copied to clipboard");
                   }}
                 >
-                  <Copy size={13} /> Copy
+                  <Copy size={13} /> Copy Playbook
                 </button>
+
                 <button
                   className="icon-button"
                   style={{ width: "33px", height: "33px" }}
