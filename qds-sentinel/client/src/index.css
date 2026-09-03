@@ -478,7 +478,18 @@ button:not(:disabled), a { cursor: pointer; }
 @media (max-width: 820px) { .monitor-rail-nav { display: none; } }
 
 /* Reference structure, Signal Atelier skin: utility header spans the frame, workspace left, inspector right. */
-.monitoring-page { display: grid; grid-template-columns: minmax(0, 1fr) 306px; column-gap: 20px; align-items: start; }
+.monitoring-page {
+  width: 100%;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 306px;
+  column-gap: 20px;
+  align-items: start;
+}
+
 .monitoring-page > .page-topbar, .monitoring-page > .monitor-active-section { grid-column: 1 / -1; }
 .monitoring-page > .monitor-inspector { grid-column: 2; grid-row: 3 / span 7; position: sticky; top: 18px; min-height: 310px; border: 1px solid var(--line); background: rgba(255,255,255,.28); padding: 20px; }
 .monitoring-page > .threat-banner, .monitoring-page > .metric-grid, .monitoring-page > .chart-toolbar, .monitoring-page > .chart-grid-two, .monitoring-page > .telemetry-card, .monitoring-page > .panel-stack { grid-column: 1; min-width: 0; }
