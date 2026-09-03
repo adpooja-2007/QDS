@@ -1106,12 +1106,13 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
             <defs>
               <linearGradient id="spectrumGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={isCritical ? "#b94a2f" : isHigh ? "#d97706" : "#0058be"} stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#101522" stopOpacity="0.1" />
+                <stop offset="100%" stopColor="rgba(244, 241, 234, 0.1)" stopOpacity="0.1" />
               </linearGradient>
             </defs>
             {/* Grid lines */}
-            <line x1="0" y1="30" x2="300" y2="30" stroke="#1E293B" strokeWidth="0.8" strokeDasharray="3 3" />
-            <line x1="0" y1="60" x2="300" y2="60" stroke="#1E293B" strokeWidth="0.8" strokeDasharray="3 3" />
+            <line x1="0" y1="30" x2="300" y2="30" stroke="rgba(22, 24, 26, 0.12)" strokeWidth="0.8" strokeDasharray="3 3" />
+            <line x1="0" y1="60" x2="300" y2="60" stroke="rgba(22, 24, 26, 0.12)" strokeWidth="0.8" strokeDasharray="3 3" />
+
 
             {/* Dynamic Equalizer Bars */}
             {barHeights.map((h, i) => (
