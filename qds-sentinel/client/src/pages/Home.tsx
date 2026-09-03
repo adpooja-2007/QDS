@@ -108,27 +108,60 @@ function SectionLabel({ index, eyebrow, title, action }: { index: string; eyebro
   );
 }
 
-function Sidebar({ location }: { location: string }) {
+function Sidebar({ location, isCollapsed, onToggle }: { location: string; isCollapsed: boolean; onToggle: () => void }) {
   const [monitorTab, setMonitorTab] = useState(() => { const requested = new URLSearchParams(window.location.search).get("section"); return ["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"; });
   useEffect(() => { const onTab = (event: Event) => setMonitorTab((event as CustomEvent<string>).detail); const onPopState = () => { const requested = new URLSearchParams(window.location.search).get("section"); setMonitorTab(["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"); }; window.addEventListener("qds-monitor-tab", onTab); window.addEventListener("popstate", onPopState); return () => { window.removeEventListener("qds-monitor-tab", onTab); window.removeEventListener("popstate", onPopState); }; }, []);
   return (
-    <aside className="operator-rail">
-      <div className="rail-top"><Brand /><button className="icon-button mobile-menu" aria-label="Open navigation"><Menu size={18} /></button></div>
+    <aside className={cn("operator-rail", isCollapsed && "operator-rail-collapsed")}>
+      <div className="rail-top">
+        <Brand />
+        <button
+          className={cn("icon-button rail-toggle-btn", isCollapsed && "is-collapsed")}
+          onClick={onToggle}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <Menu size={18} />
+        </button>
+      </div>
       <div className="rail-rule" />
       <div className="rail-kicker">Operator console <span>///</span></div>
       <div className="rail-context"><span className="rail-context-mark" />{location === "/monitoring" ? "SOC monitoring / internal directories" : "Choose an instrument from the home portal"}</div>
-      {location === "/monitoring" && <nav className="monitor-rail-nav" aria-label="SOC monitoring sections">{["overview", "threats", "incidents", "sessions", "network", "pqc"].map((item, index) => <button key={item} className={cn("monitor-rail-link", monitorTab === item && "monitor-rail-link-active")} onClick={() => window.dispatchEvent(new CustomEvent("qds-monitor-tab", { detail: item }))}><span>0{index + 1}</span>{item === "pqc" ? "PQC defense" : item}</button>)}</nav>}
-      {location !== "/" && location !== "/home" && location !== "/monitoring" && <Link href="/home" className="rail-back"><ArrowLeft size={14} /> Home portal</Link>}
+      {location === "/monitoring" && (
+        <nav className="monitor-rail-nav" aria-label="SOC monitoring sections">
+          {["overview", "threats", "incidents", "sessions", "network", "pqc"].map((item, index) => (
+            <button
+              key={item}
+              className={cn("monitor-rail-link", monitorTab === item && "monitor-rail-link-active")}
+              onClick={() => window.dispatchEvent(new CustomEvent("qds-monitor-tab", { detail: item }))}
+              title={item === "pqc" ? "PQC defense" : item}
+            >
+              <span>0{index + 1}</span>
+              <span className="nav-label-text">{item === "pqc" ? "PQC defense" : item}</span>
+            </button>
+          ))}
+        </nav>
+      )}
+      {location !== "/" && location !== "/home" && location !== "/monitoring" && (
+        <Link href="/home" className="rail-back">
+          <ArrowLeft size={14} /> <span className="nav-label-text">Home portal</span>
+        </Link>
+      )}
       <div className="rail-spacer" />
       <div className="rail-status-card">
         <div className="mini-label"><StatusDot /> gateway status</div>
         <div className="rail-status-value">3001 <span>OK</span></div>
         <div className="rail-status-meta">12ms round trip <span>↗</span></div>
       </div>
-      <div className="rail-footer"><div className="avatar">AK</div><div><strong>A. Kovacs</strong><span>Security operator</span></div><Settings2 size={15} /></div>
+      <div className="rail-footer">
+        <div className="avatar">AK</div>
+        <div className="operator-info"><strong>A. Kovacs</strong><span>Security operator</span></div>
+        <Settings2 size={15} className="settings-icon" />
+      </div>
     </aside>
   );
 }
+
 
 function Topbar({ eyebrow, title, subtitle, action, onNotifications }: { eyebrow: string; title: string; subtitle: string; action?: React.ReactNode; onNotifications?: () => void }) {
   return <header className="topbar"><div className="topbar-heading"><Link href="/home" className="topbar-identity" aria-label="QDS Sentinel home"><img src={MARK} alt="" /><span>QDS / SIGNAL GRID</span><i /></Link><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="topbar-subtitle">{subtitle}</p></div><div className="topbar-actions">{action}<div className="live-ping"><StatusDot /> <span>LIVE</span><strong>12ms</strong></div><button className="icon-button" onClick={onNotifications} aria-label="Notifications"><Bell size={17} /></button></div></header>;
@@ -2629,6 +2662,18 @@ function BackToTopButton() {
 
 export default function Home() {
   const [location] = useLocation();
+  const [isRailCollapsed, setIsRailCollapsed] = useState(() => {
+    return localStorage.getItem("qds_rail_collapsed") === "true";
+  });
+
+  const toggleRail = () => {
+    setIsRailCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("qds_rail_collapsed", String(next));
+      return next;
+    });
+  };
+
   useEffect(() => { document.title = "QDS Sentinel — Quantum signature assurance"; }, []);
   const page = useMemo(() => location === "/demonstration" ? <DemonstrationPage /> : location === "/monitoring" ? <MonitoringPage /> : location === "/attack-sandbox" ? <SandboxPage /> : location === "/transfer" ? <TransferPage /> : location === "/database" ? <DatabasePage /> : <HomePortal />, [location]);
   const isPortal = location === "/" || location === "/home" || location === "/demonstration";
@@ -2636,9 +2681,10 @@ export default function Home() {
   const isTransfer = location === "/transfer";
   const isChromeFree = isPortal || isSandbox || isTransfer;
   return (
-    <div className={cn("app-shell", isPortal && "app-shell-portal", isSandbox && "app-shell-sandbox", isTransfer && "app-shell-transfer")}>
-      {!isChromeFree && <Sidebar location={location} />}
+    <div className={cn("app-shell", isPortal && "app-shell-portal", isSandbox && "app-shell-sandbox", isTransfer && "app-shell-transfer", isRailCollapsed && "rail-is-collapsed")}>
+      {!isChromeFree && <Sidebar location={location} isCollapsed={isRailCollapsed} onToggle={toggleRail} />}
       <main className="main-shell">
+
         {page}
         {!isSandbox && !isTransfer && (
           <footer className="page-footer">

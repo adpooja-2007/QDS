@@ -70,7 +70,114 @@ button:not(:disabled), a { cursor: pointer; }
 ::selection { color: var(--paper); background: var(--copper); }
 
 .app-shell { min-height: 100vh; display: flex; background: var(--paper); }
-.operator-rail { position: fixed; z-index: 20; inset: 0 auto 0 0; width: 244px; padding: 28px 22px 22px; display: flex; flex-direction: column; background: var(--ink); color: var(--paper); }
+.operator-rail {
+  position: fixed;
+  z-index: 20;
+  inset: 0 auto 0 0;
+  width: 244px;
+  padding: 28px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink);
+  color: var(--paper);
+  transition: width 340ms cubic-bezier(0.16, 1, 0.3, 1), padding 340ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-x: hidden;
+}
+
+.main-shell {
+  width: calc(100% - 244px);
+  margin-left: 244px;
+  min-height: 100vh;
+  transition: width 340ms cubic-bezier(0.16, 1, 0.3, 1), margin-left 340ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Collapsed Sidebar CSS Rules */
+.operator-rail-collapsed {
+  width: 68px !important;
+  padding-inline: 10px !important;
+}
+
+.rail-is-collapsed .main-shell {
+  width: calc(100% - 68px) !important;
+  margin-left: 68px !important;
+}
+
+.rail-toggle-btn {
+  display: inline-grid !important;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: transparent;
+  color: #a1a5a4;
+  border: 1px solid transparent;
+  transition: transform 340ms cubic-bezier(0.16, 1, 0.3, 1), color 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.rail-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--paper);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.rail-toggle-btn.is-collapsed {
+  transform: rotate(180deg);
+  color: var(--copper);
+}
+
+/* Smooth fade for collapsed sidebar contents */
+.operator-rail-collapsed .brand-copy,
+.operator-rail-collapsed .rail-kicker,
+.operator-rail-collapsed .rail-context,
+.operator-rail-collapsed .rail-back .nav-label-text,
+.operator-rail-collapsed .rail-status-card,
+.operator-rail-collapsed .operator-info,
+.operator-rail-collapsed .settings-icon,
+.operator-rail-collapsed .nav-label-text {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transition: opacity 180ms ease !important;
+}
+
+.operator-rail .brand-copy,
+.operator-rail .rail-kicker,
+.operator-rail .rail-context,
+.operator-rail .rail-status-card,
+.operator-rail .operator-info,
+.operator-rail .nav-label-text {
+  opacity: 1;
+  transition: opacity 280ms ease 80ms;
+}
+
+.operator-rail-collapsed .rail-top {
+  justify-content: center;
+  gap: 0;
+}
+
+.operator-rail-collapsed .brand-lockup {
+  gap: 0;
+}
+
+.operator-rail-collapsed .brand-mark {
+  width: 30px;
+  height: 30px;
+}
+
+.operator-rail-collapsed .monitor-rail-link {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.operator-rail-collapsed .rail-footer {
+  justify-content: center;
+  padding-inline: 0;
+}
+
 .rail-top { display: flex; align-items: center; justify-content: space-between; }
 .brand-lockup { display: inline-flex; align-items: center; gap: 11px; }
 .brand-mark { width: 34px; height: 34px; object-fit: contain; background: var(--copper); padding: 4px; border-radius: 50%; }
