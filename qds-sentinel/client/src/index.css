@@ -631,10 +631,132 @@ button:not(:disabled), a { cursor: pointer; }
 @media (max-width: 1080px) { .sandbox-v2-shell { grid-template-columns: 180px minmax(0,1fr); }.sandbox-v2-telemetry { grid-column: 1 / -1; grid-template-columns: repeat(3,minmax(0,1fr)); }.sandbox-v2-telemetry > .eyebrow { grid-column: 1 / -1; min-height: 0; }.sandbox-v2-metric { min-height: 126px; }.sandbox-v2-readout { min-height: 126px; } }
 @media (max-width: 720px) { .sandbox-v2-header { grid-template-columns: 1fr; height: auto; gap: 7px; padding: 11px 16px; }.sandbox-v2-header > strong { display: none; }.sandbox-v2-header > span { display: none; }.sandbox-v2-shell { grid-template-columns: 1fr; gap: 16px; padding: 16px; }.sandbox-v2-scenarios { order: 0; }.sandbox-v2-scenario-list { grid-template-columns: repeat(2,minmax(0,1fr)); }.sandbox-v2-scenario { min-height: 42px; padding-inline: 8px; }.sandbox-v2-scenario small { display: none; }.sandbox-v2-scenario-spacer { display: none; }.sandbox-v2-initiate { margin-top: 10px; }.sandbox-v2-consoles { grid-template-columns: 1fr; grid-template-rows: none; }.sandbox-v2-console { min-height: 234px; }.sandbox-v2-telemetry { grid-column: auto; grid-template-columns: 1fr; }.sandbox-v2-telemetry > .eyebrow { grid-column: auto; }.sandbox-v2-readout { min-height: 0; } }
 
-/* Attack Sandbox refinement: remove inherited sidebar offset and provide a focused node-log expansion state. */
-.app-shell-sandbox, .app-shell-sandbox .main-shell { width: 100%; max-width: none; margin-left: 0; }.app-shell-sandbox .main-shell { min-height: 100vh; }.sandbox-console-overlay { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(22,24,26,.54); animation: sandbox-overlay-enter 180ms cubic-bezier(.23,1,.32,1) both; }.sandbox-console-focus { width: min(760px,100%); max-height: min(680px,calc(100vh - 48px)); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--ink); background: #101522; color: #b8c5c7; box-shadow: 0 24px 65px rgba(0,0,0,.35); animation: sandbox-focus-enter 220ms cubic-bezier(.23,1,.32,1) both; }.sandbox-console-focus-head { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 14px; border-bottom: 1px solid rgba(244,241,234,.2); background: var(--paper); color: var(--ink); }.sandbox-console-focus-head h2 { margin: 4px 0 0; font: 22px var(--display); letter-spacing: -.02em; }.sandbox-console-focus-log { flex: 1; overflow: auto; padding: 19px 18px; }.sandbox-console-focus-log p { margin: 0 0 10px; color: #b8c5c7; font: 12px/1.45 var(--mono); }.sandbox-console-focus-log .console-line-alert { color: #e56a5c; }.sandbox-console-focus-log .console-line-warn { color: #d9a065; }.sandbox-console-focus-log .console-line-ok { color: #64b59a; }.sandbox-console-focus-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid rgba(244,241,234,.16); background: rgba(244,241,234,.03); }.sandbox-console-focus-actions .button { min-height: 33px; font: 10px var(--mono); text-transform: uppercase; }
-@keyframes sandbox-overlay-enter { from { opacity: 0; } to { opacity: 1; } } @keyframes sandbox-focus-enter { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
-@media (max-width: 720px) { .app-shell-sandbox .main-shell { width: 100vw; }.sandbox-console-overlay { align-items: end; padding: 12px; }.sandbox-console-focus { max-height: min(76vh,680px); }.sandbox-console-focus-log { padding: 15px 13px; }.sandbox-console-focus-log p { font-size: 10px; }.sandbox-console-focus-actions { justify-content: stretch; }.sandbox-console-focus-actions .button { flex: 1; padding-inline: 8px; } }
+/* Attack Sandbox refinement: backdrop blur overlay & spring entrance modal. */
+.app-shell-sandbox, .app-shell-sandbox .main-shell { width: 100%; max-width: none; margin-left: 0; }.app-shell-sandbox .main-shell { min-height: 100vh; }
+.sandbox-console-overlay {
+  position: fixed;
+  z-index: 999;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(14, 18, 26, 0.68);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: sandbox-overlay-enter 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sandbox-console-focus {
+  width: min(780px, 100%);
+  max-height: min(700px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(47, 111, 133, 0.45);
+  background: #0f1420;
+  color: #b8c5c7;
+  box-shadow: 0 28px 75px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  animation: sandbox-focus-enter 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sandbox-console-focus-head {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(244, 241, 234, 0.18);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.sandbox-console-focus-head h2 {
+  margin: 4px 0 0;
+  font: 22px var(--display);
+  letter-spacing: -0.02em;
+}
+
+.sandbox-console-focus-log {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  background: #090d16;
+}
+
+.sandbox-console-focus-log p {
+  margin: 0 0 10px;
+  color: #b8c5c7;
+  font: 12px/1.55 var(--mono);
+  animation: line-stream-in 220ms ease-out both;
+}
+
+.sandbox-console-focus-log .console-line-alert { color: #f87171; font-weight: 600; }
+.sandbox-console-focus-log .console-line-warn { color: #fbbf24; }
+.sandbox-console-focus-log .console-line-ok { color: #34d399; }
+
+.sandbox-console-focus-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid rgba(244, 241, 234, 0.14);
+  background: rgba(244, 241, 234, 0.03);
+}
+
+.console-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--slate);
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.console-action-btn:hover {
+  transform: scale(1.16);
+  background: rgba(47, 111, 133, 0.12);
+  color: var(--blue);
+  border-color: rgba(47, 111, 133, 0.3);
+}
+
+.console-action-btn:active {
+  transform: scale(0.88);
+}
+
+.console-action-btn.copied-active {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #059669;
+}
+
+@keyframes sandbox-overlay-enter {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(10px); }
+}
+
+@keyframes sandbox-focus-enter {
+  0% { opacity: 0; transform: scale(0.91) translateY(28px); filter: blur(4px); }
+  65% { opacity: 1; transform: scale(1.01) translateY(-2px); filter: blur(0px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0px); }
+}
+
+@keyframes line-stream-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 720px) {
+  .app-shell-sandbox .main-shell { width: 100vw; }
+  .sandbox-console-overlay { align-items: end; padding: 12px; }
+  .sandbox-console-focus { max-height: min(76vh, 680px); }
+}
+
 @media (prefers-reduced-motion: reduce) { .sandbox-console-overlay, .sandbox-console-focus { animation: none; } }
 
 /* Transfer workspace: Signal Atelier fit-to-screen workstation layout */

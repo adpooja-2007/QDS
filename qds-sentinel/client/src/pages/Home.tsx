@@ -23,7 +23,9 @@ import {
   Info,
   Layers3,
   LockKeyhole,
+  Maximize2,
   Menu,
+
   MoreHorizontal,
   Network,
   ShieldAlert,
@@ -623,18 +625,42 @@ function SandboxPage() {
     ]
   };
 
+  const [copiedNodeTitle, setCopiedNodeTitle] = useState<string | null>(null);
+
+  const handleCopyConsoleLog = (nodeTitle: string, lines: string[]) => {
+    navigator.clipboard?.writeText(lines.join("\n"));
+    setCopiedNodeTitle(nodeTitle);
+    toast.success(nodeTitle + " log copied to clipboard");
+    setTimeout(() => setCopiedNodeTitle(null), 1800);
+  };
+
   const Pane = ({ title, nodeKey, variant, lines }: { title: string; nodeKey: "arbitrator" | "alice" | "bob" | "eve"; variant: "good" | "copper" | "blue"; lines: string[] }) => (
     <section className={cn("sandbox-v2-console", "sandbox-v2-console-" + variant)}>
       <div className="sandbox-v2-console-head">
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-1.5 font-semibold">
           <TerminalSquare size={12} className={variant === "copper" ? "text-copper" : "text-[#2F6F85]"} />
           {title}
         </span>
-        <div>
-          <button onClick={() => toast.success(title + " log copied")} aria-label={"Copy " + title + " log"}><Copy size={12} /></button>
-          <button onClick={() => setExpandedNode(nodeKey)} aria-label={"Expand " + title + " console"}><ArrowUpRight size={12} /></button>
+        <div className="flex items-center gap-1">
+          <button
+            className={cn("console-action-btn", copiedNodeTitle === title && "copied-active")}
+            onClick={() => handleCopyConsoleLog(title, lines)}
+            aria-label={"Copy " + title + " log"}
+            title="Copy console log"
+          >
+            {copiedNodeTitle === title ? <Check size={12} className="text-[#059669]" /> : <Copy size={12} />}
+          </button>
+          <button
+            className="console-action-btn"
+            onClick={() => setExpandedNode(nodeKey)}
+            aria-label={"Expand " + title + " console"}
+            title="Expand console view"
+          >
+            <Maximize2 size={12} />
+          </button>
         </div>
       </div>
+
       <div className="sandbox-v2-console-body">
         {lines.slice(0, visibleLinesCount).map((line, index) => (
           <p key={line + index} className={cn(line.includes("ERR") || line.includes("ABORT") || line.includes("BREACH") ? "console-line-alert font-semibold" : line.includes("WARN") || line.includes("INJECT") ? "console-line-warn" : line.includes("ACK") || line.includes("ACCEPT") || line.includes("PASS") || line.includes("PQC") ? "console-line-ok" : "")}>{line}</p>
