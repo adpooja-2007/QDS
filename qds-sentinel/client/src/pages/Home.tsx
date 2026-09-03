@@ -520,8 +520,19 @@ function SandboxPage() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulationPhase, setSimulationPhase] = useState("");
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
+  const [isClosingNode, setIsClosingNode] = useState(false);
   const [isExecutingApi, setIsExecutingApi] = useState(false);
   const [visibleLinesCount, setVisibleLinesCount] = useState(0);
+
+  const handleCloseExpanded = () => {
+    if (isClosingNode) return;
+    setIsClosingNode(true);
+    setTimeout(() => {
+      setExpandedNode(null);
+      setIsClosingNode(false);
+    }, 220);
+  };
+
 
   const attacks = [
     { title: "Clean signature", code: "CLEAN", detail: "Authenticated Bell-pair exchange", tone: "good", type: "clean", qber: 0.019, chsh: 2.76 },
@@ -761,14 +772,16 @@ function SandboxPage() {
       </div>
 
       {expandedNode && (
-        <div className="sandbox-console-overlay" onClick={() => setExpandedNode(null)}>
-          <section className="sandbox-console-focus" onClick={(event) => event.stopPropagation()}>
+        <div className={cn("sandbox-console-overlay", isClosingNode && "closing")} onClick={handleCloseExpanded}>
+          <section className={cn("sandbox-console-focus", isClosingNode && "closing")} onClick={(event) => event.stopPropagation()}>
             <div className="sandbox-console-focus-head">
               <div>
-                <span className="eyebrow">Expanded protocol node</span>
+                <span className="eyebrow flex items-center gap-1.5 text-blue">
+                  <Maximize2 size={12} /> Expanded protocol node
+                </span>
                 <h2>{expandedNode === "arbitrator" ? "ARBITRATOR.SYS" : expandedNode === "alice" ? "ALICE NODE" : expandedNode === "bob" ? "BOB NODE" : "EVE INTERCEPT"}</h2>
               </div>
-              <button className="icon-button" onClick={() => setExpandedNode(null)} aria-label="Close expanded node"><X size={15} /></button>
+              <button className="icon-button" onClick={handleCloseExpanded} aria-label="Close expanded node"><X size={15} /></button>
             </div>
             <div className="sandbox-console-focus-log">
               {consoleLines[expandedNode as keyof typeof consoleLines].concat([
@@ -780,12 +793,15 @@ function SandboxPage() {
               ))}
             </div>
             <div className="sandbox-console-focus-actions">
-              <button className="button button-outline button-small" onClick={() => toast.success("Expanded node log copied")}><Copy size={14} /> Copy evidence</button>
-              <button className="button button-copper button-small" onClick={() => setExpandedNode(null)}>Collapse node</button>
+              <button className="button button-outline button-small" onClick={() => { navigator.clipboard?.writeText(consoleLines[expandedNode as keyof typeof consoleLines].join("\n")); toast.success("Expanded node evidence copied"); }}>
+                <Copy size={14} /> Copy evidence
+              </button>
+              <button className="button button-copper button-small" onClick={handleCloseExpanded}>Collapse node</button>
             </div>
           </section>
         </div>
       )}
+
     </div>
   );
 }
