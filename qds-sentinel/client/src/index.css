@@ -1008,4 +1008,105 @@ a,
   background: rgba(185, 74, 47, 0.08);
 }
 
+/* Signal Atelier Skeleton Loader System */
+.skeleton-atelier {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(22, 24, 26, 0.035);
+  border-radius: 2px;
+}
+
+.skeleton-atelier::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(47, 111, 133, 0.14) 50%,
+    transparent 100%
+  );
+  animation: skeleton-atelier-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-atelier-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.skeleton-kpi-card {
+  min-height: 96px;
+  padding: 12px 13px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.skeleton-line {
+  height: 10px;
+  border-radius: 2px;
+  background: rgba(22, 24, 26, 0.07);
+}
+
+.skeleton-line-title { width: 55%; height: 8px; }
+.skeleton-line-metric { width: 80%; height: 20px; margin-top: 8px; }
+.skeleton-line-sub { width: 45%; height: 8px; margin-top: 6px; }
+
+.skeleton-table {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--line);
+}
+
+.skeleton-row {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 105px 120px minmax(160px, 1.2fr) 120px 65px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.skeleton-row:last-child {
+  border-bottom: 0;
+}
+
+.skeleton-chart-box {
+  height: 214px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.14);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+@media (max-width: 1100px) {
+  .skeleton-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .skeleton-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
 

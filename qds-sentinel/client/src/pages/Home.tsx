@@ -50,6 +50,7 @@ import { toast } from "sonner";
 import { DemonstrationDesk } from "./DemonstrationDesk";
 import { apiClient } from "@/lib/apiClient";
 import { generateAiRemediation, AiRemediationResponse } from "@/lib/groqAiService";
+import { SkeletonKpiGrid, SkeletonTableRows, SkeletonChartBox } from "@/components/ui/skeleton";
 
 const MARK = "/manus-storage/qds-sentinel-mark_81058a94.png";
 const HERO = "/manus-storage/qds-sentinel-hero_77975680.png";
@@ -2288,45 +2289,52 @@ function DatabasePage() {
           </div>
 
           <div className="data-table-wrap db-table-wrap">
-            <table className="data-table db-table">
-              <thead>
-                <tr>
-                  <th>Record ID</th>
-                  <th>Payload / Document</th>
-                  <th>Status</th>
-                  <th>QBER</th>
-                  <th>Hoeffding</th>
-                  <th>CHSH</th>
-                  <th>Verdict</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRecords.map((row) => (
-                  <tr
-                    onClick={() => setSelectedRecord(row)}
-                    className={selected?.id === row.id ? "row-selected" : ""}
-                    key={row.id}
-                  >
-                    <td className="mono strong-cell">{row.id}</td>
-                    <td>{row.doc}</td>
-                    <td>
-                      <span className={cn("row-status", (row.status === "Quarantined" || row.status === "Degraded") && "row-status-bad")}>
-                        <StatusDot tone={row.status === "Quarantined" || row.status === "Degraded" ? "bad" : "ok"} />
-                        {row.status}
-                      </span>
-                    </td>
-                    <td>{row.qber}</td>
-                    <td>5.5%</td>
-                    <td>{row.chsh}</td>
-                    <td>
-                      <Pill tone={row.verdict === "REJECT" ? "copper" : "good"}>{row.verdict}</Pill>
-                    </td>
-                    <td className="mono muted">{row.time}</td>
+            {isLoading ? (
+              <div style={{ padding: "16px" }}>
+                <SkeletonTableRows rows={6} />
+              </div>
+            ) : (
+              <table className="data-table db-table">
+                <thead>
+                  <tr>
+                    <th>Record ID</th>
+                    <th>Payload / Document</th>
+                    <th>Status</th>
+                    <th>QBER</th>
+                    <th>Hoeffding</th>
+                    <th>CHSH</th>
+                    <th>Verdict</th>
+                    <th>Created</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredRecords.map((row) => (
+                    <tr
+                      onClick={() => setSelectedRecord(row)}
+                      className={selected?.id === row.id ? "row-selected" : ""}
+                      key={row.id}
+                    >
+                      <td className="mono strong-cell">{row.id}</td>
+                      <td>{row.doc}</td>
+                      <td>
+                        <span className={cn("row-status", (row.status === "Quarantined" || row.status === "Degraded") && "row-status-bad")}>
+                          <StatusDot tone={row.status === "Quarantined" || row.status === "Degraded" ? "bad" : "ok"} />
+                          {row.status}
+                        </span>
+                      </td>
+                      <td>{row.qber}</td>
+                      <td>5.5%</td>
+                      <td>{row.chsh}</td>
+                      <td>
+                        <Pill tone={row.verdict === "REJECT" ? "copper" : "good"}>{row.verdict}</Pill>
+                      </td>
+                      <td className="mono muted">{row.time}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
           </div>
 
           <div className="db-pagination">
