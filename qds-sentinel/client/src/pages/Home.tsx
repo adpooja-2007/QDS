@@ -1560,7 +1560,8 @@ function SessionsPanel({ selectedSession, setSelectedSession }: any) {
 }
 
 function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolatedNodes }: any) {
-  const { eveActive, activeAttack, qber, chsh, pushTelemetryLogs } = useSentinel();
+  const { eveActive, toggleEve, activeAttack, qber, chsh, pushTelemetryLogs } = useSentinel();
+
 
   const [activeNode, setActiveNode] = useState("ALICE");
   const [zoom, setZoom] = useState(1);
@@ -1643,11 +1644,72 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
     }, 2000);
   };
 
+  const [topologyMode, setTopologyMode] = useState<"NOMINAL" | "DEGRADED" | "QUARANTINED">(() => {
+    if (isolatedNodes.includes("EVE")) return "QUARANTINED";
+    return eveActive ? "DEGRADED" : "NOMINAL";
+  });
+
+  const isDegradedMode = topologyMode === "DEGRADED";
+  const isQuarantinedMode = topologyMode === "QUARANTINED";
+  const isNominalMode = topologyMode === "NOMINAL";
+
   const nodes = [
-    { id: "ALICE", name: "QN-ALICE", role: "Photon source / detector", health: nodeHealthMap["ALICE"] || "NOMINAL", uptime: "99.998%", hardware: "Q-PROC-v4", protocol: "BB84, E91", rate: "1.2 kbps", latency: "12ms", loss: "0%", tone: nodeHealthMap["ALICE"] === "REBOOTING..." ? "copper" : "good", pos: "network-canvas-alice" },
-    { id: "ARBITRATOR", name: "ARB-CORE", role: "Authenticated central hub", health: nodeHealthMap["ARBITRATOR"] || "NOMINAL", uptime: "100.000%", hardware: "ARB-CORE-8", protocol: "QDS, CHSH", rate: "0.0 kbps", latency: "0ms", loss: "local", tone: nodeHealthMap["ARBITRATOR"] === "REBOOTING..." ? "copper" : "good", pos: "network-canvas-arb" },
-    { id: "BOB", name: "QN-BOB", role: "Verifier endpoint", health: nodeHealthMap["BOB"] || (eveActive ? "DEGRADED" : "NOMINAL"), uptime: "99.201%", hardware: "Q-PROC-v4", protocol: "BB84, E91", rate: eveActive ? "0.4 kbps" : "1.8 kbps", latency: "85ms", loss: eveActive ? `${(qber * 100).toFixed(1)}% loss` : "0% loss", tone: nodeHealthMap["BOB"] === "REBOOTING..." ? "copper" : (eveActive ? "copper" : "good"), pos: "network-canvas-bob" },
-    { id: "EVE", name: "EVE-PROBE-07", role: eveActive ? `Active Adversary (${activeAttack})` : "Quarantined test probe", health: nodeHealthMap["EVE"] || (eveActive ? "ACTIVE INTERCEPT" : "QUARANTINED"), uptime: "—", hardware: "OBS-PROBE", protocol: "Passive monitor", rate: "0.0 kbps", latency: eveActive ? "INTERCEPTING" : "blocked", loss: eveActive ? "tap active" : "isolated", tone: "copper", pos: "network-canvas-eve" }
+    {
+      id: "ALICE",
+      name: "QN-ALICE",
+      role: "Photon source / detector",
+      health: nodeHealthMap["ALICE"] || "NOMINAL",
+      uptime: "99.998%",
+      hardware: "Q-PROC-v4",
+      protocol: "BB84, E91",
+      rate: isDegradedMode ? "1.2 kbps" : "1.8 kbps",
+      latency: "12ms",
+      loss: "0%",
+      tone: nodeHealthMap["ALICE"] === "REBOOTING..." ? "copper" : "good",
+      pos: "network-canvas-alice"
+    },
+    {
+      id: "ARBITRATOR",
+      name: "ARB-CORE",
+      role: isQuarantinedMode ? "PQC Handover Hub" : isDegradedMode ? "Disturbed Hub" : "Authenticated Central Hub",
+      health: nodeHealthMap["ARBITRATOR"] || (isDegradedMode ? "DISTURBED" : "NOMINAL"),
+      uptime: "100.000%",
+      hardware: "ARB-CORE-8",
+      protocol: isQuarantinedMode ? "QDS + Dilithium3" : "QDS, CHSH",
+      rate: isDegradedMode ? "0.8 kbps" : "4.2 kbps",
+      latency: isDegradedMode ? "14ms" : "0.8ms",
+      loss: isDegradedMode ? "8% loss" : "0% loss",
+      tone: nodeHealthMap["ARBITRATOR"] === "REBOOTING..." ? "copper" : (isDegradedMode ? "copper" : "good"),
+      pos: "network-canvas-arb"
+    },
+    {
+      id: "BOB",
+      name: "QN-BOB",
+      role: isQuarantinedMode ? "Verifier (PQC ML-KEM)" : isDegradedMode ? "Verifier (Eavesdrop Detected)" : "Verifier Endpoint",
+      health: nodeHealthMap["BOB"] || (isDegradedMode ? "DEGRADED" : isQuarantinedMode ? "PQC PROTECTED" : "NOMINAL"),
+      uptime: "99.201%",
+      hardware: "Q-PROC-v4",
+      protocol: isQuarantinedMode ? "BB84 + ML-KEM-768" : "BB84, E91",
+      rate: isDegradedMode ? "0.4 kbps" : isQuarantinedMode ? "1.5 kbps" : "1.8 kbps",
+      latency: isDegradedMode ? "85ms" : isQuarantinedMode ? "15ms" : "18ms",
+      loss: isDegradedMode ? `${(qber * 100).toFixed(1)}% loss` : "0% loss",
+      tone: nodeHealthMap["BOB"] === "REBOOTING..." ? "copper" : (isDegradedMode ? "copper" : "good"),
+      pos: "network-canvas-bob"
+    },
+    {
+      id: "EVE",
+      name: "EVE-PROBE-07",
+      role: isDegradedMode ? `Active Adversary (${activeAttack || 'MitM Intercept'})` : isQuarantinedMode ? "Quarantined Threat Probe" : "Idle Probe (Standby)",
+      health: nodeHealthMap["EVE"] || (isDegradedMode ? "ACTIVE INTERCEPT" : isQuarantinedMode ? "QUARANTINED" : "STANDBY"),
+      uptime: "—",
+      hardware: "OBS-PROBE",
+      protocol: "Passive monitor",
+      rate: isDegradedMode ? "1.4 kbps" : "0.0 kbps",
+      latency: isDegradedMode ? "INTERCEPTING" : isQuarantinedMode ? "BLOCKED" : "STANDBY",
+      loss: isDegradedMode ? "tap active" : isQuarantinedMode ? "isolated" : "idle",
+      tone: isDegradedMode ? "copper" : isQuarantinedMode ? "copper" : "slate",
+      pos: "network-canvas-eve"
+    }
   ];
 
   const active = nodes.find((node) => node.id === activeNode) ?? nodes[0];
@@ -1665,10 +1727,42 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
         <div className="network-v2-title">
           <div>
             <h2>Network topology</h2>
-            <div className="topology-key">
-              <span className="status-text-good">Nominal</span>
-              <span className="text-copper">Degraded</span>
-              <span className="muted">Quarantined</span>
+            <div className="topology-key" role="tablist" aria-label="Network topology mode preview">
+              <button
+                type="button"
+                className={cn("topology-key-btn", topologyMode === "NOMINAL" && "active-nominal")}
+                onClick={() => {
+                  setTopologyMode("NOMINAL");
+                  if (eveActive) toggleEve();
+                  setIsolatedNodes((prev: string[]) => prev.filter(id => id !== "EVE"));
+                  toast.success("Topology: NOMINAL · All quantum channels authenticated and clean (0% loss)");
+                }}
+              >
+                <CheckCircle2 size={11} /> Nominal
+              </button>
+              <button
+                type="button"
+                className={cn("topology-key-btn", topologyMode === "DEGRADED" && "active-degraded")}
+                onClick={() => {
+                  setTopologyMode("DEGRADED");
+                  if (!eveActive) toggleEve();
+                  setIsolatedNodes((prev: string[]) => prev.filter(id => id !== "EVE"));
+                  toast.warning("Topology: DEGRADED · EVE active beam-splitter tap on Arbitrator ↔ Bob link (14.2% QBER)");
+                }}
+              >
+                <AlertTriangle size={11} /> Degraded
+              </button>
+              <button
+                type="button"
+                className={cn("topology-key-btn", topologyMode === "QUARANTINED" && "active-quarantined")}
+                onClick={() => {
+                  setTopologyMode("QUARANTINED");
+                  setIsolatedNodes((prev: string[]) => prev.includes("EVE") ? prev : [...prev, "EVE"]);
+                  toast.info("Topology: QUARANTINED · EVE isolated & blocked, PQC fallback active (0% loss)");
+                }}
+              >
+                <ShieldAlert size={11} /> Quarantined
+              </button>
             </div>
           </div>
           <span>Drag nodes to inspect paths</span>
@@ -1676,11 +1770,40 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
         <div className={cn("network-v2-canvas", Boolean(dragging) && "network-v2-canvas-dragging")} ref={canvasRef} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
           <div className="network-canvas-stage" style={{ transform: "scale(" + zoom + ")" }}>
             <svg className="network-v2-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Dynamic network paths">
+              {/* Alice to Arbitrator link */}
               <path className="network-v2-link network-v2-link-nominal" d={curve(positions.ALICE, positions.ARBITRATOR)} />
-              <path className={cn("network-v2-link", eveActive ? "network-v2-link-degraded" : "network-v2-link-nominal")} d={curve(positions.ARBITRATOR, positions.BOB)} />
-              <path className="network-v2-link network-v2-link-quarantine" d={curve(positions.ARBITRATOR, positions.EVE)} />
+              
+              {/* Arbitrator to Bob link */}
+              <path
+                className={cn(
+                  "network-v2-link",
+                  isDegradedMode ? "network-v2-link-degraded" : isQuarantinedMode ? "network-v2-link-pqc" : "network-v2-link-nominal"
+                )}
+                d={curve(positions.ARBITRATOR, positions.BOB)}
+              />
+              
+              {/* Arbitrator to Eve link */}
+              <path
+                className={cn(
+                  "network-v2-link",
+                  isDegradedMode ? "network-v2-link-degraded" : isQuarantinedMode ? "network-v2-link-quarantine" : "network-v2-link-idle"
+                )}
+                d={curve(positions.ARBITRATOR, positions.EVE)}
+              />
+              
               <LinkLabel from={positions.ALICE} to={positions.ARBITRATOR} text="12ms · 0%" />
-              <LinkLabel from={positions.ARBITRATOR} to={positions.BOB} text={eveActive ? `85ms · ${(qber * 100).toFixed(0)}%` : "20ms · 0%"} copper={eveActive} />
+              <LinkLabel
+                from={positions.ARBITRATOR}
+                to={positions.BOB}
+                text={isDegradedMode ? `85ms · ${(qber * 100).toFixed(0)}%` : isQuarantinedMode ? "15ms · 0% (PQC)" : "18ms · 0%"}
+                copper={isDegradedMode}
+              />
+              <LinkLabel
+                from={positions.ARBITRATOR}
+                to={positions.EVE}
+                text={isDegradedMode ? "TAP ACTIVE" : isQuarantinedMode ? "BLOCKED ✕" : "STANDBY"}
+                copper={isDegradedMode || isQuarantinedMode}
+              />
             </svg>
             {nodes.map((node) => {
               const point = positions[node.id];
@@ -1694,7 +1817,7 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
                     node.pos,
                     active.id === node.id && "network-v2-node-active",
                     dragging === node.id && "network-v2-node-dragging",
-                    isolatedNodes.includes(node.id) && "network-v2-node-isolated",
+                    (isolatedNodes.includes(node.id) || (node.id === "EVE" && isQuarantinedMode)) && "network-v2-node-isolated",
                     isRebooting ? "network-v2-node-copper animate-pulse" : isPinging ? "network-v2-node-good animate-bounce" : ("network-v2-node-" + node.tone)
                   )}
                   style={{ left: point.x + "%", top: point.y + "%" }}
@@ -1704,7 +1827,7 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
                   <span className="network-v2-node-icon">{node.id === "ARBITRATOR" ? <Network size={27} /> : <Server size={24} />}</span>
                   <strong>{node.name}</strong>
                   <small className={isRebooting ? "text-copper font-bold" : isPinging ? "text-blue font-bold" : ""}>
-                    {isRebooting ? "REBOOTING..." : isPinging ? "PINGING..." : isolatedNodes.includes(node.id) ? "ISOLATED" : node.role}
+                    {isRebooting ? "REBOOTING..." : isPinging ? "PINGING..." : (isolatedNodes.includes(node.id) || (node.id === "EVE" && isQuarantinedMode)) ? "ISOLATED" : node.role}
                   </small>
                 </button>
               );
@@ -1716,6 +1839,7 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
           </div>
         </div>
       </section>
+
       <aside className="network-v2-inventory">
         <button className={cn("network-active-card", "network-active-card-" + active.tone)} onClick={() => setActiveNode(active.id)}>
 
