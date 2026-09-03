@@ -981,6 +981,48 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
   const visible = filter === "ALL" ? threats : threats.filter((item) => item.severity === filter);
   const item = visible[selected] ?? visible[0] ?? threats[0];
 
+  const isCritical = item?.severity === "CRITICAL";
+  const isHigh = item?.severity === "HIGH";
+  const qberVal = item?.current || (isCritical ? "14.2%" : isHigh ? "8.4%" : "3.9%");
+  const chshVal = item?.chsh ? item.chsh.toFixed(2) : (isCritical ? "1.76" : isHigh ? "1.95" : "2.45");
+  const baselineVal = item?.baseline || "1.9%";
+
+  // Threat-specific spectrum height multiplier
+  const mult = isCritical ? 1.4 : isHigh ? 1.0 : 0.65;
+  const barHeights = [
+    Math.min(75, Math.round(28 * mult)),
+    Math.min(85, Math.round(45 * mult)),
+    Math.min(90, Math.round(78 * mult)),
+    Math.min(95, Math.round(62 * mult)),
+    Math.min(88, Math.round(84 * mult)),
+  ];
+
+  const handleExportThreatPcap = () => {
+    const payload = JSON.stringify({
+      threat_id: item?.id || "THR-104",
+      severity: item?.severity || "CRITICAL",
+      type: item?.type || "Intercept-resend",
+      origin_node: item?.origin || "EVE",
+      time: item?.time || "23:41:16",
+      metrics: {
+        baseline_qber: baselineVal,
+        measured_qber: qberVal,
+        chsh_score: chshVal,
+        boundary: isCritical ? "HOEFFDING_BOUND_BREACHED (>5.5%)" : "NOMINAL_SIFT"
+      },
+      pqc_defense: isCritical ? "CRYSTALS-Dilithium3 / ML-DSA-65" : "None"
+    }, null, 2);
+
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `threat_pcap_${item?.id || "THR"}_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported forensic payload for ${item?.id || "threat"}`);
+  };
+
   return (
     <div className="threats-v2-layout">
       <div className="threats-v2-main">
@@ -1009,35 +1051,87 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
           ))}
         </div>
       </div>
+
       <aside className="threats-v2-inspector">
         <div className="inspector-head">
-          <span className="eyebrow">Threat inspector</span>
+          <span className="eyebrow">Threat inspector · {item?.id || "THR-104"}</span>
           <button className="icon-button" onClick={() => setSelected(0)} aria-label="Reset selection"><RotateCcw size={14} /></button>
         </div>
-        <span className="eyebrow">Selected anomaly</span>
+
+        <div className="threat-meta-head">
+          <span className="eyebrow">Selected anomaly</span>
+          <Pill tone={isCritical || isHigh ? "copper" : "good"}>{item?.severity || "CRITICAL"}</Pill>
+        </div>
+
         <h3>{item?.type || "No Threat Selected"}</h3>
         <div className="threat-inspector-rule" />
+
         <span className="eyebrow">Telemetry data</span>
         <div className="threat-telemetry-block">
           <div><span>node</span><strong>{item?.origin || "EVE"}</strong></div>
-          <div><span>baseline QBER</span><strong>{item?.baseline || "1.9%"}</strong></div>
-          <div><span>current QBER</span><strong className="text-copper">{item?.current || "14.2%"}</strong></div>
+          <div><span>baseline QBER</span><strong>{baselineVal}</strong></div>
+          <div><span>current QBER</span><strong className={isCritical ? "text-copper" : isHigh ? "status-text-threat" : "status-text-good"}>{qberVal}</strong></div>
         </div>
-        <span className="eyebrow">Risk visualization</span>
-        <div className="risk-visualizer threat-risk-v2">
-          {[1, 2, 3, 4, 5].map((bar) => <i key={bar} className={bar <= (item?.severity === "CRITICAL" ? 5 : 3) ? "risk-visualizer-on" : ""} />)}
+
+        <span className="eyebrow">Risk visualization & Quantum Spectrum</span>
+        <div className="threat-spectrum-box">
+          <svg className="threat-spectrum-svg" viewBox="0 0 300 90" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="spectrumGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={isCritical ? "#b94a2f" : isHigh ? "#d97706" : "#0058be"} stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#101522" stopOpacity="0.1" />
+              </linearGradient>
+            </defs>
+            {/* Grid lines */}
+            <line x1="0" y1="30" x2="300" y2="30" stroke="#1E293B" strokeWidth="0.8" strokeDasharray="3 3" />
+            <line x1="0" y1="60" x2="300" y2="60" stroke="#1E293B" strokeWidth="0.8" strokeDasharray="3 3" />
+
+            {/* Dynamic Equalizer Bars */}
+            {barHeights.map((h, i) => (
+              <rect
+                key={i}
+                x={20 + i * 55}
+                y={85 - h}
+                width="34"
+                height={h}
+                fill={isCritical && i >= 3 ? "#b94a2f" : isHigh && i >= 3 ? "#d97706" : "#0058be"}
+                opacity="0.85"
+                rx="2"
+              >
+                <animate attributeName="height" values={`${h};${Math.max(10, h - 12)};${h}`} dur={`${1.4 + i * 0.3}s`} repeatCount="indefinite" />
+                <animate attributeName="y" values={`${85 - h};${85 - Math.max(10, h - 12)};${85 - h}`} dur={`${1.4 + i * 0.3}s`} repeatCount="indefinite" />
+              </rect>
+            ))}
+
+            {/* Threshold Line */}
+            <line x1="0" y1="35" x2="300" y2="35" stroke="#b94a2f" strokeWidth="1.5" strokeDasharray="4 4" />
+          </svg>
         </div>
-        <button className="button button-copper inspector-action" onClick={onThreat}>
+
+        <div className="threat-detail-pills">
+          <div className="threat-pill-item">
+            <span>CHSH BELL SCORE</span>
+            <strong className={isCritical ? "text-copper" : "status-text-good"}>S = {chshVal}</strong>
+          </div>
+          <div className="threat-pill-item">
+            <span>VERDICT</span>
+            <strong className={isCritical ? "text-copper" : "status-text-good"}>{isCritical ? "BREACHED" : "NOMINAL"}</strong>
+          </div>
+        </div>
+
+        <button className="button button-copper inspector-action" style={{ marginTop: "12px" }} onClick={onThreat}>
           <ShieldCheck size={14} /> {threat || eveActive ? "Restore node from quarantine" : "Run containment protocol"}
         </button>
+
         <div className="threats-v2-actions">
-          <button className="button button-outline button-small" onClick={() => toast.success("Buffer purge queued")}>Purge buffer</button>
-          <button className="button button-outline button-small" onClick={() => toast.success("PCAP export prepared")}>Export PCAP</button>
+          <button className="button button-outline button-small" onClick={() => toast.success(`Purged 100 key pairs for ${item?.id || 'threat'}`)}>Purge buffer</button>
+          <button className="button button-outline button-small" onClick={handleExportThreatPcap}>Export PCAP</button>
         </div>
       </aside>
     </div>
   );
 }
+
 
 /* Incidents inspector — Signal Atelier pairs forensic precision with warm paper, dark ink, copper intervention, and blue audit detail. */
 function IncidentsPanel({ selectedIncident, setSelectedIncident }: any) {

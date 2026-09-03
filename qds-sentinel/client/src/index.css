@@ -1108,5 +1108,72 @@ a,
   }
 }
 
+/* Dynamic Threat Inspector Spectrum & Visualizer */
+.threat-dynamic-card {
+  margin-top: 8px;
+  margin-bottom: 12px;
+  padding: 11px;
+  border: 1px solid var(--line);
+  background: rgba(22, 24, 26, 0.028);
+}
+
+.threat-meta-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.threat-meta-head strong {
+  font: 600 11px var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.threat-spectrum-box {
+  position: relative;
+  height: 94px;
+  margin: 9px 0;
+  border: 1px solid var(--line);
+  background: #101522;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.threat-spectrum-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.threat-detail-pills {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.threat-pill-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.threat-pill-item span {
+  color: var(--slate);
+  font: 8px var(--mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.threat-pill-item strong {
+  color: var(--ink);
+  font: 600 11px var(--mono);
+}
+
+
 
 
