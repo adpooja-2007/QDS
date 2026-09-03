@@ -1030,15 +1030,34 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
   const chshVal = item?.chsh ? item.chsh.toFixed(2) : (isCritical ? "1.76" : isHigh ? "1.95" : "2.45");
   const baselineVal = item?.baseline || "1.9%";
 
-  // Threat-specific spectrum height multiplier
-  const mult = isCritical ? 1.4 : isHigh ? 1.0 : 0.65;
-  const barHeights = [
-    Math.min(75, Math.round(28 * mult)),
-    Math.min(85, Math.round(45 * mult)),
-    Math.min(90, Math.round(78 * mult)),
-    Math.min(95, Math.round(62 * mult)),
-    Math.min(88, Math.round(84 * mult)),
-  ];
+  // Calculate unique threat-specific spectrum profile and dynamic bar heights
+  const threatProfile = useMemo(() => {
+    const idStr = item?.id || "THR-104";
+    const idSeed = parseInt(idStr.replace(/\D/g, "") || "104", 10);
+    const qber = item?.qber ?? (parseFloat(item?.current || "14.2") / 100);
+    const chsh = item?.chsh ?? (isCritical ? 1.76 : isHigh ? 1.95 : 2.45);
+
+    const heights = [
+      Math.min(80, Math.max(16, Math.round(qber * 390 + ((idSeed * 3) % 17) + 12))),
+      Math.min(84, Math.max(20, Math.round(qber * 430 + ((idSeed * 7) % 21) + 18))),
+      Math.min(88, Math.max(26, Math.round(qber * 490 + ((idSeed * 11) % 27) + 22))),
+      Math.min(85, Math.max(18, Math.round((3.0 - chsh) * 55 + ((idSeed * 13) % 19) + 16))),
+      Math.min(82, Math.max(14, Math.round(qber * 410 + ((idSeed * 17) % 23) + 14)))
+    ];
+
+    const animDurs = heights.map((_, i) => ((0.85 + ((idSeed + i * 5) % 9) * 0.14)).toFixed(2) + "s");
+
+    const barColors = heights.map(h => {
+      if (h >= 50) return "#b94a2f"; // Copper breach
+      if (h >= 34) return "#d97706"; // Amber elevated
+      return "#0058be"; // Blue nominal
+    });
+
+    const pts = heights.map((h, i) => `${37 + i * 55},${85 - h}`);
+    const wavePathD = `M 15,80 L ${pts.join(" L ")} L 285,80`;
+
+    return { heights, animDurs, barColors, wavePathD, qber, chsh, idStr };
+  }, [item, isCritical, isHigh]);
 
   const handleExportThreatPcap = () => {
     const payload = JSON.stringify({
@@ -1125,25 +1144,44 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
                 <stop offset="100%" stopColor="rgba(244, 241, 234, 0.1)" stopOpacity="0.1" />
               </linearGradient>
             </defs>
+
             {/* Grid lines */}
             <line x1="0" y1="30" x2="300" y2="30" stroke="rgba(22, 24, 26, 0.12)" strokeWidth="0.8" strokeDasharray="3 3" />
             <line x1="0" y1="60" x2="300" y2="60" stroke="rgba(22, 24, 26, 0.12)" strokeWidth="0.8" strokeDasharray="3 3" />
 
+            {/* Unique Threat Waveform Envelope */}
+            <path
+              d={threatProfile.wavePathD}
+              fill="none"
+              stroke={isCritical ? "rgba(185, 74, 47, 0.35)" : "rgba(0, 88, 190, 0.3)"}
+              strokeWidth="1.5"
+              strokeDasharray="2 2"
+            />
 
-            {/* Dynamic Equalizer Bars */}
-            {barHeights.map((h, i) => (
+            {/* Dynamic Threat-Specific Equalizer Bars */}
+            {threatProfile.heights.map((h, i) => (
               <rect
-                key={i}
+                key={`${item?.id || 'threat'}-bar-${i}`}
                 x={20 + i * 55}
                 y={85 - h}
                 width="34"
                 height={h}
-                fill={isCritical && i >= 3 ? "#b94a2f" : isHigh && i >= 3 ? "#d97706" : "#0058be"}
-                opacity="0.85"
+                fill={threatProfile.barColors[i]}
+                opacity="0.88"
                 rx="2"
               >
-                <animate attributeName="height" values={`${h};${Math.max(10, h - 12)};${h}`} dur={`${1.4 + i * 0.3}s`} repeatCount="indefinite" />
-                <animate attributeName="y" values={`${85 - h};${85 - Math.max(10, h - 12)};${85 - h}`} dur={`${1.4 + i * 0.3}s`} repeatCount="indefinite" />
+                <animate
+                  attributeName="height"
+                  values={`${h};${Math.max(8, h - (10 + (i % 3) * 4))};${h}`}
+                  dur={threatProfile.animDurs[i]}
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="y"
+                  values={`${85 - h};${85 - Math.max(8, h - (10 + (i % 3) * 4))};${85 - h}`}
+                  dur={threatProfile.animDurs[i]}
+                  repeatCount="indefinite"
+                />
               </rect>
             ))}
 
@@ -1175,6 +1213,7 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
     </div>
   );
 }
+
 
 
 /* Incidents inspector — Signal Atelier pairs forensic precision with warm paper, dark ink, copper intervention, and blue audit detail. */
