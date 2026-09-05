@@ -20,7 +20,7 @@ from fastapi.responses import RedirectResponse
 from app.core.config import settings
 from app.core.middleware import TelemetryMiddleware, telemetry_store
 from app.core.exceptions import register_exception_handlers
-from app.api import arbitrator, alice, bob, security, attacks, sessions
+from app.api import arbitrator, alice, bob, security, attacks, sessions, ghz, quarc, network
 from app.services.session_service import session_service
 from app.schemas.common import HealthResponse
 
@@ -89,6 +89,18 @@ app = FastAPI(
             "name": "Sessions & Telemetry",
             "description": "📊 **Monitoring** — Session lifecycle, telemetry logs, and diagnostics.",
         },
+        {
+            "name": "GHZ Quantum Entanglement",
+            "description": "⚛️ **3-Qubit GHZ Module** — Entanglement generation, 3-party distribution, multi-basis measurement, and parity verification.",
+        },
+        {
+            "name": "QuARC Quantum Routing",
+            "description": "🌐 **Quantum Adaptive Routing using Clusters** — Clustering, multi-metric candidate ranking, adaptive selection, and failure rerouting.",
+        },
+        {
+            "name": "Quantum Network Topology",
+            "description": "🗺️ **Network Graph Management** — Nodes, quantum links, and topology configuration.",
+        },
     ],
 )
 
@@ -118,6 +130,9 @@ app.include_router(bob.router, prefix=settings.API_PREFIX)
 app.include_router(security.router, prefix=settings.API_PREFIX)
 app.include_router(attacks.router, prefix=settings.API_PREFIX)
 app.include_router(sessions.router, prefix=settings.API_PREFIX)
+app.include_router(ghz.router, prefix=settings.API_PREFIX)
+app.include_router(quarc.router, prefix=settings.API_PREFIX)
+app.include_router(network.router, prefix=settings.API_PREFIX)
 
 
 # ── Root & Health ────────────────────────────────────────────────────

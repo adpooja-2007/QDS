@@ -85,3 +85,77 @@ class TelemetryModel(Base):
             "session_id": self.session_id,
             "error": self.error,
         }
+
+
+class GHZSessionModel(Base):
+    """
+    SQLAlchemy ORM model for persisting 3-qubit GHZ entanglement instances.
+    Table: ghz_sessions
+    """
+    __tablename__ = "ghz_sessions"
+
+    ghz_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    qubit_count: Mapped[int] = mapped_column(Integer, default=3)
+    status: Mapped[str] = mapped_column(String(32), default="INITIALIZED", index=True)
+    participants: Mapped[List[str]] = mapped_column(JSON, default=list)
+    qubit_mapping: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+    shots: Mapped[int] = mapped_column(Integer, default=1000)
+    noise_rate: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    measurement: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    verification: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    metadata_json: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class QuantumNodeModel(Base):
+    """
+    SQLAlchemy ORM model for persisting Quantum Nodes in topology.
+    Table: quantum_nodes
+    """
+    __tablename__ = "quantum_nodes"
+
+    node_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(128), default="")
+    node_type: Mapped[str] = mapped_column(String(32), default="ROUTER")
+    status: Mapped[str] = mapped_column(String(32), default="ONLINE", index=True)
+    capacity: Mapped[int] = mapped_column(Integer, default=100)
+    cluster_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    metadata_json: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class QuantumLinkModel(Base):
+    """
+    SQLAlchemy ORM model for persisting Quantum Links in topology.
+    Table: quantum_links
+    """
+    __tablename__ = "quantum_links"
+
+    link_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    source: Mapped[str] = mapped_column(String(64), index=True)
+    destination: Mapped[str] = mapped_column(String(64), index=True)
+    distance: Mapped[float] = mapped_column(Float, default=1.0)
+    fidelity: Mapped[float] = mapped_column(Float, default=0.98)
+    latency: Mapped[float] = mapped_column(Float, default=1.0)
+    capacity: Mapped[int] = mapped_column(Integer, default=50)
+    success_probability: Mapped[float] = mapped_column(Float, default=0.95)
+    error_rate: Mapped[float] = mapped_column(Float, default=0.02)
+    status: Mapped[str] = mapped_column(String(32), default="ACTIVE", index=True)
+    metadata_json: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class RoutingDecisionModel(Base):
+    """
+    SQLAlchemy ORM model for persisting QuARC routing decisions.
+    Table: routing_decisions
+    """
+    __tablename__ = "routing_decisions"
+
+    decision_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    source: Mapped[str] = mapped_column(String(64), index=True)
+    destination: Mapped[str] = mapped_column(String(64), index=True)
+    selected_path: Mapped[List[str]] = mapped_column(JSON, default=list)
+    score: Mapped[float] = mapped_column(Float)
+    metrics: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+    reason: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
