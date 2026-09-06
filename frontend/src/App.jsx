@@ -141,6 +141,23 @@ export default function App() {
   const handleSendMessage = async ({ text, file_name, file_type, file_size, file_data, inject_attack }) => {
     if (!currentUser?.username || !activeContact?.username) return;
 
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
+      sender: currentUser.username,
+      recipient: activeContact.username,
+      text,
+      file_name,
+      file_type,
+      file_size,
+      file_data,
+      timestamp: new Date().toISOString(),
+      is_pending: true,
+      is_pass: true,
+      qds_status: 'PENDING'
+    };
+
+    setMessages(prev => [...prev, optimisticMsg]);
     setIsSending(true);
 
     try {
@@ -155,16 +172,18 @@ export default function App() {
         inject_attack
       });
 
-      setMessages(prev => [...prev, savedMsg]);
+      setMessages(prev => prev.map(m => m.id === tempId ? savedMsg : m));
       setLatestMessages(prev => ({ ...prev, [activeContact.username]: savedMsg }));
       setSelectedSecurityData(savedMsg);
     } catch (err) {
       console.error('Send failed:', err);
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, is_pending: false, is_failed: true, is_pass: false } : m));
       alert(err.message || 'Quantum transmission error');
     } finally {
       setIsSending(false);
     }
   };
+
 
   // 7. Clear chat history
   const handleClearHistory = async () => {
