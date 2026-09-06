@@ -11,16 +11,18 @@ This file:
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.middleware import TelemetryMiddleware, telemetry_store
 from app.core.exceptions import register_exception_handlers
-from app.api import arbitrator, alice, bob, security, attacks, sessions, ghz, quarc, network
+from app.api import arbitrator, alice, bob, security, attacks, sessions, ghz, quarc, network, auth, chat
 from app.services.session_service import session_service
 from app.schemas.common import HealthResponse
 
@@ -133,13 +135,24 @@ app.include_router(sessions.router, prefix=settings.API_PREFIX)
 app.include_router(ghz.router, prefix=settings.API_PREFIX)
 app.include_router(quarc.router, prefix=settings.API_PREFIX)
 app.include_router(network.router, prefix=settings.API_PREFIX)
+app.include_router(auth.router, prefix=settings.API_PREFIX)
+app.include_router(chat.router, prefix=settings.API_PREFIX)
+
+
+# ── Static Files & Web UI ────────────────────────────────────────────
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 # ── Root & Health ────────────────────────────────────────────────────
 
 @app.get("/", include_in_schema=False)
 async def root():
-    """Redirect root to Swagger docs."""
+    """Serve the Quantum Chat UI, or redirect to Swagger docs if index.html is absent."""
+    index_file = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
     return RedirectResponse(url="/docs")
 
 

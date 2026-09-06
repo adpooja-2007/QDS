@@ -167,6 +167,36 @@ class QuARCService:
             constraints=constraints,
         )
 
+    def seed_default_topology(self) -> None:
+        """Seed default nodes and quantum links if topology is empty."""
+        if self.topology.nodes:
+            return
+
+        nodes = [
+            ("alice", "Alice (Signer)", NodeType.CLIENT, NodeStatus.ONLINE, 100),
+            ("bob", "Bob (Verifier)", NodeType.CLIENT, NodeStatus.ONLINE, 100),
+            ("charlie", "Charlie (Arbitrator)", NodeType.CLIENT, NodeStatus.ONLINE, 100),
+            ("node1", "Repeater 1", NodeType.ROUTER, NodeStatus.ONLINE, 150),
+            ("node2", "Repeater 2", NodeType.ROUTER, NodeStatus.ONLINE, 150),
+            ("node3", "Repeater 3", NodeType.ROUTER, NodeStatus.ONLINE, 150),
+            ("node4", "Repeater 4", NodeType.ROUTER, NodeStatus.ONLINE, 150),
+        ]
+        for nid, name, ntype, nstatus, cap in nodes:
+            self.add_node(nid, name=name, node_type=ntype, status=nstatus, capacity=cap)
+
+        links = [
+            ("l_a_1", "alice", "node1", 2.0, 0.99, 1.0),
+            ("l_1_3", "node1", "node3", 2.0, 0.99, 1.0),
+            ("l_3_b", "node3", "bob", 2.0, 0.99, 1.0),
+            ("l_a_2", "alice", "node2", 4.0, 0.96, 2.5),
+            ("l_2_4", "node2", "node4", 4.0, 0.96, 2.5),
+            ("l_4_b", "node4", "bob", 4.0, 0.96, 2.5),
+            ("l_c_2", "charlie", "node2", 3.0, 0.97, 1.8),
+            ("l_c_1", "charlie", "node1", 3.5, 0.96, 2.0),
+        ]
+        for lid, src, dst, dist, fid, lat in links:
+            self.add_link(lid, src, dst, distance=dist, fidelity=fid, latency=lat)
+
     def get_topology(self) -> Dict:
         """Export serialized network topology."""
         return self.topology.to_dict()
@@ -178,3 +208,5 @@ class QuARCService:
 
 # Global singleton service instance
 quarc_service = QuARCService()
+quarc_service.seed_default_topology()
+

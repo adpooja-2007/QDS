@@ -131,6 +131,10 @@ class QuantumService:
             "status": "SIGNED",
         }
 
+    def sign(self, session_id: str, document_hash: str) -> dict:
+        """Alias for prepare_and_sign."""
+        return self.prepare_and_sign(session_id, document_hash)
+
     def verify(self, session_id: str) -> dict:
         """
         Simulate Bob's complete verification operation:

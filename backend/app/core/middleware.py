@@ -24,7 +24,7 @@ class TelemetryEntry:
 
     __slots__ = (
         "request_id", "endpoint", "method", "timestamp",
-        "execution_time_ms", "status_code", "session_id", "error"
+        "execution_time_ms", "status_code", "session_id", "error", "client_ip"
     )
 
     def __init__(
@@ -37,6 +37,7 @@ class TelemetryEntry:
         status_code: int,
         session_id: Optional[str] = None,
         error: Optional[str] = None,
+        client_ip: Optional[str] = None,
     ):
         self.request_id = request_id
         self.endpoint = endpoint
@@ -46,6 +47,7 @@ class TelemetryEntry:
         self.status_code = status_code
         self.session_id = session_id
         self.error = error
+        self.client_ip = client_ip
 
     def to_dict(self) -> dict:
         return {
@@ -57,6 +59,7 @@ class TelemetryEntry:
             "status_code": self.status_code,
             "session_id": self.session_id,
             "error": self.error,
+            "client_ip": self.client_ip,
         }
 
 
@@ -87,6 +90,9 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
         # Try to extract session_id from path parameters
         session_id = self._extract_session_id(request)
 
+        # Extract client IP
+        client_ip = self._extract_client_ip(request)
+
         try:
             response = await call_next(request)
             execution_time_ms = (time.perf_counter() - start_time) * 1000
@@ -100,6 +106,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
                 status_code=response.status_code,
                 session_id=session_id,
                 error=None if response.status_code < 400 else f"HTTP {response.status_code}",
+                client_ip=client_ip,
             )
 
             telemetry_store.append(entry)
@@ -131,6 +138,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
                 status_code=500,
                 session_id=session_id,
                 error=str(exc),
+                client_ip=client_ip,
             )
 
             telemetry_store.append(entry)
@@ -157,3 +165,16 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
             if part.startswith("QKD-"):
                 return part
         return None
+
+    @staticmethod
+    def _extract_client_ip(request: Request) -> str:
+        """Extract the real client IP, checking X-Forwarded-For header first."""
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            return forwarded_for.split(",")[0].strip()
+        real_ip = request.headers.get("X-Real-IP")
+        if real_ip:
+            return real_ip.strip()
+        if request.client:
+            return request.client.host
+        return "unknown"

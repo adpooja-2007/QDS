@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html class="h-full bg-[#FBF9F5] text-[#181B20] antialiased" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>QDS Secure Chat — Quantum Messenger</title>
+  <!-- Tailwind CSS v3 with forms and container queries -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            cream: {
+              50: '#FCFBF8',
+              100: '#FBF9F5',
+              200: '#F4EFEA',
+              300: '#EAE3DA',
+              400: '#DDD5C8',
+            },
+            terracotta: {
+              500: '#D85A38',
+              600: '#C84B31',
+              700: '#AA3920',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(24, 27, 32, 0.15);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(24, 27, 32, 0.3);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans overflow-hidden bg-[#FBF9F5] select-none text-[#181B20]">
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- SCREEN 1: LOGIN & REGISTRATION PORTAL (SHOWN FIRST)                   -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<div id="loginScreen" class="fixed inset-0 z-50 bg-[#F4EFEA] flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-[#FCFBF8] border border-[#DDD5C8] rounded-3xl max-w-lg w-full shadow-2xl p-6 sm:p-8 space-y-6">
+    
+    <!-- Branding Header -->
+    <div class="text-center space-y-1.5">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#181B20] text-cream-100 font-mono font-bold text-2xl shadow-lg border border-[#2D3139] mb-2">
+        ⚛
+      </div>
+      <h1 class="text-xl sm:text-2xl font-bold text-[#181B20] tracking-tight">QDS Quantum Messenger</h1>
+      <p class="font-mono text-xs text-[#797167]">Quantum Digital Signatures &amp; EPR Entanglement Network</p>
+    </div>
+
+    <!-- Quick 1-Click Peer Login Chips -->
+    <div class="space-y-2">
+      <div class="flex items-center justify-between text-[11px] font-mono font-semibold text-[#797167] px-1">
+        <span>⚡ 1-CLICK NODE LOGIN</span>
+        <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-medium">Pre-seeded</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <!-- Alice Button -->
+        <button class="quick-login-chip p-3 rounded-2xl bg-[#F7F4EF] hover:bg-[#EAE3DA] border border-[#E0D7CC] hover:border-[#181B20] flex items-center gap-2.5 transition text-left cursor-pointer group" data-username="alice" data-password="alice">
+          <div class="w-9 h-9 rounded-full bg-[#181B20] text-cream-100 flex items-center justify-center font-mono font-bold text-xs shrink-0 group-hover:scale-105 transition">
+            AK
+          </div>
+          <div class="overflow-hidden">
+            <div class="font-bold text-xs text-[#181B20]">Alice Kovacs</div>
+            <div class="text-[10px] font-mono text-[#797167] truncate">Signer Node #9042</div>
+          </div>
+        </button>
+
+        <!-- Bob Button -->
+        <button class="quick-login-chip p-3 rounded-2xl bg-[#F7F4EF] hover:bg-[#EAE3DA] border border-[#E0D7CC] hover:border-[#181B20] flex items-center gap-2.5 transition text-left cursor-pointer group" data-username="bob" data-password="bob">
+          <div class="w-9 h-9 rounded-full bg-[#181B20] text-cream-100 flex items-center justify-center font-mono font-bold text-xs shrink-0 group-hover:scale-105 transition">
+            B
+          </div>
+          <div class="overflow-hidden">
+            <div class="font-bold text-xs text-[#181B20]">Bob Receiver</div>
+            <div class="text-[10px] font-mono text-[#797167] truncate">Verifier #260827</div>
+          </div>
+        </button>
+
+        <!-- Charlie Button -->
+        <button class="quick-login-chip p-3 rounded-2xl bg-[#F7F4EF] hover:bg-[#EAE3DA] border border-[#E0D7CC] hover:border-[#181B20] flex items-center gap-2.5 transition text-left cursor-pointer group" data-username="charlie" data-password="charlie">
+          <div class="w-9 h-9 rounded-full bg-[#2D3748] text-cream-100 flex items-center justify-center font-mono font-bold text-xs shrink-0 group-hover:scale-105 transition">
+            C
+          </div>
+          <div class="overflow-hidden">
+            <div class="font-bold text-xs text-[#181B20]">Charlie Relay</div>
+            <div class="text-[10px] font-mono text-[#797167] truncate">Router Q2 #881029</div>
+          </div>
+        </button>
+
+        <!-- Eve Button -->
+        <button class="quick-login-chip p-3 rounded-2xl bg-[#F7F4EF] hover:bg-[#EAE3DA] border border-[#E0D7CC] hover:border-terracotta-600 flex items-center gap-2.5 transition text-left cursor-pointer group" data-username="eve" data-password="eve">
+          <div class="w-9 h-9 rounded-full bg-terracotta-700 text-white flex items-center justify-center font-mono font-bold text-xs shrink-0 group-hover:scale-105 transition">
+            ⚠
+          </div>
+          <div class="overflow-hidden">
+            <div class="font-bold text-xs text-terracotta-700">Eve Attacker</div>
+            <div class="text-[10px] font-mono text-[#797167] truncate">MitM Probe #666999</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mode Selector Tabs (Sign In vs Register) -->
+    <div class="flex rounded-xl bg-[#EAE3DA]/60 p-1 border border-[#DDD5C8]">
+      <button id="authTabLogin" class="flex-1 py-2 text-xs font-mono font-bold rounded-lg transition bg-[#FCFBF8] text-[#181B20] shadow-sm cursor-pointer">
+        Sign In
+      </button>
+      <button id="authTabRegister" class="flex-1 py-2 text-xs font-mono font-bold rounded-lg transition text-[#797167] hover:text-[#181B20] cursor-pointer">
+        Register New Node
+      </button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginFormElement" class="space-y-3.5">
+      <div>
+        <label class="block text-[#4C463D] font-mono text-[11px] mb-1 font-semibold">Username / Node Credential</label>
+        <input type="text" id="inputLoginUsername" placeholder="e.g. alice, bob, charlie, or custom" required class="w-full bg-[#FBF9F5] border border-[#DDD5C8] rounded-xl p-2.5 text-xs text-[#181B20] focus:ring-1 focus:ring-black focus:border-black font-mono outline-none"/>
+      </div>
+      <div>
+        <label class="block text-[#4C463D] font-mono text-[11px] mb-1 font-semibold">Password</label>
+        <input type="password" id="inputLoginPassword" placeholder="••••••••" required class="w-full bg-[#FBF9F5] border border-[#DDD5C8] rounded-xl p-2.5 text-xs text-[#181B20] focus:ring-1 focus:ring-black focus:border-black font-mono outline-none"/>
+      </div>
+      <div id="loginErrorText" class="text-xs text-terracotta-600 font-mono hidden"></div>
+      <button type="submit" class="w-full py-3 bg-[#181B20] hover:bg-black text-cream-100 rounded-xl text-xs font-mono font-bold transition shadow cursor-pointer">
+        Connect to Quantum Node
+      </button>
+    </form>
+
+    <!-- Register Form (Hidden by default) -->
+    <form id="registerFormElement" class="space-y-3.5 hidden">
+      <div>
+        <label class="block text-[#4C463D] font-mono text-[11px] mb-1 font-semibold">Username</label>
+        <input type="text" id="inputRegUsername" placeholder="e.g. david, sarah" required class="w-full bg-[#FBF9F5] border border-[#DDD5C8] rounded-xl p-2.5 text-xs text-[#181B20] focus:ring-1 focus:ring-black focus:border-black font-mono outline-none"/>
+      </div>
+      <div>
+        <label class="block text-[#4C463D] font-mono text-[11px] mb-1 font-semibold">Display Name</label>
+        <input type="text" id="inputRegDisplayName" placeholder="e.g. David Miller" required class="w-full bg-[#FBF9F5] border border-[#DDD5C8] rounded-xl p-2.5 text-xs text-[#181B20] focus:ring-1 focus:ring-black focus:border-black font-sans outline-none"/>
+      </div>
+      <div>
+        <label class="block text-[#4C463D] font-mono text-[11px] mb-1 font-semibold">Node Role</label>
+        <input type="text" id="inputRegRole" value="Quantum Client Node" class="w-full bg-[#FBF9F5] border border-[#DDD5C8] rounded-xl p-2.5 text-xs text-[#181B20] focus:ring-1 focus:ring-black focus:border-black font-sans outline-none"/>
+      </div>
+      <div>
+        <label class="block text-[#4C463D] font-mono text-[11px] mb-1 font-semibold">Password</label>
+        <input type="password" id="inputRegPassword" placeholder="Create password" required class="w-full bg-[#FBF9F5] border border-[#DDD5C8] rounded-xl p-2.5 text-xs text-[#181B20] focus:ring-1 focus:ring-black focus:border-black font-mono outline-none"/>
+      </div>
+      <div id="regErrorText" class="text-xs text-terracotta-600 font-mono hidden"></div>
+      <button type="submit" class="w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-mono font-bold transition shadow cursor-pointer">
+        Create &amp; Initialize Quantum Account
+      </button>
+    </form>
+
+    <div class="border-t border-[#EAE3DA] pt-3 text-center">
+      <p class="font-mono text-[10px] text-[#797167]">Open multiple browser tabs with different credentials to chat simultaneously in real time.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- SCREEN 2: MAIN QUANTUM CHAT INTERFACE (SHOWN AFTER LOGIN)            -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<div id="mainAppLayout" class="flex-1 flex overflow-hidden relative">
+
+  <!-- Left Sidebar (Conversations List) -->
+  <aside class="w-[340px] md:w-[380px] border-r border-[#EAE3DA] bg-[#F7F4EF] flex flex-col shrink-0">
+    
+    <!-- Sidebar Header: Active Logged In User Profile & Actions -->
+    <div class="p-3.5 border-b border-[#EAE3DA] bg-[#FCFBF8] flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition" id="profileBtn" title="View Current Profile">
+        <div class="relative">
+          <div class="w-10 h-10 rounded-full bg-[#181B20] text-cream-100 flex items-center justify-center font-mono font-bold text-xs tracking-wider border border-[#2D3139]" id="sidebarUserAvatar">
+            AK
+          </div>
+          <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-600 border-2 border-white rounded-full"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h2 class="text-sm font-semibold text-[#181B20]" id="sidebarUserName">Alice Kovacs</h2>
+            <span class="text-[9px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-200 px-1 py-0.2 rounded font-medium">ONLINE</span>
+          </div>
+          <p class="font-mono text-[10px] text-[#797167]" id="sidebarUserNodeId">QDS Secure ID #9042</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-1">
+        <!-- New Chat / Peer Picker -->
+        <button class="p-2 text-[#797167] hover:text-[#181B20] rounded-full hover:bg-[#EAE3DA] transition cursor-pointer" id="newChatBtn" title="New Chat / Refresh Peers">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        </button>
+        <!-- Switch Account / Logout -->
+        <button class="p-2 text-[#797167] hover:text-[#181B20] rounded-full hover:bg-[#EAE3DA] transition cursor-pointer" id="logoutBtn" title="Switch User / Logout">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        </button>
+        <!-- Settings -->
+        <button class="p-2 text-[#797167] hover:text-[#181B20] rounded-full hover:bg-[#EAE3DA] transition cursor-pointer" id="settingsBtn" title="Quantum Parameters Settings">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Conversations -->
+    <div class="p-3 border-b border-[#EAE3DA]">
+      <div class="relative">
+        <input class="w-full bg-[#FCFBF8] border border-[#DDD5C8] rounded-lg text-xs py-2 pl-8 pr-3 focus:ring-1 focus:ring-black focus:border-black font-sans placeholder-[#9C9488]" id="searchConversations" placeholder="Search quantum peers..." type="text"/>
+        <svg class="w-3.5 h-3.5 text-[#9C9488] absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </div>
+    </div>
+
+    <!-- Conversations List -->
+    <div class="flex-1 overflow-y-auto divide-y divide-[#EAE3DA]" id="conversationsContainer">
+      <!-- Dynamic peer items injected via JS -->
+    </div>
+
+    <!-- Footer Sidebar info -->
+    <div class="p-2.5 border-t border-[#EAE3DA] bg-[#F2EDE5] font-mono text-[10px] text-[#6E665A] flex items-center justify-between">
+      <span>QDS Protocol v2.4</span>
+      <span class="text-emerald-700 font-semibold" id="bottomStatusBadge">● Secure E2EE</span>
+    </div>
+  </aside>
+
+  <!-- Right Main Chat Area -->
+  <main class="flex-1 flex flex-col bg-[#FBF9F5] overflow-hidden">
+    
+    <!-- Chat Header -->
+    <div class="h-16 px-5 border-b border-[#EAE3DA] bg-[#FCFBF8] flex items-center justify-between shrink-0">
+      <div class="flex items-center space-x-3.5 cursor-pointer" id="contactHeaderBtn" title="View Peer Details">
+        <div class="relative">
+          <div class="w-10 h-10 rounded-full bg-[#181B20] text-cream-100 flex items-center justify-center font-mono font-bold text-sm" id="headerAvatar">B</div>
+          <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" id="headerStatusDot"></span>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-sm font-semibold text-[#111317]" id="headerName">Bob</h1>
+            <span class="text-[10px] font-mono text-[#6E665A]" id="headerHandle">@bob_receiver</span>
+          </div>
+          <p class="text-[11px] text-[#746C61] flex items-center gap-1 font-sans">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" id="headerOnlineDot"></span>
+            <span id="top-session-status">Online · Entanglement Ready</span>
+          </p>
+        </div>
+      </div>
+      
+      <!-- Header Actions & Security Badge -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- Clickable Security Indicator -->
+        <button class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full text-xs font-mono transition shadow-sm cursor-pointer" id="securityBadgeBtn" title="View Quantum Security Details">
+          <span>🔒</span>
+          <span class="font-semibold" id="top-badge-text">Secure E2EE</span>
+        </button>
+        <!-- Clear Chat -->
+        <button class="p-2 text-[#5C554E] hover:text-black hover:bg-[#EAE3DA] rounded-full transition cursor-pointer" id="clearChatBtn" title="Clear Chat Messages">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        </button>
+        <!-- More Options -->
+        <button class="p-2 text-[#5C554E] hover:text-black hover:bg-[#EAE3DA] rounded-full transition cursor-pointer" id="moreOptionsBtn" title="Security & Network Info">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 5v.01M12 12v.01M12 19v.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-[#FBF9F5]" id="chatMessageScroll">
+      <!-- Injected via JS -->
+    </div>
+
+    <!-- Secure Encryption Notice Above Composer -->
+    <div class="bg-[#F3EFE9] border-t border-[#EAE3DA] px-4 py-1.5 text-center font-mono text-[10px] text-[#7A7367] flex items-center justify-center gap-1.5" id="encryptionNoticeBanner">
+      <span>🔒</span>
+      <span id="bannerText">Messages &amp; Files are signed with Joint Bell Measurements &amp; Post-Quantum Keys (IST Timezone)</span>
+    </div>
+
+    <!-- Attachment Pending Preview Banner (Shows when file/image selected) -->
+    <div id="attachmentPreviewBar" class="hidden bg-[#F4EFEA] border-t border-[#DDD5C8] px-4 py-2 flex items-center justify-between">
+      <div class="flex items-center space-x-3 overflow-hidden">
+        <!-- Thumbnail or File Icon -->
+        <div id="attachmentIconBox" class="w-10 h-10 rounded-lg bg-[#EAE3DA] border border-[#DDD5C8] flex items-center justify-center font-mono text-xs overflow-hidden shrink-0">
+          📄
+        </div>
+        <div class="overflow-hidden">
+          <p id="attachmentFileName" class="text-xs font-semibold text-[#181B20] truncate">document.pdf</p>
+          <p id="attachmentFileSize" class="text-[10px] font-mono text-[#797167]">240 KB · Ready for Quantum Signature</p>
+        </div>
+      </div>
+      <button id="cancelAttachmentBtn" class="p-1.5 text-[#797167] hover:text-[#181B20] rounded-full hover:bg-[#EAE3DA] transition cursor-pointer" title="Remove attachment">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </button>
+    </div>
+
+    <!-- Message Composer -->
+    <div class="p-3 bg-[#FCFBF8] border-t border-[#EAE3DA] relative">
+      <!-- Hidden File Inputs (Accepts all file types & images) -->
+      <input type="file" id="generalFileInput" class="hidden" accept="*"/>
+      <input type="file" id="imageFileInput" class="hidden" accept="image/*"/>
+
+      <!-- Floating Qubit Emoji Picker Dropdown -->
+      <div id="qubitPickerMenu" class="hidden absolute bottom-16 left-4 bg-[#FCFBF8] border border-[#DDD5C8] rounded-2xl shadow-xl p-2.5 z-40 flex items-center gap-1.5 font-mono text-xs">
+        <button class="qubit-symbol-btn px-2.5 py-1.5 rounded-lg bg-[#F4EFEA] hover:bg-[#EAE3DA] text-[#181B20] font-bold cursor-pointer transition">|Ψ⟩</button>
+        <button class="qubit-symbol-btn px-2.5 py-1.5 rounded-lg bg-[#F4EFEA] hover:bg-[#EAE3DA] text-[#181B20] font-bold cursor-pointer transition">|0⟩</button>
+        <button class="qubit-symbol-btn px-2.5 py-1.5 rounded-lg bg-[#F4EFEA] hover:bg-[#EAE3DA] text-[#181B20] font-bold cursor-pointer transition">|1⟩</button>
+        <button class="qubit-symbol-btn px-2.5 py-1.5 rounded-lg bg-[#F4EFEA] hover:bg-[#EAE3DA] text-[#181B20] font-bold cursor-pointer transition">|+⟩</button>
+        <button class="qubit-symbol-btn px-2.5 py-1.5 rounded-lg bg-[#F4EFEA] hover:bg-[#EAE3DA] text-[#181B20] font-bold cursor-pointer transition">|-⟩</button>
+        <button class="qubit-symbol-btn px-2.5 py-1.5 rounded-lg bg-[#F4EFEA] hover:bg-[#EAE3DA] text-[#181B20] font-bold cursor-pointer transition">|Φ⁺⟩</button>
+        <button class="qubit-symbol-btn px-2.5 py-1.5 rounded-lg bg-[#F4EFEA] hover:bg-[#EAE3DA] text-[#181B20] font-bold cursor-pointer transition">|Ψ⁻⟩</button>
+      </div>
+
+      <div class="flex items-end space-x-1.5 sm:space-x-2">
+        <!-- File Document Upload Button -->
+        <button class="p-2.5 text-[#554F46] hover:bg-[#EAE3DA] rounded-full transition cursor-pointer" id="attachFileBtn" title="Upload &amp; Sign Any File (PDF, DOC, ZIP, TXT, etc.)">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        </button>
+
+        <!-- Image Upload Button -->
+        <button class="p-2.5 text-[#554F46] hover:bg-[#EAE3DA] rounded-full transition cursor-pointer" id="attachImageBtn" title="Upload &amp; Sign Image (PNG, JPG, WebP, GIF)">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        </button>
+
+        <!-- Insert Qubit Notation Dropdown Toggle -->
+        <button class="p-2.5 text-[#554F46] hover:bg-[#EAE3DA] rounded-full transition hidden sm:block cursor-pointer" id="emojiBtn" title="Insert Quantum Notation (|Ψ⟩, |0⟩, |1⟩)">
+          <span class="text-sm font-mono font-bold">|Ψ⟩</span>
+        </button>
+
+        <!-- Input field container -->
+        <div class="flex-1 bg-[#FBF9F5] border border-[#DDD5C8] rounded-2xl px-3.5 py-2 focus-within:border-black focus-within:ring-1 focus-within:ring-black">
+          <textarea class="w-full bg-transparent border-0 p-0 text-xs focus:ring-0 resize-none font-sans placeholder-[#9C9488] leading-relaxed max-h-24 outline-none" id="messageTextInput" placeholder="Type a message or attach any file..." rows="1"></textarea>
+        </div>
+
+        <!-- Send Button -->
+        <button class="p-2.5 bg-[#181B20] hover:bg-black text-cream-100 rounded-full transition shadow cursor-pointer shrink-0" id="sendMessageBtn" title="Send Quantum Signed Message">
+          <svg class="w-4 h-4 text-terracotta-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- MODALS                                                                -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+
+<!-- Modal: Lightbox Image Viewer -->
+<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4" id="imageLightboxModal">
+  <div class="max-w-3xl w-full flex flex-col items-center">
+    <div class="w-full flex justify-between items-center text-white mb-2 px-2">
+      <span class="font-mono text-xs" id="lightboxTitle">Quantum Signed Image</span>
+      <button class="p-1 rounded-full hover:bg-white/20 text-white cursor-pointer" id="closeLightboxBtn">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </button>
+    </div>
+    <div class="bg-black/50 rounded-2xl overflow-hidden p-2 border border-white/20 shadow-2xl">
+      <img id="lightboxImage" src="" alt="Full Preview" class="max-h-[80vh] max-w-full rounded-xl object-contain"/>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: User Profile (Triggered by clicking top left profile) -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4" id="userProfileModal">
+  <div class="bg-[#FCFBF8] border border-[#DDD4C5] rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col text-center p-6 space-y-4">
+    <div class="flex justify-end -mr-2 -mt-2">
+      <button class="p-1 rounded-full hover:bg-[#E8E1D5] cursor-pointer" id="closeUserProfileModal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </button>
+    </div>
+    <div class="mx-auto w-20 h-20 rounded-full bg-[#181B20] text-cream-100 flex items-center justify-center font-mono font-bold text-2xl border-2 border-emerald-600" id="userModalAvatar">
+      AK
+    </div>
+    <div>
+      <h3 class="font-semibold text-base text-[#111317]" id="userModalName">Alice Kovacs</h3>
+      <p class="font-mono text-xs text-[#7F776B] mt-0.5" id="userModalHandle">Signer Node Alpha · ID #9042</p>
+    </div>
+    <div class="bg-[#F4EFEA] p-3.5 rounded-xl text-left font-mono text-[11px] space-y-2 border border-[#E5DEC7]">
+      <div class="flex justify-between"><span class="text-[#746C61]">Node Role:</span><span class="text-emerald-700 font-semibold" id="userModalRole">Signer Node</span></div>
+      <div class="flex justify-between"><span class="text-[#746C61]">State:</span><span class="text-emerald-700 font-semibold">Active &amp; Ready</span></div>
+      <div class="flex justify-between"><span class="text-[#746C61]">Timezone:</span><span>IST (UTC+05:30)</span></div>
+      <div class="flex justify-between"><span class="text-[#746C61]">Quantum Key:</span><span>OTP + ML-DSA-65</span></div>
+    </div>
+    <button class="w-full py-2.5 bg-[#181B20] hover:bg-black text-white rounded-xl text-xs font-mono transition cursor-pointer" id="closeUserProfileModalBtn">
+      Done
+    </button>
+  </div>
+</div>
+
+<!-- Modal: Contact Profile -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4" id="contactModal">
+  <div class="bg-[#FCFBF8] border border-[#DDD4C5] rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col text-center p-6 space-y-4">
+    <div class="flex justify-end -mr-2 -mt-2">
+      <button class="p-1 rounded-full hover:bg-[#E8E1D5] cursor-pointer" id="closeContactModal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </button>
+    </div>
+    <div class="mx-auto w-20 h-20 rounded-full bg-[#181B20] text-cream-100 flex items-center justify-center font-mono font-bold text-2xl border-2 border-terracotta-600" id="contactModalAvatar">
+      B
+    </div>
+    <div>
+      <h3 class="font-semibold text-base text-[#111317]" id="contactModalName">Bob (Receiver Node Beta)</h3>
+      <p class="font-mono text-xs text-[#7F776B] mt-0.5" id="contactModalHandle">@bob_receiver · Node ID #260827</p>
+    </div>
+    <div class="bg-[#F4EFEA] p-3.5 rounded-xl text-left font-mono text-[11px] space-y-2 border border-[#E5DEC7]">
+      <div class="flex justify-between"><span class="text-[#746C61]">Status:</span><span class="text-emerald-700 font-semibold" id="contactModalStatus">Online</span></div>
+      <div class="flex justify-between"><span class="text-[#746C61]">Optical Fiber:</span><span id="contactModalFiber">1550nm Telecom</span></div>
+      <div class="flex justify-between"><span class="text-[#746C61]">Key Exchange:</span><span id="contactModalKey">Active E2EE</span></div>
+    </div>
+    <button class="w-full py-2.5 bg-[#181B20] hover:bg-black text-white rounded-xl text-xs font-mono transition cursor-pointer" id="closeContactModalBtn">
+      Done
+    </button>
+  </div>
+</div>
+
+<!-- Modal: Security Details (Triggered by clicking 🔒 Secure badge) -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4" id="securityModal">
+  <div class="bg-[#FCFBF8] border border-[#DDD4C5] rounded-2xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col">
+    <div class="p-4 border-b border-[#EAE3DA] bg-[#F7F3EC] flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-xl">🔒</span>
+        <div>
+          <h3 class="font-semibold text-sm text-[#181B20]">End-to-End Quantum Encryption</h3>
+          <p class="font-mono text-[10px] text-[#7F776B]" id="modalChannelLabel">Channel: Alice ↔ Bob</p>
+        </div>
+      </div>
+      <button class="p-1 rounded-full hover:bg-[#E8E1D5] text-[#746D62] cursor-pointer" id="closeSecurityModal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </button>
+    </div>
+    <div class="p-5 space-y-4 text-xs font-sans">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#F4EFEA] border border-[#E5DEC7]">
+          <span class="text-[#554F46]">QDS Signature Status</span>
+          <span id="status-qds" class="font-mono text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Verified (Pass)</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#F4EFEA] border border-[#E5DEC7]">
+          <span class="text-[#554F46]">Quantum Key Active</span>
+          <span class="font-mono font-semibold text-[#181B20]">OTP + ML-DSA-65</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#F4EFEA] border border-[#E5DEC7]">
+          <span class="text-[#554F46]">Quantum Bit Error Rate (QBER)</span>
+          <span id="status-qber" class="font-mono font-semibold text-emerald-700">1.82%</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#F4EFEA] border border-[#E5DEC7]">
+          <span class="text-[#554F46]">Quantum Route Optimal</span>
+          <span id="status-route" class="font-mono font-semibold text-[#181B20]">alice → Q1-Router → bob</span>
+        </div>
+      </div>
+      <!-- Expandable Technical Details -->
+      <div class="border border-[#EAE3DA] rounded-xl overflow-hidden">
+        <button class="w-full p-3 bg-[#F4EFEA] hover:bg-[#EAE3DA] text-left font-mono text-[11px] font-semibold text-[#332E27] flex justify-between items-center transition cursor-pointer" id="toggleTechDetails">
+          <span>View Technical Details</span>
+          <span id="toggleTechArrow">▼</span>
+        </button>
+        <div class="p-3 bg-white font-mono text-[10px] text-[#554F46] space-y-1.5 hidden" id="techDetailsContent">
+          <div id="status-chsh">CHSH Bell Score: S = 2.82 [ENTANGLEMENT_PRESENT]</div>
+          <div id="status-epr-rate">EPR Emission Rate: 1,000 pairs/sec</div>
+          <div id="status-hoeffding">Hoeffding Bound limit: 14.12%</div>
+          <div>Post-Quantum Fallback: ML-DSA-65 / Dilithium3</div>
+        </div>
+      </div>
+    </div>
+    <div class="p-3.5 border-t border-[#EAE3DA] bg-[#F7F3EC] flex justify-end">
+      <button class="bg-[#181B20] hover:bg-black text-cream-100 px-4 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer" id="closeSecurityModalBtn">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Settings -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4" id="settingsModal">
+  <div class="bg-[#FCFBF8] border border-[#DDD4C5] rounded-2xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col p-6 space-y-4">
+    <div class="flex justify-between items-center pb-2 border-b border-[#EAE3DA]">
+      <h3 class="font-semibold text-sm text-[#181B20]">Quantum Parameters Configuration</h3>
+      <button class="p-1 rounded-full hover:bg-[#E8E1D5] text-[#746D62] cursor-pointer" id="closeSettingsModal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </button>
+    </div>
+    <div class="space-y-3 text-xs font-sans">
+      <div>
+        <label class="block text-[#554F46] font-mono text-[11px] mb-1">EPR Pairs Generated (N):</label>
+        <input type="number" id="settingNumPairs" value="1000" min="100" max="10000" step="100" class="w-full bg-[#F4EFEA] border border-[#DDD5C8] rounded-lg p-2 font-mono text-xs outline-none"/>
+      </div>
+      <div>
+        <label class="block text-[#554F46] font-mono text-[11px] mb-1">Baseline Physical Noise (e₀):</label>
+        <input type="number" id="settingNoise" value="0.02" min="0" max="0.2" step="0.01" class="w-full bg-[#F4EFEA] border border-[#DDD5C8] rounded-lg p-2 font-mono text-xs outline-none"/>
+      </div>
+      <div>
+        <label class="block text-[#554F46] font-mono text-[11px] mb-1">False Alarm Alpha (α):</label>
+        <input type="number" id="settingAlpha" value="0.000001" min="0.0000001" max="0.01" step="0.000001" class="w-full bg-[#F4EFEA] border border-[#DDD5C8] rounded-lg p-2 font-mono text-xs outline-none"/>
+      </div>
+    </div>
+    <div class="flex justify-end space-x-2 pt-2 border-t border-[#EAE3DA]">
+      <button class="bg-[#181B20] hover:bg-black text-cream-100 px-4 py-2 rounded-xl text-xs font-mono transition cursor-pointer" id="saveSettingsBtn">
+        Save Parameters
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT LOGIC WITH IST TIMEZONE & INTERACTIVE BUTTONS             -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<script>
+  // ── State Management ────────────────────────────────────────────────
+  let currentUser = null;
+  let activePeer = null;
+  let allUsers = [];
+  let pollInterval = null;
+  let pendingAttachment = null; // { name, type, size, dataUrl, isImage }
+
+  // Check sessionStorage for per-tab session
+  const storedUser = sessionStorage.getItem("qds_light_user");
+  if (storedUser) {
+    try {
+      currentUser = JSON.parse(storedUser);
+    } catch(e) {}
+  }
+
+  // ── IST (Indian Standard Time) Formatter ───────────────────────────
+  function formatISTTime(dateInput) {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    return d.toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+
+  function formatISTDate(dateInput) {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    return d.toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  }
+
+  // ── DOM References ────────────────────────────────────────────────
+  const loginScreen = document.getElementById('loginScreen');
+  const mainAppLayout = document.getElementById('mainAppLayout');
+
+  // Auth
+  const authTabLogin = document.getElementById('authTabLogin');
+  const authTabRegister = document.getElementById('authTabRegister');
+  const loginForm = document.getElementById('loginFormElement');
+  const registerForm = document.getElementById('registerFormElement');
+  const loginErrorText = document.getElementById('loginErrorText');
+  const regErrorText = document.getElementById('regErrorText');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const newChatBtn = document.getElementById('newChatBtn');
+
+  // Chat UI Elements
+  const conversationsContainer = document.getElementById('conversationsContainer');
+  const chatScroll = document.getElementById('chatMessageScroll');
+  const messageInput = document.getElementById('messageTextInput');
+  const sendMessageBtn = document.getElementById('sendMessageBtn');
+  const searchInput = document.getElementById('searchConversations');
+  const clearChatBtn = document.getElementById('clearChatBtn');
+  const emojiBtn = document.getElementById('emojiBtn');
+  const qubitPickerMenu = document.getElementById('qubitPickerMenu');
+
+  // Upload Elements
+  const attachFileBtn = document.getElementById('attachFileBtn');
+  const attachImageBtn = document.getElementById('attachImageBtn');
+  const generalFileInput = document.getElementById('generalFileInput');
+  const imageFileInput = document.getElementById('imageFileInput');
+  const attachmentPreviewBar = document.getElementById('attachmentPreviewBar');
+  const attachmentIconBox = document.getElementById('attachmentIconBox');
+  const attachmentFileName = document.getElementById('attachmentFileName');
+  const attachmentFileSize = document.getElementById('attachmentFileSize');
+  const cancelAttachmentBtn = document.getElementById('cancelAttachmentBtn');
+
+  // Lightbox Elements
+  const imageLightboxModal = document.getElementById('imageLightboxModal');
+  const lightboxImage = document.getElementById('lightboxImage');
+  const lightboxTitle = document.getElementById('lightboxTitle');
+  const closeLightboxBtn = document.getElementById('closeLightboxBtn');
+
+  // Profile Modals
+  const userProfileModal = document.getElementById('userProfileModal');
+  const profileBtn = document.getElementById('profileBtn');
+  const closeUserProfileModal = document.getElementById('closeUserProfileModal');
+  const closeUserProfileModalBtn = document.getElementById('closeUserProfileModalBtn');
+
+  // Contact Modal
+  const contactModal = document.getElementById('contactModal');
+  const contactHeaderBtn = document.getElementById('contactHeaderBtn');
+  const closeContactModal = document.getElementById('closeContactModal');
+  const closeContactModalBtn = document.getElementById('closeContactModalBtn');
+
+  // Security Modal
+  const securityModal = document.getElementById('securityModal');
+  const securityBadgeBtn = document.getElementById('securityBadgeBtn');
+  const closeSecurityModal = document.getElementById('closeSecurityModal');
+  const closeSecurityModalBtn = document.getElementById('closeSecurityModalBtn');
+  const toggleTechDetails = document.getElementById('toggleTechDetails');
+  const techDetailsContent = document.getElementById('techDetailsContent');
+  const toggleTechArrow = document.getElementById('toggleTechArrow');
+
+  // Settings Modal
+  const settingsModal = document.getElementById('settingsModal');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const closeSettingsModal = document.getElementById('closeSettingsModal');
+  const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+  const moreOptionsBtn = document.getElementById('moreOptionsBtn');
+
+  // ── Initialize App ────────────────────────────────────────────────
+  function init() {
+    setupAuthListeners();
+    setupChatListeners();
+    setupUploadListeners();
+    setupModalListeners();
+
+    if (currentUser) {
+      showChatScreen();
+    } else {
+      showLoginScreen();
+    }
+  }
+
+  function showLoginScreen() {
+    loginScreen.classList.remove('hidden');
+    if (pollInterval) clearInterval(pollInterval);
+  }
+
+  function showChatScreen() {
+    loginScreen.classList.add('hidden');
+    updateSidebarUser();
+    loadUsers();
+    startPolling();
+  }
+
+  function updateSidebarUser() {
+    if (!currentUser) return;
+    document.getElementById('sidebarUserName').innerText = currentUser.display_name;
+    document.getElementById('sidebarUserNodeId').innerText = `QDS Secure ID ${currentUser.node_id || '#NODE'}`;
+    const av = document.getElementById('sidebarUserAvatar');
+    av.innerText = currentUser.avatar_text || currentUser.username.substring(0, 2).toUpperCase();
+    av.className = `w-10 h-10 rounded-full ${currentUser.avatar_bg || 'bg-[#181B20]'} text-cream-100 flex items-center justify-center font-mono font-bold text-xs tracking-wider border border-[#2D3139]`;
+  }
+
+  // ── Authentication Handlers ───────────────────────────────────────
+  function setupAuthListeners() {
+    document.querySelectorAll('.quick-login-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const u = chip.getAttribute('data-username');
+        const p = chip.getAttribute('data-password');
+        executeLogin(u, p);
+      });
+    });
+
+    authTabLogin.addEventListener('click', () => {
+      authTabLogin.className = "flex-1 py-2 text-xs font-mono font-bold rounded-lg transition bg-[#FCFBF8] text-[#181B20] shadow-sm cursor-pointer";
+      authTabRegister.className = "flex-1 py-2 text-xs font-mono font-bold rounded-lg transition text-[#797167] hover:text-[#181B20] cursor-pointer";
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
+    });
+
+    authTabRegister.addEventListener('click', () => {
+      authTabRegister.className = "flex-1 py-2 text-xs font-mono font-bold rounded-lg transition bg-emerald-800 text-white shadow-sm cursor-pointer";
+      authTabLogin.className = "flex-1 py-2 text-xs font-mono font-bold rounded-lg transition text-[#797167] hover:text-[#181B20] cursor-pointer";
+      registerForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+    });
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const u = document.getElementById('inputLoginUsername').value.trim();
+      const p = document.getElementById('inputLoginPassword').value.trim();
+      executeLogin(u, p);
+    });
+
+    registerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const u = document.getElementById('inputRegUsername').value.trim();
+      const d = document.getElementById('inputRegDisplayName').value.trim();
+      const r = document.getElementById('inputRegRole').value.trim();
+      const p = document.getElementById('inputRegPassword').value.trim();
+      executeRegister(u, p, d, r);
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      sessionStorage.removeItem("qds_light_user");
+      currentUser = null;
+      showLoginScreen();
+    });
+
+    newChatBtn.addEventListener('click', () => {
+      loadUsers();
+      searchInput.focus();
+    });
+  }
+
+  async function executeLogin(username, password) {
+    loginErrorText.classList.add('hidden');
+    try {
+      const res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        currentUser = data.user;
+        sessionStorage.setItem("qds_light_user", JSON.stringify(currentUser));
+        showChatScreen();
+      } else {
+        loginErrorText.innerText = data.detail || "Invalid node credentials.";
+        loginErrorText.classList.remove('hidden');
+      }
+    } catch(err) {
+      loginErrorText.innerText = "Connection error. Ensure backend is running.";
+      loginErrorText.classList.remove('hidden');
+    }
+  }
+
+  async function executeRegister(username, password, display_name, role) {
+    regErrorText.classList.add('hidden');
+    try {
+      const res = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, display_name, role })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        currentUser = data.user;
+        sessionStorage.setItem("qds_light_user", JSON.stringify(currentUser));
+        showChatScreen();
+      } else {
+        regErrorText.innerText = data.detail || "Registration failed. Username may already exist.";
+        regErrorText.classList.remove('hidden');
+      }
+    } catch(err) {
+      regErrorText.innerText = "Connection error. Ensure backend is running.";
+      regErrorText.classList.remove('hidden');
+    }
+  }
+
+  // ── Upload Handlers ───────────────────────────────────────────────
+  function setupUploadListeners() {
+    attachFileBtn.addEventListener('click', () => generalFileInput.click());
+    attachImageBtn.addEventListener('click', () => imageFileInput.click());
+
+    generalFileInput.addEventListener('change', handleFileSelect);
+    imageFileInput.addEventListener('change', handleFileSelect);
+
+    cancelAttachmentBtn.addEventListener('click', clearPendingAttachment);
+
+    closeLightboxBtn.addEventListener('click', () => imageLightboxModal.classList.add('hidden'));
+    imageLightboxModal.addEventListener('click', (e) => {
+      if (e.target === imageLightboxModal) imageLightboxModal.classList.add('hidden');
+    });
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+      pendingAttachment = {
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        dataUrl: event.target.result,
+        isImage: isImage
+      };
+
+      // Show Preview Bar
+      attachmentFileName.innerText = file.name;
+      attachmentFileSize.innerText = `${formatFileSize(file.size)} · Ready for QDS Signature`;
+      
+      if (isImage) {
+        attachmentIconBox.innerHTML = `<img src="${event.target.result}" class="w-full h-full object-cover rounded-lg"/>`;
+      } else {
+        attachmentIconBox.innerHTML = `📄`;
+      }
+
+      attachmentPreviewBar.classList.remove('hidden');
+      messageInput.focus();
+    };
+
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+
+  function clearPendingAttachment() {
+    pendingAttachment = null;
+    attachmentPreviewBar.classList.add('hidden');
+    attachmentIconBox.innerHTML = `📄`;
+  }
+
+  function formatFileSize(bytes) {
+    if (!bytes) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  // ── User Directory & Contacts ─────────────────────────────────────
+  async function loadUsers() {
+    try {
+      const res = await fetch('/api/v1/auth/users');
+      const data = await res.json();
+      if (data.success && data.users) {
+        allUsers = data.users;
+        renderContactsList();
+
+        if (!activePeer || activePeer.username === currentUser.username) {
+          const peer = allUsers.find(u => u.username !== currentUser.username);
+          if (peer) selectPeer(peer.username);
+        }
+      }
+    } catch(e) {
+      console.error("Failed to load users:", e);
+    }
+  }
+
+  function renderContactsList() {
+    conversationsContainer.innerHTML = '';
+    const peers = allUsers.filter(u => u.username !== currentUser.username);
+
+    peers.forEach(u => {
+      const isSelected = activePeer && activePeer.username === u.username;
+      const isEve = (u.username === 'eve');
+      const badgeStyle = isEve ? 'bg-red-50 text-red-800' : 'bg-emerald-50 text-emerald-800';
+      const avBg = u.avatar_bg || (isEve ? 'bg-terracotta-700' : 'bg-[#181B20]');
+
+      const itemHTML = `
+        <div class="contact-item p-3 ${isSelected ? 'bg-[#EAE3DA]/50 border-l-4 border-l-terracotta-600' : 'hover:bg-[#EAE3DA]/30'} cursor-pointer transition-colors relative" data-username="${u.username}">
+          <div class="flex items-start justify-between mb-1">
+            <div class="flex items-center gap-2.5">
+              <div class="relative">
+                <div class="w-10 h-10 rounded-full ${avBg} text-cream-100 flex items-center justify-center font-mono text-xs font-semibold">
+                  ${u.avatar_text || u.username.substring(0, 2).toUpperCase()}
+                </div>
+                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ${isEve ? 'bg-red-500' : 'bg-emerald-500'} border-2 border-white"></span>
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-semibold text-xs text-[#181B20]">${u.display_name}</span>
+                  <span class="text-[9px] font-mono ${badgeStyle} px-1 rounded font-medium">${isEve ? 'ATTACK' : 'QDS'}</span>
+                </div>
+                <p class="text-xs text-[#6F685E] truncate w-48 font-sans mt-0.5" id="${u.username}-last-msg">${u.role || 'Quantum Node'}</p>
+              </div>
+            </div>
+            <div class="flex flex-col items-end space-y-1">
+              <span class="font-mono text-[10px] text-[#8C8479]">Online</span>
+            </div>
+          </div>
+        </div>
+      `;
+      conversationsContainer.insertAdjacentHTML('beforeend', itemHTML);
+    });
+
+    document.querySelectorAll('.contact-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const username = el.getAttribute('data-username');
+        selectPeer(username);
+      });
+    });
+  }
+
+  function selectPeer(username) {
+    const peer = allUsers.find(u => u.username === username);
+    if (!peer) return;
+
+    activePeer = peer;
+
+    document.getElementById('headerName').innerText = peer.display_name;
+    document.getElementById('headerHandle').innerText = `@${peer.username}`;
+    document.getElementById('modalChannelLabel').innerText = `Channel: ${currentUser.display_name} ↔ ${peer.display_name}`;
+
+    const av = document.getElementById('headerAvatar');
+    av.innerText = peer.avatar_text || peer.username.substring(0, 2).toUpperCase();
+    av.className = `w-10 h-10 rounded-full ${peer.avatar_bg || 'bg-[#181B20]'} text-cream-100 flex items-center justify-center font-mono font-bold text-sm`;
+
+    const isEve = (peer.username === 'eve');
+    const topBadge = document.getElementById('top-badge-text');
+    const topBadgeBtn = document.getElementById('securityBadgeBtn');
+    const statusText = document.getElementById('top-session-status');
+
+    if (isEve) {
+      topBadge.innerText = "COMPROMISED";
+      topBadgeBtn.className = "flex items-center gap-1.5 px-3 py-1 bg-red-50 hover:bg-red-100 text-red-800 border border-red-200 rounded-full text-xs font-mono transition shadow-sm cursor-pointer";
+      statusText.innerText = "MitM Probe Active · Eavesdropping Simulation";
+    } else {
+      topBadge.innerText = "Secure E2EE";
+      topBadgeBtn.className = "flex items-center gap-1.5 px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full text-xs font-mono transition shadow-sm cursor-pointer";
+      statusText.innerText = "Online · Quantum Key Synced (IST)";
+    }
+
+    renderContactsList();
+    fetchMessages();
+  }
+
+  // ── Message Fetching & Rendering (IST Timestamps) ─────────────────
+  async function fetchMessages() {
+    if (!activePeer || !currentUser) return;
+    try {
+      const res = await fetch(`/api/v1/chat/messages?user1=${currentUser.username}&user2=${activePeer.username}`);
+      const data = await res.json();
+      if (data.success) {
+        renderMessages(data.messages || []);
+      }
+    } catch(e) {
+      console.error("Message sync error:", e);
+    }
+  }
+
+  function renderMessages(messages) {
+    const todayIST = formatISTDate(new Date());
+    chatScroll.innerHTML = `
+      <div class="flex justify-center my-2">
+        <span class="font-mono text-[10px] bg-[#EAE3DA] text-[#696157] px-2.5 py-1 rounded-full uppercase tracking-wider">
+          ${todayIST} · Quantum Session Active
+        </span>
+      </div>
+    `;
+
+    if (messages.length === 0) {
+      chatScroll.insertAdjacentHTML('beforeend', `
+        <div class="text-center py-12 text-[#8C8478] font-mono text-xs">
+          No previous messages in quantum session. Send a message or attach any file!
+        </div>
+      `);
+      return;
+    }
+
+    messages.forEach(m => {
+      const isMe = (m.sender.toLowerCase() === currentUser.username.toLowerCase());
+      const timeStrIST = formatISTTime(m.timestamp);
+      const statusColor = m.is_pass ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-red-700 bg-red-50 border-red-200';
+      const statusText = m.is_pass ? '✓ QDS Verified' : '❌ Tampered / Compromised';
+
+      // Build attachment preview if present
+      let fileAttachmentHTML = '';
+      if (m.file_data) {
+        const isImg = (m.file_type && m.file_type.startsWith('image/')) || (m.file_name && /\.(png|jpe?g|webp|gif|svg|bmp)$/i.test(m.file_name));
+        if (isImg) {
+          fileAttachmentHTML = `
+            <div class="mt-1.5 rounded-xl overflow-hidden border ${isMe ? 'border-white/20' : 'border-[#DDD5C8]'} max-w-xs cursor-pointer group shadow-sm" onclick="openLightbox('${m.file_data}', '${escapeHTML(m.file_name || 'Quantum Image')}')">
+              <img src="${m.file_data}" alt="${escapeHTML(m.file_name || 'Image')}" class="w-full h-auto max-h-56 object-cover group-hover:opacity-95 transition"/>
+              <div class="p-1.5 ${isMe ? 'bg-black/50 text-cream-100' : 'bg-[#F4EFEA] text-[#181B20]'} text-[10px] font-mono flex items-center justify-between">
+                <span class="truncate">${escapeHTML(m.file_name || 'Quantum Image')}</span>
+                <span class="text-[9px] opacity-75">${formatFileSize(m.file_size)}</span>
+              </div>
+            </div>
+          `;
+        } else {
+          fileAttachmentHTML = `
+            <div class="mt-1.5 p-2.5 rounded-xl border ${isMe ? 'bg-white/10 border-white/20 text-cream-100' : 'bg-[#F4EFEA] border-[#DDD5C8] text-[#181B20]'} flex items-center justify-between gap-3 max-w-xs shadow-sm">
+              <div class="flex items-center space-x-2.5 overflow-hidden">
+                <span class="text-2xl">📄</span>
+                <div class="overflow-hidden">
+                  <p class="text-xs font-semibold truncate">${escapeHTML(m.file_name || 'Attachment')}</p>
+                  <p class="text-[9px] font-mono opacity-75">${formatFileSize(m.file_size)} · QDS Signed</p>
+                </div>
+              </div>
+              <a href="${m.file_data}" download="${escapeHTML(m.file_name || 'document.dat')}" class="p-2 rounded-lg ${isMe ? 'bg-white text-black' : 'bg-[#181B20] text-cream-100'} hover:opacity-80 transition font-mono text-[10px] shrink-0 font-bold flex items-center gap-1" title="Download signed file">
+                <span>⬇</span><span>Get</span>
+              </a>
+            </div>
+          `;
+        }
+      }
+
+      if (isMe) {
+        // Outgoing Message (Right)
+        chatScroll.insertAdjacentHTML('beforeend', `
+          <div class="flex items-end space-x-2 max-w-xl ml-auto flex-row-reverse space-x-reverse">
+            <div class="w-7 h-7 rounded-full bg-terracotta-600 text-white flex items-center justify-center font-mono text-xs font-semibold shrink-0 mb-1 shadow-sm">
+              ${currentUser.avatar_text || currentUser.username.substring(0, 1).toUpperCase()}
+            </div>
+            <div class="space-y-1 text-right max-w-sm sm:max-w-md">
+              <div class="bg-[#181B20] text-[#FBF9F5] p-3 rounded-2xl rounded-br-none shadow-sm text-sm text-left">
+                ${m.text ? `<div class="leading-relaxed ${fileAttachmentHTML ? 'mb-2' : ''}">${escapeHTML(m.text)}</div>` : ''}
+                ${fileAttachmentHTML}
+              </div>
+              <div class="flex items-center justify-end gap-1.5 font-mono text-[10px] text-[#867E73] pr-1">
+                <span class="${m.is_pass ? 'text-emerald-600 font-semibold' : 'text-red-600 font-semibold'} cursor-pointer hover:underline" onclick="openMsgSecurityModal('${m.session_id}', ${m.qber_percentage}, ${m.chsh_score}, ${m.threshold_percentage}, '${m.qds_status}')">${statusText} (QBER ${m.qber_percentage}%)</span>
+                <span>${timeStrIST} IST</span>
+              </div>
+            </div>
+          </div>
+        `);
+      } else {
+        // Incoming Message (Left)
+        const av = activePeer.avatar_text || activePeer.username.substring(0, 1).toUpperCase();
+        chatScroll.insertAdjacentHTML('beforeend', `
+          <div class="flex items-end space-x-2 max-w-xl">
+            <div class="w-7 h-7 rounded-full ${activePeer.avatar_bg || 'bg-[#181B20]'} text-cream-100 flex items-center justify-center font-mono text-xs font-semibold shrink-0 mb-1 shadow-sm">
+              ${av}
+            </div>
+            <div class="space-y-1 max-w-sm sm:max-w-md">
+              <div class="bg-[#FCFBF8] border border-[#E0D7CC] p-3 rounded-2xl rounded-bl-none shadow-sm text-sm text-[#1F2228] text-left">
+                ${m.text ? `<div class="leading-relaxed ${fileAttachmentHTML ? 'mb-2' : ''}">${escapeHTML(m.text)}</div>` : ''}
+                ${fileAttachmentHTML}
+              </div>
+              <div class="flex items-center gap-2 font-mono text-[10px] text-[#8C8478] pl-1">
+                <span>${timeStrIST} IST</span>
+                <span class="${statusColor} border px-1.5 py-0.2 rounded font-semibold cursor-pointer hover:underline" onclick="openMsgSecurityModal('${m.session_id}', ${m.qber_percentage}, ${m.chsh_score}, ${m.threshold_percentage}, '${m.qds_status}')">${statusText} (QBER ${m.qber_percentage}%)</span>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+    });
+
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+  }
+
+  function openLightbox(src, title) {
+    lightboxImage.src = src;
+    lightboxTitle.innerText = title;
+    imageLightboxModal.classList.remove('hidden');
+  }
+
+  function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ── Send Message & Attachments ────────────────────────────────────
+  async function dispatchMessage() {
+    const text = messageInput.value.trim();
+    const attachment = pendingAttachment;
+
+    if (!text && !attachment) return;
+    if (!activePeer) return;
+
+    messageInput.value = '';
+    clearPendingAttachment();
+    qubitPickerMenu.classList.add('hidden');
+
+    const tempId = "tmp-" + Date.now();
+    const timeStrIST = formatISTTime(new Date());
+
+    chatScroll.insertAdjacentHTML('beforeend', `
+      <div id="${tempId}" class="flex items-end space-x-2 max-w-xl ml-auto flex-row-reverse space-x-reverse">
+        <div class="w-7 h-7 rounded-full bg-terracotta-600 text-white flex items-center justify-center font-mono text-xs font-semibold shrink-0 mb-1">
+          ${currentUser.avatar_text || currentUser.username.substring(0, 1).toUpperCase()}
+        </div>
+        <div class="space-y-1 text-right">
+          <div class="bg-[#181B20] text-[#FBF9F5] p-3 rounded-2xl rounded-br-none shadow-sm text-sm text-left leading-relaxed">
+            ${text ? escapeHTML(text) : ''}
+            ${attachment ? `<div class="text-[11px] font-mono text-cream-200 mt-1 opacity-80">📎 ${escapeHTML(attachment.name)}</div>` : ''}
+          </div>
+          <div class="flex items-center justify-end gap-1.5 font-mono text-[10px] text-[#867E73] pr-1">
+            <span class="text-orange-500 animate-pulse font-semibold">⚛ EPR Signing &amp; Verifying via QDS...</span>
+            <span>${timeStrIST} IST</span>
+          </div>
+        </div>
+      </div>
+    `);
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+
+    const numPairs = parseInt(document.getElementById('settingNumPairs').value) || 1000;
+    const baselineNoise = parseFloat(document.getElementById('settingNoise').value) || 0.02;
+    const alpha = parseFloat(document.getElementById('settingAlpha').value) || 0.000001;
+    const injectAttack = (activePeer.username === 'eve');
+
+    try {
+      const res = await fetch('/api/v1/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: currentUser.username,
+          recipient: activePeer.username,
+          text: text,
+          num_pairs: numPairs,
+          baseline_noise: baselineNoise,
+          alpha: alpha,
+          inject_attack: injectAttack,
+          file_name: attachment ? attachment.name : null,
+          file_type: attachment ? attachment.type : null,
+          file_size: attachment ? attachment.size : null,
+          file_data: attachment ? attachment.dataUrl : null,
+        })
+      });
+
+      const data = await res.json();
+      const tmpEl = document.getElementById(tempId);
+      if (tmpEl) tmpEl.remove();
+
+      if (res.ok) {
+        updateSecurityMetrics(data);
+        fetchMessages();
+      } else {
+        alert("Transmission failed: " + (data.detail || "Error"));
+      }
+    } catch(err) {
+      console.error(err);
+      const tmpEl = document.getElementById(tempId);
+      if (tmpEl) tmpEl.remove();
+    }
+  }
+
+  function updateSecurityMetrics(data) {
+    document.getElementById('status-qds').innerText = data.is_pass ? "Verified (Pass)" : "Failed (Reject)";
+    document.getElementById('status-qds').className = data.is_pass ? "font-mono text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200" : "font-mono text-red-700 font-semibold bg-red-50 px-2 py-0.5 rounded border border-red-200";
+    document.getElementById('status-qber').innerText = `${data.qber_percentage}% (Threshold: ${data.threshold_percentage}%)`;
+    document.getElementById('status-chsh').innerText = `CHSH Bell Score: S = ${data.chsh_score}`;
+    document.getElementById('status-hoeffding').innerText = `Hoeffding Bound limit: ${data.threshold_percentage}%`;
+    if (data.route_path && data.route_path.length > 0) {
+      document.getElementById('status-route').innerText = data.route_path.join(" → ");
+    }
+
+    const topBadge = document.getElementById('top-badge-text');
+    const topBadgeBtn = document.getElementById('securityBadgeBtn');
+    if (data.is_pass) {
+      topBadge.innerText = "Secure E2EE";
+      topBadgeBtn.className = "flex items-center gap-1.5 px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full text-xs font-mono transition shadow-sm cursor-pointer";
+    } else {
+      topBadge.innerText = "COMPROMISED";
+      topBadgeBtn.className = "flex items-center gap-1.5 px-3 py-1 bg-red-50 hover:bg-red-100 text-red-800 border border-red-200 rounded-full text-xs font-mono transition shadow-sm cursor-pointer";
+    }
+  }
+
+  function openMsgSecurityModal(sessionId, qber, chsh, threshold, status) {
+    document.getElementById('status-qds').innerText = status === 'VERIFIED' ? "Verified (Pass)" : "Failed (Reject)";
+    document.getElementById('status-qds').className = status === 'VERIFIED' ? "font-mono text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200" : "font-mono text-red-700 font-semibold bg-red-50 px-2 py-0.5 rounded border border-red-200";
+    document.getElementById('status-qber').innerText = `${qber}%`;
+    document.getElementById('status-chsh').innerText = `CHSH Bell Score: S = ${chsh}`;
+    document.getElementById('status-hoeffding').innerText = `Hoeffding Bound limit: ${threshold}%`;
+    securityModal.classList.remove('hidden');
+  }
+
+  // ── Setup All Modal Listeners ─────────────────────────────────────
+  function setupModalListeners() {
+    // 1. User Profile Modal
+    profileBtn.addEventListener('click', () => {
+      if (!currentUser) return;
+      document.getElementById('userModalName').innerText = currentUser.display_name;
+      document.getElementById('userModalHandle').innerText = `${currentUser.role || 'Quantum Node'} · ID ${currentUser.node_id || '#NODE'}`;
+      document.getElementById('userModalRole').innerText = currentUser.role || 'Quantum Client';
+      document.getElementById('userModalAvatar').innerText = currentUser.avatar_text || currentUser.username.substring(0, 2).toUpperCase();
+      userProfileModal.classList.remove('hidden');
+    });
+    closeUserProfileModal.addEventListener('click', () => userProfileModal.classList.add('hidden'));
+    closeUserProfileModalBtn.addEventListener('click', () => userProfileModal.classList.add('hidden'));
+
+    // 2. Contact Profile Modal
+    contactHeaderBtn.addEventListener('click', () => {
+      if (!activePeer) return;
+      document.getElementById('contactModalName').innerText = `${activePeer.display_name} (${activePeer.role || 'Node'})`;
+      document.getElementById('contactModalHandle').innerText = `@${activePeer.username} · Node ID ${activePeer.node_id || '#NODE'}`;
+      document.getElementById('contactModalAvatar').innerText = activePeer.avatar_text || activePeer.username.substring(0, 1).toUpperCase();
+      contactModal.classList.remove('hidden');
+    });
+    closeContactModal.addEventListener('click', () => contactModal.classList.add('hidden'));
+    closeContactModalBtn.addEventListener('click', () => contactModal.classList.add('hidden'));
+
+    // 3. Security Details Modal
+    securityBadgeBtn.addEventListener('click', () => securityModal.classList.remove('hidden'));
+    moreOptionsBtn.addEventListener('click', () => securityModal.classList.remove('hidden'));
+    closeSecurityModal.addEventListener('click', () => securityModal.classList.add('hidden'));
+    closeSecurityModalBtn.addEventListener('click', () => securityModal.classList.add('hidden'));
+    
+    toggleTechDetails.addEventListener('click', () => {
+      techDetailsContent.classList.toggle('hidden');
+      toggleTechArrow.innerText = techDetailsContent.classList.contains('hidden') ? '▼' : '▲';
+    });
+
+    // 4. Settings Modal
+    settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+    closeSettingsModal.addEventListener('click', () => settingsModal.classList.add('hidden'));
+    saveSettingsBtn.addEventListener('click', () => {
+      settingsModal.classList.add('hidden');
+      alert("Quantum simulation parameters updated successfully!");
+    });
+  }
+
+  // ── Setup Chat Listeners ──────────────────────────────────────────
+  function setupChatListeners() {
+    sendMessageBtn.addEventListener('click', dispatchMessage);
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        dispatchMessage();
+      }
+    });
+
+    // Emoji / Qubit Dropdown Toggle
+    emojiBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      qubitPickerMenu.classList.toggle('hidden');
+    });
+
+    document.querySelectorAll('.qubit-symbol-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const symbol = btn.innerText;
+        messageInput.value += symbol;
+        messageInput.focus();
+        qubitPickerMenu.classList.add('hidden');
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!qubitPickerMenu.contains(e.target) && e.target !== emojiBtn) {
+        qubitPickerMenu.classList.add('hidden');
+      }
+    });
+
+    // Clear Chat
+    clearChatBtn.addEventListener('click', async () => {
+      if (!activePeer || !currentUser) return;
+      if (confirm(`Clear all quantum chat history with ${activePeer.display_name}?`)) {
+        await fetch(`/api/v1/chat/messages?user1=${currentUser.username}&user2=${activePeer.username}`, { method: 'DELETE' });
+        fetchMessages();
+      }
+    });
+
+    // Live Search
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll('.contact-item').forEach(item => {
+        item.style.display = item.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  }
+
+  // ── Polling Loop (Live Sync across simultaneous tabs/windows) ──────
+  function startPolling() {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(() => {
+      if (currentUser && activePeer) {
+        fetchMessages();
+      }
+    }, 1200);
+  }
+
+  window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -143,6 +143,89 @@ class QuantumLinkModel(Base):
     metadata_json: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
+from sqlalchemy import String, Integer, Float, DateTime, Text, JSON, Boolean
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.core.database import Base
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class UserModel(Base):
+    """
+    SQLAlchemy ORM model for user accounts.
+    Table: users
+    """
+    __tablename__ = "users"
+
+    username: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(128))
+    display_name: Mapped[str] = mapped_column(String(128))
+    role: Mapped[str] = mapped_column(String(128), default="Quantum Node")
+    node_id: Mapped[str] = mapped_column(String(64), default="#000000")
+    avatar_text: Mapped[str] = mapped_column(String(8), default="U")
+    avatar_bg: Mapped[str] = mapped_column(String(64), default="bg-[#181B20]")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    def to_dict(self) -> dict:
+        return {
+            "username": self.username,
+            "display_name": self.display_name,
+            "role": self.role,
+            "node_id": self.node_id,
+            "avatar_text": self.avatar_text,
+            "avatar_bg": self.avatar_bg,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ChatMessageModel(Base):
+    """
+    SQLAlchemy ORM model for quantum signed chat messages.
+    Table: chat_messages
+    """
+    __tablename__ = "chat_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    sender: Mapped[str] = mapped_column(String(64), index=True)
+    recipient: Mapped[str] = mapped_column(String(64), index=True)
+    text: Mapped[str] = mapped_column(Text)
+    session_id: Mapped[str] = mapped_column(String(64), default="")
+    qds_status: Mapped[str] = mapped_column(String(64), default="VERIFIED")
+    qber_percentage: Mapped[float] = mapped_column(Float, default=0.0)
+    chsh_score: Mapped[float] = mapped_column(Float, default=2.82)
+    threshold_percentage: Mapped[float] = mapped_column(Float, default=14.0)
+    route_path: Mapped[List[str]] = mapped_column(JSON, default=list)
+    is_pass: Mapped[bool] = mapped_column(Boolean, default=True)
+    file_name: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
+    file_type: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    file_size: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    file_data: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "sender": self.sender,
+            "recipient": self.recipient,
+            "text": self.text,
+            "session_id": self.session_id,
+            "qds_status": self.qds_status,
+            "qber_percentage": round(self.qber_percentage, 2),
+            "chsh_score": round(self.chsh_score, 2),
+            "threshold_percentage": round(self.threshold_percentage, 2),
+            "route_path": self.route_path or [],
+            "is_pass": self.is_pass,
+            "file_name": self.file_name,
+            "file_type": self.file_type,
+            "file_size": self.file_size,
+            "file_data": self.file_data,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+        }
+
+
 class RoutingDecisionModel(Base):
     """
     SQLAlchemy ORM model for persisting QuARC routing decisions.
