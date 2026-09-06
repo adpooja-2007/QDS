@@ -7,8 +7,10 @@ export default function Sidebar({
   activeContact,
   onSelectContact,
   latestMessages = {},
-  onRegisterUser
+  onRegisterUser,
+  onOpenAuditLedger
 }) {
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -85,7 +87,15 @@ export default function Sidebar({
           </div>
         </div>
 
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1.5">
+          <button
+            className="p-1.5 text-[#554F46] hover:text-[#181B20] bg-[#EAE3DA]/60 hover:bg-[#EAE3DA] rounded-lg transition flex items-center gap-1 font-mono text-[10px] font-semibold"
+            title="Open Global Quantum Audit Ledger (All Users' Chats)"
+            onClick={onOpenAuditLedger}
+          >
+            <span>⚛</span>
+            <span className="hidden sm:inline">Ledger</span>
+          </button>
           <button
             className="p-2 text-[#797167] hover:text-[#181B20] rounded-full hover:bg-[#EAE3DA] transition"
             title="New Quantum Chat / Add Node"
@@ -94,6 +104,7 @@ export default function Sidebar({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
           </button>
         </div>
+
 
         {/* ── User Switcher Dropdown Menu ── */}
         {showUserMenu && (

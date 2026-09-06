@@ -52,6 +52,25 @@ async def get_chat_messages(
     )
 
 
+@router.get(
+    "/all-messages",
+    response_model=ChatHistoryResponse,
+    summary="Get all messages across all users for quantum ledger audit",
+)
+async def get_all_messages(
+    limit: int = Query(200, ge=1, le=1000),
+):
+    messages_data = await auth_service.get_all_messages(limit=limit)
+    msgs = [ChatMessageResponse(**m) for m in messages_data]
+    return ChatHistoryResponse(
+        success=True,
+        message=f"Retrieved {len(msgs)} total messages across all nodes.",
+        messages=msgs,
+        total=len(msgs),
+    )
+
+
+
 @router.post(
     "/send",
     response_model=ChatMessageResponse,
