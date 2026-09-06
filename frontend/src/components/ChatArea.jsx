@@ -250,21 +250,34 @@ export default function ChatArea({
                   </div>
 
                   {/* Message Metadata & Quantum Audit Tag */}
-                  <div className={`flex items-center gap-2 font-mono text-[10px] text-[#867E73] ${isOutgoing ? 'justify-end pr-1' : 'pl-1'}`}>
+                  <div className={`flex items-center gap-1.5 font-mono text-[10px] text-[#867E73] ${isOutgoing ? 'justify-end pr-1' : 'pl-1'}`}>
                     <span>{timeStr}</span>
-                    <button
-                      onClick={() => onOpenSecurity(msg)}
-                      className={`cursor-pointer border px-1.5 py-0.5 rounded transition font-medium ${
-                        passed
-                          ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
-                          : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100'
-                      }`}
-                      title="Click to view quantum audit proofs"
-                    >
-                      {passed ? '✓✓ QDS' : '❌ VIOLATION'}
-                    </button>
-                    {msg.qber_percentage !== undefined && (
-                      <span className="text-[9px] opacity-75">QBER: {msg.qber_percentage.toFixed(1)}%</span>
+
+                    {msg.is_pending ? (
+                      /* WhatsApp-style Pending Clock Icon */
+                      <span className="inline-flex items-center gap-1 text-[#797167]" title="Quantum signing & EPR distribution in progress...">
+                        <svg className="w-3 h-3 text-[#797167] animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="9" strokeWidth="2" stroke="currentColor"></circle>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 7v5l3 3"></path>
+                        </svg>
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => onOpenSecurity(msg)}
+                          className={`cursor-pointer border px-1.5 py-0.5 rounded transition font-medium ${
+                            passed
+                              ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
+                              : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100'
+                          }`}
+                          title="Click to view quantum audit proofs"
+                        >
+                          {passed ? '✓✓ QDS' : '❌ VIOLATION'}
+                        </button>
+                        {msg.qber_percentage !== undefined && (
+                          <span className="text-[9px] opacity-75">QBER: {msg.qber_percentage.toFixed(1)}%</span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -272,22 +285,8 @@ export default function ChatArea({
             );
           })
         )}
-
-        {/* Sending State Spinner */}
-        {isSending && (
-          <div className="flex items-end space-x-2 max-w-xl ml-auto flex-row-reverse space-x-reverse">
-            <div className="w-7 h-7 rounded-full bg-terracotta-600 text-white flex items-center justify-center font-mono text-xs font-semibold shrink-0 mb-1">
-              {currentUser?.username?.[0]?.toUpperCase() || 'A'}
-            </div>
-            <div className="space-y-1 text-right">
-              <div className="bg-[#181B20] text-[#FBF9F5] p-3 rounded-2xl rounded-br-none shadow-xs text-xs font-mono animate-pulse flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-orange-400 animate-ping"></span>
-                <span>Pumping Bell pairs & executing 6-stage QDS verification...</span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
+
 
       {/* ── Input Bar ── */}
       <div className="p-3.5 border-t border-[#EAE3DA] bg-[#FCFBF8]">
