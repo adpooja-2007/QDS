@@ -41,9 +41,12 @@ class EPRDistributeResponse(BaseResponse):
 class SignRequest(BaseModel):
     """Request for Alice to sign a document."""
     session_id: str = Field(..., description="Active EPR session ID")
-    document_hash: str = Field(
-        ..., min_length=8, max_length=256,
+    document_hash: Optional[str] = Field(
+        default=None, min_length=1, max_length=256,
         description="SHA-256 hash of the document to sign"
+    )
+    document: Optional[str] = Field(
+        default=None, description="Raw document or message text to sign"
     )
 
 

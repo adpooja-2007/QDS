@@ -66,10 +66,21 @@ class AttackService:
         """
         session = session_service.get(session_id)
 
-        if session.status not in ("MEASURED", "SIFTED"):
+        if session.status not in ("EPR_READY", "SIGNED", "MEASURED", "SIFTED", "AUDITED"):
             raise InvalidSessionStateError(
-                session_id, session.status, "MEASURED"
+                session_id, session.status, "SIGNED"
             )
+
+        # If the session is EPR_READY, auto-sign and verify first
+        if session.status == "EPR_READY":
+            from app.services.quantum_service import quantum_service
+            quantum_service.sign(session_id, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+            quantum_service.verify(session_id)
+            session = session_service.get(session_id)
+        elif session.status == "SIGNED":
+            from app.services.quantum_service import quantum_service
+            quantum_service.verify(session_id)
+            session = session_service.get(session_id)
 
         alice_bits = session.alice.bits
         alice_bases = session.alice.bases
@@ -181,10 +192,15 @@ class AttackService:
         """
         session = session_service.get(session_id)
 
-        if session.status not in ("SIGNED", "MEASURED", "SIFTED"):
+        if session.status not in ("EPR_READY", "SIGNED", "MEASURED", "SIFTED", "AUDITED"):
             raise InvalidSessionStateError(
                 session_id, session.status, "SIGNED"
             )
+
+        if session.status == "EPR_READY":
+            from app.services.quantum_service import quantum_service
+            quantum_service.sign(session_id, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+            session = session_service.get(session_id)
 
         bell_bits = list(session.alice.bell_measurements)
         alice_bits = session.alice.bits
@@ -378,10 +394,21 @@ class AttackService:
         """
         session = session_service.get(session_id)
 
-        if session.status not in ("MEASURED", "SIFTED"):
+        if session.status not in ("EPR_READY", "SIGNED", "MEASURED", "SIFTED", "AUDITED"):
             raise InvalidSessionStateError(
-                session_id, session.status, "MEASURED"
+                session_id, session.status, "SIGNED"
             )
+
+        # If the session is EPR_READY, auto-sign and verify first
+        if session.status == "EPR_READY":
+            from app.services.quantum_service import quantum_service
+            quantum_service.sign(session_id, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+            quantum_service.verify(session_id)
+            session = session_service.get(session_id)
+        elif session.status == "SIGNED":
+            from app.services.quantum_service import quantum_service
+            quantum_service.verify(session_id)
+            session = session_service.get(session_id)
 
         alice_bits = session.alice.bits
         alice_bases = session.alice.bases
@@ -489,10 +516,21 @@ class AttackService:
         """
         session = session_service.get(session_id)
 
-        if session.status not in ("MEASURED", "SIFTED"):
+        if session.status not in ("EPR_READY", "SIGNED", "MEASURED", "SIFTED", "AUDITED"):
             raise InvalidSessionStateError(
-                session_id, session.status, "MEASURED"
+                session_id, session.status, "SIGNED"
             )
+
+        # If the session is EPR_READY, auto-sign and verify first
+        if session.status == "EPR_READY":
+            from app.services.quantum_service import quantum_service
+            quantum_service.sign(session_id, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+            quantum_service.verify(session_id)
+            session = session_service.get(session_id)
+        elif session.status == "SIGNED":
+            from app.services.quantum_service import quantum_service
+            quantum_service.verify(session_id)
+            session = session_service.get(session_id)
 
         alice_bits = session.alice.bits
         alice_bases = session.alice.bases

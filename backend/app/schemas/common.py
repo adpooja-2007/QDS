@@ -39,6 +39,7 @@ class TelemetryEntrySchema(BaseModel):
     status_code: int
     session_id: Optional[str] = None
     error: Optional[str] = None
+    client_ip: Optional[str] = None
 
 
 class TelemetryResponse(BaseResponse):

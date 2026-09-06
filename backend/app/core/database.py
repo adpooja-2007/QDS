@@ -50,13 +50,13 @@ async def init_db() -> None:
         logger.info("Database initialized successfully at %s", settings.async_database_url)
     except Exception as exc:
         logger.warning(
-            "Could not connect to PostgreSQL at %s (%s). "
-            "Falling back to in-memory SQLite database for offline execution.",
+            "Could not connect to database at %s (%s). "
+            "Falling back to local SQLite database for offline execution.",
             settings.async_database_url,
             exc,
         )
-        # Fallback to SQLite in-memory for zero-friction execution when Postgres is offline
-        fallback_url = "sqlite+aiosqlite:///:memory:"
+        # Fallback to local SQLite for zero-friction execution
+        fallback_url = "sqlite+aiosqlite:///./qds.db"
         engine = create_async_engine(fallback_url, echo=False, future=True)
         AsyncSessionLocal = async_sessionmaker(
             bind=engine,
@@ -66,7 +66,30 @@ async def init_db() -> None:
         )
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        logger.info("In-memory SQLite database initialized as fallback.")
+        logger.info("Local SQLite database initialized as fallback.")
+
+    # Migrate columns if needed (e.g. SQLite newly added file columns)
+    try:
+        async with engine.begin() as conn:
+            for col_def in [
+                ("file_name", "VARCHAR(256)"),
+                ("file_type", "VARCHAR(128)"),
+                ("file_size", "INTEGER"),
+                ("file_data", "TEXT"),
+            ]:
+                try:
+                    await conn.exec_driver_sql(f"ALTER TABLE chat_messages ADD COLUMN {col_def[0]} {col_def[1]}")
+                except Exception:
+                    pass  # Column already exists
+    except Exception as mig_err:
+        logger.debug("Migration check: %s", mig_err)
+
+    # Seed default user accounts (alice, bob, charlie, eve)
+    try:
+        from app.services.auth_service import auth_service
+        await auth_service.seed_default_users()
+    except Exception as seed_err:
+        logger.warning("Could not seed default users: %s", seed_err)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

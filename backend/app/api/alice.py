@@ -40,9 +40,17 @@ router = APIRouter(
     ),
 )
 async def sign_document(request: SignRequest):
+    import hashlib
+    doc_hash = request.document_hash
+    if not doc_hash:
+        if request.document:
+            doc_hash = hashlib.sha256(request.document.encode()).hexdigest()
+        else:
+            doc_hash = hashlib.sha256(b"qds-default-document").hexdigest()
+
     result = quantum_service.prepare_and_sign(
         session_id=request.session_id,
-        document_hash=request.document_hash,
+        document_hash=doc_hash,
     )
 
     return SignResponse(

@@ -185,8 +185,8 @@ class SecurityService:
             )
             # Degraded S proportional to attack intensity
             base_s = 2.82
-            degradation = max_fraction * 1.2  # Strong degradation
-            S = max(1.5, base_s - degradation + np.random.normal(0, 0.05))
+            degradation = max(0.9, max_fraction * 1.8)  # Attack breaks entanglement below classical bound (S < 2.0)
+            S = max(1.2, base_s - degradation + np.random.normal(0, 0.02))
         else:
             # Clean channel — near-ideal quantum correlations
             S = 2.7 + np.random.uniform(0.0, 0.12)
@@ -215,7 +215,7 @@ class SecurityService:
         """
         session = session_service.get(session_id)
 
-        if session.status not in ("SIFTED", "AUDITED"):
+        if session.status not in ("MEASURED", "SIFTED", "AUDITED"):
             raise InvalidSessionStateError(
                 session_id, session.status, "SIFTED"
             )
@@ -223,6 +223,18 @@ class SecurityService:
         alice_bits = session.sifting.alice_bits
         bob_bits = session.sifting.bob_bits
         sifted_length = session.sifting.sifted_length
+
+        # Auto-sift if session is MEASURED but sifting hasn't been done yet
+        if sifted_length == 0 and session.status in ("MEASURED", "SIFTED"):
+            from app.services.quantum_service import quantum_service
+            try:
+                quantum_service.sift(session_id)
+                session = session_service.get(session_id)
+                alice_bits = session.sifting.alice_bits
+                bob_bits = session.sifting.bob_bits
+                sifted_length = session.sifting.sifted_length
+            except Exception:
+                pass
 
         if sifted_length == 0:
             raise InsufficientDataError("Security Audit", "Sifted bits > 0")
