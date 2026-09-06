@@ -38,8 +38,9 @@ DEFAULT_USERS = [
         "node_id": "#9042",
         "avatar_text": "AK",
         "avatar_bg": "bg-[#181B20]",
-        "is_admin": True,
+        "is_admin": False,
     },
+
     {
         "username": "bob",
         "password_hash": hash_password("bob"),

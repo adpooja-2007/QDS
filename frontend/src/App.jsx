@@ -34,9 +34,9 @@ export default function App() {
   const isAdmin = Boolean(
     currentUser?.is_admin ||
     currentUser?.username === 'admin' ||
-    currentUser?.username === 'alice' ||
     currentUser?.role?.toLowerCase().includes('admin')
   );
+
 
   // 1. Initialize network and load user list
   const loadUsers = useCallback(async () => {
