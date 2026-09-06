@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
+const COMMON_EMOJIS = ['⚛', '🔒', '🛡️', '🔑', '⚡', '✨', '📄', '🚀', '📡', '👍', '😊', '⚠️'];
+
 export default function ChatArea({
   currentUser,
   activeContact,
@@ -12,8 +14,10 @@ export default function ChatArea({
   const [input, setInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null); // { name, type, size, data }
   const [injectAttack, setInjectAttack] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Auto-scroll to bottom when messages update
   useEffect(() => {
@@ -21,6 +25,13 @@ export default function ChatArea({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isSending]);
+
+  // Focus input when contact changes
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [activeContact?.username]);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -52,6 +63,7 @@ export default function ChatArea({
 
     setInput('');
     setAttachedFile(null);
+    setShowEmojiPicker(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
 
     await onSendMessage({
@@ -64,9 +76,38 @@ export default function ChatArea({
     });
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const addEmoji = (emoji) => {
+    setInput(prev => prev + emoji);
+    setShowEmojiPicker(false);
+    inputRef.current?.focus();
+  };
+
   const isEveContact = activeContact?.username === 'eve';
   const latestMessage = messages[messages.length - 1];
   const isSecureChannel = latestMessage ? latestMessage.is_pass : !isEveContact && !injectAttack;
+
+  // Group messages by date
+  const getDateLabel = (isoString) => {
+    if (!isoString) return 'Today';
+    try {
+      const d = new Date(isoString);
+      const now = new Date();
+      if (d.toDateString() === now.toDateString()) return 'Today';
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return 'Today';
+    }
+  };
 
   if (!activeContact) {
     return (
@@ -167,7 +208,7 @@ export default function ChatArea({
       {/* ── Messages Stream (WhatsApp layout in QDS Sentinel theme) ── */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-gradient-to-b from-[#FBF9F5] to-[#F7F4EF]"
+        className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 bg-gradient-to-b from-[#FBF9F5] to-[#F7F4EF]"
       >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
@@ -185,7 +226,7 @@ export default function ChatArea({
             </div>
           </div>
         ) : (
-          messages.map((msg) => {
+          messages.map((msg, idx) => {
             const isOutgoing = msg.sender?.toLowerCase() === currentUser?.username?.toLowerCase();
             const timeStr = msg.timestamp
               ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -193,103 +234,131 @@ export default function ChatArea({
 
             const passed = msg.is_pass ?? (msg.qds_status === 'VERIFIED');
 
+            // Date divider check
+            const currentDateLabel = getDateLabel(msg.timestamp);
+            const prevDateLabel = idx > 0 ? getDateLabel(messages[idx - 1].timestamp) : null;
+            const showDateDivider = idx === 0 || currentDateLabel !== prevDateLabel;
+
             return (
-              <div
-                key={msg.id || `${msg.sender}-${msg.timestamp}`}
-                className={`flex items-end space-x-2 max-w-xl ${isOutgoing ? 'ml-auto flex-row-reverse space-x-reverse' : ''}`}
-              >
-                {/* Node Avatar Icon */}
-                <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-mono text-xs font-semibold shrink-0 mb-1 ${
-                  isOutgoing ? 'bg-terracotta-600' : 'bg-[#181B20]'
-                }`}>
-                  {msg.sender?.[0]?.toUpperCase() || 'U'}
-                </div>
+              <React.Fragment key={msg.id || `${msg.sender}-${msg.timestamp}-${idx}`}>
+                {/* Date Group Divider */}
+                {showDateDivider && (
+                  <div className="flex items-center justify-center my-2">
+                    <span className="px-3 py-1 bg-[#EAE3DA] text-[#554F46] rounded-full text-[10px] font-mono shadow-xs border border-[#DDD5C8]">
+                      {currentDateLabel}
+                    </span>
+                  </div>
+                )}
 
-                {/* Bubble Container */}
-                <div className={`space-y-1 ${isOutgoing ? 'text-right' : 'text-left'}`}>
-                  <div className={`p-3.5 rounded-2xl shadow-xs text-sm leading-relaxed ${
-                    isOutgoing
-                      ? 'bg-[#181B20] text-[#FBF9F5] rounded-br-none'
-                      : 'bg-[#FCFBF8] text-[#1F2228] border border-[#E0D7CC] rounded-bl-none'
+                <div className={`flex items-end space-x-2 max-w-xl ${isOutgoing ? 'ml-auto flex-row-reverse space-x-reverse' : ''}`}>
+                  {/* Node Avatar Icon */}
+                  <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-mono text-xs font-semibold shrink-0 mb-1 ${
+                    isOutgoing ? 'bg-terracotta-600' : 'bg-[#181B20]'
                   }`}>
-                    {/* Image Attachment Preview */}
-                    {msg.file_data && msg.file_type?.startsWith('image/') && (
-                      <div className="mb-2 rounded-lg overflow-hidden border border-black/10">
-                        <img
-                          src={msg.file_data}
-                          alt={msg.file_name || 'Quantum signed image'}
-                          className="max-h-64 object-contain rounded-lg w-full bg-black/5"
-                        />
-                      </div>
-                    )}
-
-                    {/* File Attachment Card */}
-                    {msg.file_data && !msg.file_type?.startsWith('image/') && (
-                      <div className={`p-2.5 rounded-lg border mb-2 flex items-center justify-between gap-3 text-xs font-mono ${
-                        isOutgoing ? 'bg-white/10 border-white/20 text-white' : 'bg-[#F4EFEA] border-[#E5DEC7] text-[#181B20]'
-                      }`}>
-                        <div className="flex items-center gap-2 truncate">
-                          <span className="text-base">📄</span>
-                          <div className="truncate">
-                            <div className="font-semibold truncate">{msg.file_name || 'Document'}</div>
-                            <div className="text-[9px] opacity-75">{msg.file_size ? `${(msg.file_size / 1024).toFixed(1)} KB` : 'Attached file'}</div>
-                          </div>
-                        </div>
-                        <a
-                          href={msg.file_data}
-                          download={msg.file_name || 'quantum_document'}
-                          className="px-2 py-1 bg-terracotta-600 text-white rounded text-[10px] font-semibold hover:bg-terracotta-700 shrink-0"
-                        >
-                          Download
-                        </a>
-                      </div>
-                    )}
-
-                    {/* Text Message */}
-                    {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
+                    {msg.sender?.[0]?.toUpperCase() || 'U'}
                   </div>
 
-                  {/* Message Metadata & Quantum Audit Tag */}
-                  <div className={`flex items-center gap-1.5 font-mono text-[10px] text-[#867E73] ${isOutgoing ? 'justify-end pr-1' : 'pl-1'}`}>
-                    <span>{timeStr}</span>
+                  {/* Bubble Container */}
+                  <div className={`space-y-1 ${isOutgoing ? 'text-right' : 'text-left'}`}>
+                    <div className={`p-3.5 rounded-2xl shadow-xs text-sm leading-relaxed ${
+                      isOutgoing
+                        ? 'bg-[#181B20] text-[#FBF9F5] rounded-br-none'
+                        : 'bg-[#FCFBF8] text-[#1F2228] border border-[#E0D7CC] rounded-bl-none'
+                    }`}>
+                      {/* Image Attachment Preview */}
+                      {msg.file_data && msg.file_type?.startsWith('image/') && (
+                        <div className="mb-2 rounded-lg overflow-hidden border border-black/10">
+                          <img
+                            src={msg.file_data}
+                            alt={msg.file_name || 'Quantum signed image'}
+                            className="max-h-64 object-contain rounded-lg w-full bg-black/5"
+                          />
+                        </div>
+                      )}
 
-                    {msg.is_pending ? (
-                      /* WhatsApp-style Pending Clock Icon */
-                      <span className="inline-flex items-center gap-1 text-[#797167]" title="Quantum signing & EPR distribution in progress...">
-                        <svg className="w-3 h-3 text-[#797167] animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="9" strokeWidth="2" stroke="currentColor"></circle>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 7v5l3 3"></path>
-                        </svg>
-                      </span>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => onOpenSecurity(msg)}
-                          className={`cursor-pointer border px-1.5 py-0.5 rounded transition font-medium ${
-                            passed
-                              ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
-                              : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100'
-                          }`}
-                          title="Click to view quantum audit proofs"
-                        >
-                          {passed ? '✓✓ QDS' : '❌ VIOLATION'}
-                        </button>
-                        {msg.qber_percentage !== undefined && (
-                          <span className="text-[9px] opacity-75">QBER: {msg.qber_percentage.toFixed(1)}%</span>
-                        )}
-                      </>
-                    )}
+                      {/* File Attachment Card */}
+                      {msg.file_data && !msg.file_type?.startsWith('image/') && (
+                        <div className={`p-2.5 rounded-lg border mb-2 flex items-center justify-between gap-3 text-xs font-mono ${
+                          isOutgoing ? 'bg-white/10 border-white/20 text-white' : 'bg-[#F4EFEA] border-[#E5DEC7] text-[#181B20]'
+                        }`}>
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="text-base">📄</span>
+                            <div className="truncate">
+                              <div className="font-semibold truncate">{msg.file_name || 'Document'}</div>
+                              <div className="text-[9px] opacity-75">{msg.file_size ? `${(msg.file_size / 1024).toFixed(1)} KB` : 'Attached file'}</div>
+                            </div>
+                          </div>
+                          <a
+                            href={msg.file_data}
+                            download={msg.file_name || 'quantum_document'}
+                            className="px-2 py-1 bg-terracotta-600 text-white rounded text-[10px] font-semibold hover:bg-terracotta-700 shrink-0"
+                          >
+                            Download
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Text Message */}
+                      {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
+                    </div>
+
+                    {/* Message Metadata & Quantum Audit Tag */}
+                    <div className={`flex items-center gap-1.5 font-mono text-[10px] text-[#867E73] ${isOutgoing ? 'justify-end pr-1' : 'pl-1'}`}>
+                      <span>{timeStr}</span>
+
+                      {msg.is_pending ? (
+                        /* WhatsApp-style Pending Clock Icon */
+                        <span className="inline-flex items-center gap-1 text-[#797167]" title="Quantum signing & EPR distribution in progress...">
+                          <svg className="w-3 h-3 text-[#797167] animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="9" strokeWidth="2" stroke="currentColor"></circle>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 7v5l3 3"></path>
+                          </svg>
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => onOpenSecurity(msg)}
+                            className={`cursor-pointer border px-1.5 py-0.5 rounded transition font-medium ${
+                              passed
+                                ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
+                                : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100'
+                            }`}
+                            title="Click to view quantum audit proofs"
+                          >
+                            {passed ? '✓✓ QDS' : '❌ VIOLATION'}
+                          </button>
+                          {msg.qber_percentage !== undefined && (
+                            <span className="text-[9px] opacity-75">QBER: {msg.qber_percentage.toFixed(1)}%</span>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </React.Fragment>
             );
           })
         )}
       </div>
 
-
       {/* ── Input Bar ── */}
-      <div className="p-3.5 border-t border-[#EAE3DA] bg-[#FCFBF8]">
+      <div className="p-3.5 border-t border-[#EAE3DA] bg-[#FCFBF8] relative">
+        {/* Quick Emoji Picker Drawer */}
+        {showEmojiPicker && (
+          <div className="absolute bottom-16 left-4 bg-[#FCFBF8] border border-[#DDD5C8] rounded-xl shadow-xl p-2.5 flex items-center gap-1.5 z-30 animate-in fade-in zoom-in-95 duration-100">
+            {COMMON_EMOJIS.map(emoji => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => addEmoji(emoji)}
+                className="w-8 h-8 rounded-lg hover:bg-[#EAE3DA] text-base flex items-center justify-center transition"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Pending File Attachment Preview */}
         {attachedFile && (
           <div className="mb-2 p-2 bg-[#F4EFEA] border border-[#DDD5C8] rounded-xl flex items-center justify-between text-xs font-mono">
@@ -312,6 +381,16 @@ export default function ChatArea({
         )}
 
         <form onSubmit={handleSend} className="flex items-center space-x-2">
+          {/* Emoji Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="p-2.5 text-[#797167] hover:text-[#181B20] rounded-xl hover:bg-[#EAE3DA] transition border border-transparent hover:border-[#DDD5C8]"
+            title="Add Emoji"
+          >
+            😊
+          </button>
+
           {/* File Upload Button */}
           <input
             type="file"
@@ -329,12 +408,14 @@ export default function ChatArea({
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
           </button>
 
-          {/* Text Input */}
+          {/* Text Input with Enter to send */}
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Quantum signed message to ${activeContact?.display_name || 'node'}...`}
+            onKeyDown={handleKeyDown}
+            placeholder={`Quantum signed message to ${activeContact?.display_name || 'node'}... (Enter to send)`}
             className="flex-1 bg-[#F4EFEA] border border-[#DDD5C8] rounded-xl px-4 py-2.5 text-xs font-sans focus:ring-1 focus:ring-black focus:border-black placeholder-[#9C9488]"
           />
 

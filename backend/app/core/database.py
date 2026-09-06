@@ -76,12 +76,14 @@ async def init_db() -> None:
                 ("chat_messages", "file_type", "VARCHAR(128)"),
                 ("chat_messages", "file_size", "INTEGER"),
                 ("chat_messages", "file_data", "TEXT"),
+                ("chat_messages", "is_read", "BOOLEAN DEFAULT 0"),
                 ("users", "is_admin", "BOOLEAN DEFAULT 0"),
             ]:
                 try:
                     await conn.exec_driver_sql(f"ALTER TABLE {col_def[0]} ADD COLUMN {col_def[1]} {col_def[2]}")
                 except Exception:
                     pass  # Column already exists
+
     except Exception as mig_err:
         logger.debug("Migration check: %s", mig_err)
 

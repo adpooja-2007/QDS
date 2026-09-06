@@ -89,11 +89,11 @@ export const registerUser = async ({ username, password, display_name, role }) =
 };
 
 // ── Chat Messaging ───────────────────────────────────────────────────────────
-export const fetchChatMessages = async (user1, user2, limit = 100) => {
+export const fetchChatMessages = async (user1, user2, limit = 100, markRead = true) => {
   if (!user1 || !user2) return [];
   try {
     const res = await fetch(
-      `${API_BASE}/chat/messages?user1=${encodeURIComponent(user1)}&user2=${encodeURIComponent(user2)}&limit=${limit}`
+      `${API_BASE}/chat/messages?user1=${encodeURIComponent(user1)}&user2=${encodeURIComponent(user2)}&limit=${limit}&mark_read=${markRead}`
     );
     if (!res.ok) return [];
     const data = await res.json();
@@ -103,6 +103,20 @@ export const fetchChatMessages = async (user1, user2, limit = 100) => {
     return [];
   }
 };
+
+export const fetchUnreadCounts = async (username) => {
+  if (!username) return {};
+  try {
+    const res = await fetch(`${API_BASE}/chat/unread?username=${encodeURIComponent(username)}`);
+    if (!res.ok) return {};
+    const data = await res.json();
+    return data.unread_counts || {};
+  } catch (err) {
+    console.error('fetchUnreadCounts error:', err);
+    return {};
+  }
+};
+
 
 export const fetchAllChatMessages = async (requester, limit = 200) => {
   try {

@@ -38,11 +38,12 @@ router = APIRouter(
     summary="Get conversation history between two nodes",
 )
 async def get_chat_messages(
-    user1: str = Query(..., description="First participant username"),
-    user2: str = Query(..., description="Second participant username"),
+    user1: str = Query(..., description="First participant username (current user)"),
+    user2: str = Query(..., description="Second participant username (contact)"),
     limit: int = Query(100, ge=1, le=500),
+    mark_read: bool = Query(True, description="Automatically mark incoming messages as read"),
 ):
-    messages_data = await auth_service.get_messages(user1, user2, limit=limit)
+    messages_data = await auth_service.get_messages(user1, user2, limit=limit, mark_read=mark_read)
     msgs = [ChatMessageResponse(**m) for m in messages_data]
     return ChatHistoryResponse(
         success=True,
@@ -50,6 +51,22 @@ async def get_chat_messages(
         messages=msgs,
         total=len(msgs),
     )
+
+
+@router.get(
+    "/unread",
+    summary="Get unread message counts per contact for a user",
+)
+async def get_unread_counts(
+    username: str = Query(..., description="Username of recipient"),
+):
+    counts = await auth_service.get_unread_counts(username)
+    return {
+        "success": True,
+        "unread_counts": counts,
+        "total_unread": sum(counts.values()),
+    }
+
 
 
 @router.get(

@@ -206,6 +206,7 @@ class ChatMessageModel(Base):
     file_type: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     file_size: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     file_data: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     def to_dict(self) -> dict:
@@ -225,8 +226,10 @@ class ChatMessageModel(Base):
             "file_type": self.file_type,
             "file_size": self.file_size,
             "file_data": self.file_data,
+            "is_read": bool(self.is_read),
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
         }
+
 
 
 class RoutingDecisionModel(Base):
