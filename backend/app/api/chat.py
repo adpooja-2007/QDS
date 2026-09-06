@@ -63,11 +63,12 @@ async def get_all_messages(
 ):
     req_username = requester.strip().lower()
     user = await auth_service.get_user(req_username)
-    if not user or not (user.get("is_admin") or req_username in ("admin", "alice")):
+    if not user or not (user.get("is_admin") or req_username == "admin"):
         raise HTTPException(
             status_code=403,
             detail="Access denied. Quantum Audit Ledger is restricted to Security Administrators.",
         )
+
 
     messages_data = await auth_service.get_all_messages(limit=limit)
     msgs = [ChatMessageResponse(**m) for m in messages_data]

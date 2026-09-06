@@ -153,10 +153,11 @@ export default function AuthPage({ onLoginSuccess }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
                 {usersList.map((u) => {
-                  const isAdmin = u.is_admin || u.username === 'admin' || u.username === 'alice';
+                  const isAdmin = u.is_admin || u.username === 'admin' || u.role?.toLowerCase().includes('admin');
                   const isEve = u.username === 'eve';
 
                   return (
+
                     <div
                       key={u.username}
                       onClick={() => handleQuickDemoSelect(u)}
