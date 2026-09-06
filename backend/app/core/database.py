@@ -68,21 +68,23 @@ async def init_db() -> None:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Local SQLite database initialized as fallback.")
 
-    # Migrate columns if needed (e.g. SQLite newly added file columns)
+    # Migrate columns if needed (e.g. SQLite newly added columns)
     try:
         async with engine.begin() as conn:
             for col_def in [
-                ("file_name", "VARCHAR(256)"),
-                ("file_type", "VARCHAR(128)"),
-                ("file_size", "INTEGER"),
-                ("file_data", "TEXT"),
+                ("chat_messages", "file_name", "VARCHAR(256)"),
+                ("chat_messages", "file_type", "VARCHAR(128)"),
+                ("chat_messages", "file_size", "INTEGER"),
+                ("chat_messages", "file_data", "TEXT"),
+                ("users", "is_admin", "BOOLEAN DEFAULT 0"),
             ]:
                 try:
-                    await conn.exec_driver_sql(f"ALTER TABLE chat_messages ADD COLUMN {col_def[0]} {col_def[1]}")
+                    await conn.exec_driver_sql(f"ALTER TABLE {col_def[0]} ADD COLUMN {col_def[1]} {col_def[2]}")
                 except Exception:
                     pass  # Column already exists
     except Exception as mig_err:
         logger.debug("Migration check: %s", mig_err)
+
 
     # Seed default user accounts (alice, bob, charlie, eve) and initial chats
     try:

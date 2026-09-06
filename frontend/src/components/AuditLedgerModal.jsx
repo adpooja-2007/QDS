@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAllChatMessages } from '../api';
 
-export default function AuditLedgerModal({ isOpen, onClose, onSelectInspectMessage }) {
+export default function AuditLedgerModal({ isOpen, onClose, onSelectInspectMessage, currentUser }) {
   const [allMessages, setAllMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterUser, setFilterUser] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState('');
 
   const loadMessages = async () => {
     setLoading(true);
+    setError('');
     try {
-      const msgs = await fetchAllChatMessages(500);
+      const msgs = await fetchAllChatMessages(currentUser?.username || 'admin', 500);
       setAllMessages(msgs);
     } catch (e) {
       console.error(e);
+      setError(e.message || 'Access restricted to Security Administrators.');
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     if (isOpen) {

@@ -68,6 +68,23 @@ export default function ChatArea({
   const latestMessage = messages[messages.length - 1];
   const isSecureChannel = latestMessage ? latestMessage.is_pass : !isEveContact && !injectAttack;
 
+  if (!activeContact) {
+    return (
+      <main className="flex-1 flex flex-col items-center justify-center bg-[#FBF9F5] p-8 text-center select-none text-[#181B20]">
+        <div className="w-16 h-16 rounded-2xl bg-[#181B20] text-cream-100 flex items-center justify-center text-2xl font-mono mb-4 border border-[#2D3139] shadow-md">
+          ⚛
+        </div>
+        <h2 className="text-lg font-bold text-[#181B20]">QDS Sentinel Messenger</h2>
+        <p className="text-xs text-[#797167] max-w-sm mt-1 font-mono">
+          Select a secure quantum node from the sidebar to establish GHZ / EPR entanglement channels and exchange authenticated signatures.
+        </p>
+        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-[#EAE3DA] text-[#181B20] rounded-full text-[10px] font-mono border border-[#DDD5C8]">
+          🔒 End-to-End Quantum Digital Signatures Active
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="flex-1 flex flex-col bg-[#FBF9F5] overflow-hidden select-none">
       {/* ── Chat Header ── */}
@@ -122,7 +139,7 @@ export default function ChatArea({
             title="Click to inspect QDS Hoeffding & CHSH proofs"
           >
             <span className={`w-2 h-2 rounded-full ${isSecureChannel ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-            <span className="font-semibold">{isSecureChannel ? 'Secure E2EE (QDS)' : 'COMPROMISED'}</span>
+            <span className="font-semibold">{isSecureChannel ? '✓✓ QDS Verified' : 'COMPROMISED'}</span>
           </button>
 
           {/* Clear History */}
@@ -147,14 +164,14 @@ export default function ChatArea({
         </div>
       )}
 
-      {/* ── Messages Stream ── */}
+      {/* ── Messages Stream (WhatsApp layout in QDS Sentinel theme) ── */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-gradient-to-b from-[#FBF9F5] to-[#F7F4EF]"
       >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
-            <div className="w-16 h-16 rounded-full bg-[#EAE3DA] flex items-center justify-center text-2xl font-mono">
+            <div className="w-14 h-14 rounded-full bg-[#EAE3DA] flex items-center justify-center text-2xl font-mono">
               ⚛
             </div>
             <div>
@@ -181,7 +198,7 @@ export default function ChatArea({
                 key={msg.id || `${msg.sender}-${msg.timestamp}`}
                 className={`flex items-end space-x-2 max-w-xl ${isOutgoing ? 'ml-auto flex-row-reverse space-x-reverse' : ''}`}
               >
-                {/* Avatar Icon */}
+                {/* Node Avatar Icon */}
                 <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-mono text-xs font-semibold shrink-0 mb-1 ${
                   isOutgoing ? 'bg-terracotta-600' : 'bg-[#181B20]'
                 }`}>
@@ -237,14 +254,14 @@ export default function ChatArea({
                     <span>{timeStr}</span>
                     <button
                       onClick={() => onOpenSecurity(msg)}
-                      className={`cursor-pointer border px-1.5 py-0.5 rounded transition ${
+                      className={`cursor-pointer border px-1.5 py-0.5 rounded transition font-medium ${
                         passed
                           ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
                           : 'text-red-700 bg-red-50 border-red-200 hover:bg-red-100'
                       }`}
                       title="Click to view quantum audit proofs"
                     >
-                      {passed ? '✓ QDS Verified' : '❌ Violation'}
+                      {passed ? '✓✓ QDS' : '❌ VIOLATION'}
                     </button>
                     {msg.qber_percentage !== undefined && (
                       <span className="text-[9px] opacity-75">QBER: {msg.qber_percentage.toFixed(1)}%</span>
@@ -308,7 +325,7 @@ export default function ChatArea({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="p-2.5 text-[#797167] hover:text-[#181B20] rounded-xl hover:bg-[#EAE3DA] transition border border-transparent hover:border-[#DDD5C8]"
-            title="Attach File or Image"
+            title="Attach File or Document"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
           </button>
@@ -318,7 +335,7 @@ export default function ChatArea({
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Message ${activeContact?.display_name || 'node'} (authenticated via QDS)...`}
+            placeholder={`Quantum signed message to ${activeContact?.display_name || 'node'}...`}
             className="flex-1 bg-[#F4EFEA] border border-[#DDD5C8] rounded-xl px-4 py-2.5 text-xs font-sans focus:ring-1 focus:ring-black focus:border-black placeholder-[#9C9488]"
           />
 
@@ -327,7 +344,7 @@ export default function ChatArea({
             type="submit"
             disabled={(!input.trim() && !attachedFile) || isSending}
             className="p-2.5 bg-terracotta-600 hover:bg-terracotta-700 disabled:opacity-50 disabled:hover:bg-terracotta-600 text-white rounded-xl transition shadow-xs flex items-center justify-center shrink-0"
-            title="Send Quantum Message"
+            title="Send Quantum Signed Message"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
           </button>

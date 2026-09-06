@@ -21,6 +21,16 @@ def hash_password(password: str) -> str:
 
 DEFAULT_USERS = [
     {
+        "username": "admin",
+        "password_hash": hash_password("admin"),
+        "display_name": "Security Administrator",
+        "role": "Chief Quantum Security Officer",
+        "node_id": "#000001",
+        "avatar_text": "AD",
+        "avatar_bg": "bg-[#181B20]",
+        "is_admin": True,
+    },
+    {
         "username": "alice",
         "password_hash": hash_password("alice"),
         "display_name": "Alice Kovacs",
@@ -28,6 +38,7 @@ DEFAULT_USERS = [
         "node_id": "#9042",
         "avatar_text": "AK",
         "avatar_bg": "bg-[#181B20]",
+        "is_admin": True,
     },
     {
         "username": "bob",
@@ -37,6 +48,7 @@ DEFAULT_USERS = [
         "node_id": "#260827",
         "avatar_text": "B",
         "avatar_bg": "bg-[#181B20]",
+        "is_admin": False,
     },
     {
         "username": "charlie",
@@ -46,6 +58,7 @@ DEFAULT_USERS = [
         "node_id": "#881029",
         "avatar_text": "C",
         "avatar_bg": "bg-[#2D3748]",
+        "is_admin": False,
     },
     {
         "username": "eve",
@@ -55,6 +68,7 @@ DEFAULT_USERS = [
         "node_id": "#666999",
         "avatar_text": "⚠",
         "avatar_bg": "bg-terracotta-700",
+        "is_admin": False,
     },
 ]
 
@@ -78,9 +92,13 @@ class AuthService:
                         node_id=u["node_id"],
                         avatar_text=u["avatar_text"],
                         avatar_bg=u["avatar_bg"],
+                        is_admin=u.get("is_admin", False),
                         created_at=datetime.now(timezone.utc),
                     )
                     db.add(new_user)
+                else:
+                    # Update is_admin if needed
+                    user.is_admin = u.get("is_admin", False)
             await db.commit()
             logger.info("Default user accounts verified/seeded.")
 
@@ -104,6 +122,7 @@ class AuthService:
             initials = "".join([part[0].upper() for part in disp.split()[:2]]) or username[:2].upper()
             import random
             node_num = random.randint(100000, 999999)
+            is_admin = "admin" in role.lower() or username == "admin"
             user = UserModel(
                 username=username,
                 password_hash=hash_password(password),
@@ -112,12 +131,14 @@ class AuthService:
                 node_id=f"#{node_num}",
                 avatar_text=initials,
                 avatar_bg="bg-[#181B20]",
+                is_admin=is_admin,
                 created_at=datetime.now(timezone.utc),
             )
             db.add(user)
             await db.commit()
             await db.refresh(user)
             return user
+
 
     async def authenticate(self, username: str, password: str) -> Optional[UserModel]:
         username = username.strip().lower()

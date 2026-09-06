@@ -167,6 +167,7 @@ class UserModel(Base):
     node_id: Mapped[str] = mapped_column(String(64), default="#000000")
     avatar_text: Mapped[str] = mapped_column(String(8), default="U")
     avatar_bg: Mapped[str] = mapped_column(String(64), default="bg-[#181B20]")
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     def to_dict(self) -> dict:
@@ -177,8 +178,10 @@ class UserModel(Base):
             "node_id": self.node_id,
             "avatar_text": self.avatar_text,
             "avatar_bg": self.avatar_bg,
+            "is_admin": bool(self.is_admin),
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
 
 
 class ChatMessageModel(Base):
