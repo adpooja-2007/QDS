@@ -207,7 +207,7 @@ class AuthService:
             await db.refresh(msg)
             return msg.to_dict()
 
-    async def get_messages(self, user1: str, user2: str, limit: int = 100) -> List[dict]:
+    async def get_messages(self, user1: str, user2: str, limit: int = 100, mark_read: bool = True) -> List[dict]:
         u1 = user1.strip().lower()
         u2 = user2.strip().lower()
         async with get_session() as db:
@@ -219,12 +219,35 @@ class AuthService:
                         and_(ChatMessageModel.sender == u2, ChatMessageModel.recipient == u1),
                     )
                 )
-                .order_by(ChatMessageModel.timestamp.asc())
+                .order_by(ChatMessageModel.timestamp.desc())
                 .limit(limit)
             )
             res = await db.execute(stmt)
-            messages = res.scalars().all()
-            return [m.to_dict() for m in messages]
+            messages = list(res.scalars().all())
+
+            # Mark incoming messages to user1 from user2 as read
+            if mark_read and messages:
+                for m in messages:
+                    if m.recipient == u1 and not m.is_read:
+                        m.is_read = True
+                await db.commit()
+
+            return [m.to_dict() for m in reversed(messages)]
+
+    async def get_unread_counts(self, username: str) -> Dict[str, int]:
+        """Return a mapping of sender -> unread message count for the given user."""
+        u = username.strip().lower()
+        async with get_session() as db:
+            stmt = (
+                select(ChatMessageModel.sender)
+                .where(and_(ChatMessageModel.recipient == u, ChatMessageModel.is_read == False))
+            )
+            res = await db.execute(stmt)
+            senders = res.scalars().all()
+            counts: Dict[str, int] = {}
+            for s in senders:
+                counts[s] = counts.get(s, 0) + 1
+            return counts
 
     async def get_all_messages(self, limit: int = 200) -> List[dict]:
         """Retrieve all messages across all users for auditing."""
@@ -233,6 +256,7 @@ class AuthService:
             res = await db.execute(stmt)
             messages = res.scalars().all()
             return [m.to_dict() for m in reversed(messages)]
+
 
     async def seed_default_chats(self):
         """Seed rich realistic historical chat records between all nodes."""

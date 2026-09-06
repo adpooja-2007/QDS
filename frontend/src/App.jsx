@@ -74,24 +74,39 @@ export default function App() {
     }
   }, [currentUser]);
 
+  const [unreadCounts, setUnreadCounts] = useState({});
+
   // 2. Fetch active conversation messages
   const loadConversation = useCallback(async () => {
     if (!currentUser?.username || !activeContact?.username) return;
-    const msgs = await fetchChatMessages(currentUser.username, activeContact.username);
+    const msgs = await fetchChatMessages(currentUser.username, activeContact.username, 100, true);
     setMessages(msgs);
 
     if (msgs.length > 0) {
       const last = msgs[msgs.length - 1];
       setLatestMessages(prev => ({ ...prev, [activeContact.username]: last }));
     }
+
+    // Clear unread count for current active contact
+    setUnreadCounts(prev => ({ ...prev, [activeContact.username]: 0 }));
   }, [currentUser?.username, activeContact?.username]);
 
-  // 3. Load latest messages for all contacts
+  // 3. Load latest messages and unread counts for all contacts
   const loadAllLatestPreviews = useCallback(async () => {
     if (!currentUser?.username || usersList.length === 0) return;
+
+    // Fetch unread count map from backend
+    try {
+      const unreadMap = await fetchUnreadCounts(currentUser.username);
+      setUnreadCounts(unreadMap);
+    } catch (e) {
+      console.error(e);
+    }
+
     for (const u of usersList) {
       if (u.username === currentUser.username) continue;
-      const msgs = await fetchChatMessages(currentUser.username, u.username, 1);
+      // Pass markRead=false so polling doesn't falsely mark unread messages as read
+      const msgs = await fetchChatMessages(currentUser.username, u.username, 1, false);
       if (msgs && msgs.length > 0) {
         setLatestMessages(prev => ({ ...prev, [u.username]: msgs[msgs.length - 1] }));
       }
@@ -126,7 +141,14 @@ export default function App() {
     setCurrentUser(null);
     setActiveContact(null);
     setMessages([]);
+    setUnreadCounts({});
   };
+
+  const handleSelectContact = (contact) => {
+    setActiveContact(contact);
+    setUnreadCounts(prev => ({ ...prev, [contact.username]: 0 }));
+  };
+
 
   // 5. Handle registration of new user node
   const handleRegisterUser = async (data) => {
@@ -216,12 +238,14 @@ export default function App() {
         onLogout={handleLogout}
         usersList={usersList}
         activeContact={activeContact}
-        onSelectContact={setActiveContact}
+        onSelectContact={handleSelectContact}
         latestMessages={latestMessages}
+        unreadCounts={unreadCounts}
         onRegisterUser={handleRegisterUser}
         onOpenAuditLedger={() => setIsAuditLedgerOpen(true)}
         isAdmin={isAdmin}
       />
+
 
       {/* Main Quantum Chat Area */}
       <ChatArea
