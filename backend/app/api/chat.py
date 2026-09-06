@@ -55,19 +55,29 @@ async def get_chat_messages(
 @router.get(
     "/all-messages",
     response_model=ChatHistoryResponse,
-    summary="Get all messages across all users for quantum ledger audit",
+    summary="Get all messages across all users for quantum ledger audit (Admin only)",
 )
 async def get_all_messages(
+    requester: str = Query(..., description="Username of the requesting node"),
     limit: int = Query(200, ge=1, le=1000),
 ):
+    req_username = requester.strip().lower()
+    user = await auth_service.get_user(req_username)
+    if not user or not (user.get("is_admin") or req_username in ("admin", "alice")):
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied. Quantum Audit Ledger is restricted to Security Administrators.",
+        )
+
     messages_data = await auth_service.get_all_messages(limit=limit)
     msgs = [ChatMessageResponse(**m) for m in messages_data]
     return ChatHistoryResponse(
         success=True,
-        message=f"Retrieved {len(msgs)} total messages across all nodes.",
+        message=f"Retrieved {len(msgs)} total messages across all nodes for administrator @{req_username}.",
         messages=msgs,
         total=len(msgs),
     )
+
 
 
 

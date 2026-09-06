@@ -104,17 +104,21 @@ export const fetchChatMessages = async (user1, user2, limit = 100) => {
   }
 };
 
-export const fetchAllChatMessages = async (limit = 200) => {
+export const fetchAllChatMessages = async (requester, limit = 200) => {
   try {
-    const res = await fetch(`${API_BASE}/chat/all-messages?limit=${limit}`);
-    if (!res.ok) return [];
+    const res = await fetch(`${API_BASE}/chat/all-messages?requester=${encodeURIComponent(requester || '')}&limit=${limit}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to fetch global audit ledger');
+    }
     const data = await res.json();
     return data.messages || [];
   } catch (err) {
     console.error('fetchAllChatMessages error:', err);
-    return [];
+    throw err;
   }
 };
+
 
 
 export const sendQuantumChatMessage = async ({

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import AuthPage from './components/AuthPage';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import SecurityModal from './components/SecurityModal';
@@ -19,14 +20,7 @@ export default function App() {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return {
-      username: 'alice',
-      display_name: 'Alice Kovacs',
-      role: 'Signer Node Alpha',
-      node_id: '#9042',
-      avatar_text: 'AK',
-      avatar_bg: 'bg-[#181B20]'
-    };
+    return null; // Start on AuthPage if not logged in
   });
 
   const [activeContact, setActiveContact] = useState(null);
@@ -37,6 +31,12 @@ export default function App() {
   const [isAuditLedgerOpen, setIsAuditLedgerOpen] = useState(false);
   const [selectedSecurityData, setSelectedSecurityData] = useState(null);
 
+  const isAdmin = Boolean(
+    currentUser?.is_admin ||
+    currentUser?.username === 'admin' ||
+    currentUser?.username === 'alice' ||
+    currentUser?.role?.toLowerCase().includes('admin')
+  );
 
   // 1. Initialize network and load user list
   const loadUsers = useCallback(async () => {
@@ -44,17 +44,17 @@ export default function App() {
     if (users && users.length > 0) {
       setUsersList(users);
 
-      // Verify current user still valid
-      const existingCurrent = users.find(u => u.username === currentUser?.username);
-      if (existingCurrent) {
-        setCurrentUser(existingCurrent);
-      }
+      if (currentUser?.username) {
+        const existingCurrent = users.find(u => u.username === currentUser.username);
+        if (existingCurrent) {
+          setCurrentUser(existingCurrent);
+        }
 
-      // If activeContact is null or same as current user, select default recipient
-      if (!activeContact || activeContact.username === currentUser?.username) {
-        const defaultRecipient = users.find(u => u.username !== currentUser?.username);
-        if (defaultRecipient) {
-          setActiveContact(defaultRecipient);
+        if (!activeContact || activeContact.username === currentUser.username) {
+          const defaultRecipient = users.find(u => u.username !== currentUser.username);
+          if (defaultRecipient) {
+            setActiveContact(defaultRecipient);
+          }
         }
       }
     }
@@ -63,12 +63,14 @@ export default function App() {
   useEffect(() => {
     initNetwork();
     loadUsers();
-  }, []);
+  }, [loadUsers]);
 
   // Save current user to localStorage
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('qds_chat_current_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('qds_chat_current_user');
     }
   }, [currentUser]);
 
@@ -103,21 +105,26 @@ export default function App() {
 
   // Periodic polling for real-time sync across windows/tabs
   useEffect(() => {
+    if (!currentUser) return;
     const interval = setInterval(() => {
       loadConversation();
       loadAllLatestPreviews();
     }, 2000);
     return () => clearInterval(interval);
-  }, [loadConversation, loadAllLatestPreviews]);
+  }, [currentUser, loadConversation, loadAllLatestPreviews]);
 
-  // 4. Handle switching user identity
-  const handleSwitchUser = (user) => {
+  // 4. Handle Login & Logout
+  const handleLoginSuccess = (user) => {
     setCurrentUser(user);
-    // Find first other contact
     const other = usersList.find(u => u.username !== user.username);
     if (other) {
       setActiveContact(other);
     }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setActiveContact(null);
     setMessages([]);
   };
 
@@ -177,18 +184,24 @@ export default function App() {
     }
   };
 
+  // Render Auth Page if not authenticated
+  if (!currentUser) {
+    return <AuthPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="flex-1 flex overflow-hidden relative h-screen w-screen font-sans bg-[#FBF9F5] text-[#181B20]">
       {/* Sidebar with active identity and live contact list */}
       <Sidebar
         currentUser={currentUser}
-        onSwitchUser={handleSwitchUser}
+        onLogout={handleLogout}
         usersList={usersList}
         activeContact={activeContact}
         onSelectContact={setActiveContact}
         latestMessages={latestMessages}
         onRegisterUser={handleRegisterUser}
         onOpenAuditLedger={() => setIsAuditLedgerOpen(true)}
+        isAdmin={isAdmin}
       />
 
       {/* Main Quantum Chat Area */}
@@ -214,10 +227,11 @@ export default function App() {
         activeRecipient={activeContact?.display_name || activeContact?.username}
       />
 
-      {/* Global Quantum Audit Ledger Modal */}
+      {/* Global Quantum Audit Ledger Modal (Admin Only) */}
       <AuditLedgerModal
         isOpen={isAuditLedgerOpen}
         onClose={() => setIsAuditLedgerOpen(false)}
+        currentUser={currentUser}
         onSelectInspectMessage={(msg) => {
           setSelectedSecurityData(msg);
           setIsSecurityModalOpen(true);
@@ -226,4 +240,3 @@ export default function App() {
     </div>
   );
 }
-
