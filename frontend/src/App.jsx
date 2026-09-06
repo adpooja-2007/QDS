@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import SecurityModal from './components/SecurityModal';
+import AuditLedgerModal from './components/AuditLedgerModal';
 import {
   initNetwork,
   fetchUsers,
@@ -33,7 +34,9 @@ export default function App() {
   const [latestMessages, setLatestMessages] = useState({});
   const [isSending, setIsSending] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [isAuditLedgerOpen, setIsAuditLedgerOpen] = useState(false);
   const [selectedSecurityData, setSelectedSecurityData] = useState(null);
+
 
   // 1. Initialize network and load user list
   const loadUsers = useCallback(async () => {
@@ -185,6 +188,7 @@ export default function App() {
         onSelectContact={setActiveContact}
         latestMessages={latestMessages}
         onRegisterUser={handleRegisterUser}
+        onOpenAuditLedger={() => setIsAuditLedgerOpen(true)}
       />
 
       {/* Main Quantum Chat Area */}
@@ -209,6 +213,17 @@ export default function App() {
         currentSender={currentUser?.display_name || currentUser?.username}
         activeRecipient={activeContact?.display_name || activeContact?.username}
       />
+
+      {/* Global Quantum Audit Ledger Modal */}
+      <AuditLedgerModal
+        isOpen={isAuditLedgerOpen}
+        onClose={() => setIsAuditLedgerOpen(false)}
+        onSelectInspectMessage={(msg) => {
+          setSelectedSecurityData(msg);
+          setIsSecurityModalOpen(true);
+        }}
+      />
     </div>
   );
 }
+

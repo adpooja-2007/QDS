@@ -84,12 +84,14 @@ async def init_db() -> None:
     except Exception as mig_err:
         logger.debug("Migration check: %s", mig_err)
 
-    # Seed default user accounts (alice, bob, charlie, eve)
+    # Seed default user accounts (alice, bob, charlie, eve) and initial chats
     try:
         from app.services.auth_service import auth_service
         await auth_service.seed_default_users()
+        await auth_service.seed_default_chats()
     except Exception as seed_err:
-        logger.warning("Could not seed default users: %s", seed_err)
+        logger.warning("Could not seed default users or chats: %s", seed_err)
+
 
 
 def get_session() -> AsyncSession:

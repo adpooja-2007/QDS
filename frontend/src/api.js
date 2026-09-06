@@ -104,6 +104,19 @@ export const fetchChatMessages = async (user1, user2, limit = 100) => {
   }
 };
 
+export const fetchAllChatMessages = async (limit = 200) => {
+  try {
+    const res = await fetch(`${API_BASE}/chat/all-messages?limit=${limit}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.messages || [];
+  } catch (err) {
+    console.error('fetchAllChatMessages error:', err);
+    return [];
+  }
+};
+
+
 export const sendQuantumChatMessage = async ({
   sender,
   recipient,
