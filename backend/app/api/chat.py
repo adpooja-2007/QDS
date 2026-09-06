@@ -21,7 +21,7 @@ from app.services.session_service import session_service
 from app.services.quantum_service import quantum_service
 from app.services.attack_service import attack_service
 from app.services.security_service import security_service
-from app.core.database import AsyncSessionLocal
+from app.core.database import get_session
 from app.models.db_models import ChatMessageModel
 
 logger = logging.getLogger("qds.chat_api")
@@ -170,7 +170,7 @@ async def clear_messages(
 ):
     u1 = user1.strip().lower()
     u2 = user2.strip().lower()
-    async with AsyncSessionLocal() as db:
+    async with get_session() as db:
         stmt = delete(ChatMessageModel).where(
             or_(
                 and_(ChatMessageModel.sender == u1, ChatMessageModel.recipient == u2),

@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 
 from sqlalchemy import select, or_, and_, desc
-from app.core.database import AsyncSessionLocal
+from app.core.database import get_session
 from app.models.db_models import UserModel, ChatMessageModel
 
 logger = logging.getLogger("qds.auth")
@@ -64,7 +64,7 @@ class AuthService:
 
     async def seed_default_users(self):
         """Seed default user accounts if not present."""
-        async with AsyncSessionLocal() as db:
+        async with get_session() as db:
             for u in DEFAULT_USERS:
                 stmt = select(UserModel).where(UserModel.username == u["username"])
                 res = await db.execute(stmt)
@@ -94,7 +94,7 @@ class AuthService:
         username = username.strip().lower()
         if not username or not password:
             return None
-        async with AsyncSessionLocal() as db:
+        async with get_session() as db:
             stmt = select(UserModel).where(UserModel.username == username)
             res = await db.execute(stmt)
             if res.scalar_one_or_none():
@@ -121,7 +121,7 @@ class AuthService:
 
     async def authenticate(self, username: str, password: str) -> Optional[UserModel]:
         username = username.strip().lower()
-        async with AsyncSessionLocal() as db:
+        async with get_session() as db:
             stmt = select(UserModel).where(UserModel.username == username)
             res = await db.execute(stmt)
             user = res.scalar_one_or_none()
@@ -130,7 +130,7 @@ class AuthService:
             return None
 
     async def list_users(self, exclude_username: Optional[str] = None) -> List[dict]:
-        async with AsyncSessionLocal() as db:
+        async with get_session() as db:
             stmt = select(UserModel)
             if exclude_username:
                 stmt = stmt.where(UserModel.username != exclude_username.strip().lower())
@@ -139,7 +139,7 @@ class AuthService:
             return [u.to_dict() for u in users]
 
     async def get_user(self, username: str) -> Optional[dict]:
-        async with AsyncSessionLocal() as db:
+        async with get_session() as db:
             stmt = select(UserModel).where(UserModel.username == username.strip().lower())
             res = await db.execute(stmt)
             u = res.scalar_one_or_none()
@@ -162,7 +162,7 @@ class AuthService:
         file_size: Optional[int] = None,
         file_data: Optional[str] = None,
     ) -> dict:
-        async with AsyncSessionLocal() as db:
+        async with get_session() as db:
             msg = ChatMessageModel(
                 sender=sender.strip().lower(),
                 recipient=recipient.strip().lower(),
@@ -188,7 +188,7 @@ class AuthService:
     async def get_messages(self, user1: str, user2: str, limit: int = 100) -> List[dict]:
         u1 = user1.strip().lower()
         u2 = user2.strip().lower()
-        async with AsyncSessionLocal() as db:
+        async with get_session() as db:
             stmt = (
                 select(ChatMessageModel)
                 .where(

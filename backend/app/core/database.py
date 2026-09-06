@@ -92,9 +92,14 @@ async def init_db() -> None:
         logger.warning("Could not seed default users: %s", seed_err)
 
 
+def get_session() -> AsyncSession:
+    """Return an async session from the currently active sessionmaker."""
+    return AsyncSessionLocal()
+
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for providing a database session to API requests."""
-    async with AsyncSessionLocal() as session:
+    async with get_session() as session:
         try:
             yield session
             await session.commit()
@@ -103,3 +108,4 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
