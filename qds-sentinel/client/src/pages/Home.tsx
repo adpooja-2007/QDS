@@ -1649,6 +1649,16 @@ function NetworkPanel({ selectedNode, setSelectedNode, isolatedNodes, setIsolate
     return eveActive ? "DEGRADED" : "NOMINAL";
   });
 
+  useEffect(() => {
+    if (isolatedNodes.includes("EVE")) {
+      setTopologyMode("QUARANTINED");
+    } else if (eveActive) {
+      setTopologyMode("DEGRADED");
+    } else {
+      setTopologyMode("NOMINAL");
+    }
+  }, [eveActive, isolatedNodes]);
+
   const isDegradedMode = topologyMode === "DEGRADED";
   const isQuarantinedMode = topologyMode === "QUARANTINED";
   const isNominalMode = topologyMode === "NOMINAL";

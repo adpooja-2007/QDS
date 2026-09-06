@@ -1,7 +1,7 @@
 // FastAPI Backend API Client for QDS Sentinel (Connected to FastAPI backend on port 8000)
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
-const HEALTH_URL = 'http://127.0.0.1:8000/health';
+const HEALTH_URL = import.meta.env.VITE_HEALTH_URL || 'http://127.0.0.1:8000/health';
 
 class ApiClient {
   private async fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

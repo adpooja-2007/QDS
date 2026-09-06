@@ -1738,7 +1738,8 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     const checkLatency = async () => {
       const startTime = performanceNow();
       try {
-        await fetch('http://localhost:3001/api/v1/health', { method: 'GET', mode: 'cors' }).catch(() => null);
+        const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+        await fetch(`${apiBase}/health`, { method: 'GET', mode: 'cors' }).catch(() => null);
         const elapsed = Math.max(2, Math.round(performanceNow() - startTime));
         setLiveLatency(elapsed < 100 ? elapsed : 14);
       } catch {
