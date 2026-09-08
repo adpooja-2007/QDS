@@ -55,14 +55,11 @@ class SessionService:
         return str(uuid.uuid4())
 
     def _save_to_db_sync(self, session: QuantumSession) -> None:
-        """Persist session record to PostgreSQL synchronously."""
+        """Persist session record to database synchronously."""
         try:
-            from sqlalchemy.orm import sessionmaker
-            from sqlalchemy import create_engine
-            # Convert async URL to sync driver if needed for background sync save
-            sync_url = settings.async_database_url.replace("postgresql+asyncpg://", "postgresql://").replace("sqlite+aiosqlite://", "sqlite://")
-            sync_engine = create_engine(sync_url, pool_pre_ping=True)
-            with SyncSession(sync_engine) as db:
+            from app.core.database import get_sync_engine
+            db_engine = get_sync_engine()
+            with SyncSession(db_engine) as db:
                 db_item = db.get(SessionModel, session.session_id)
                 if not db_item:
                     db_item = SessionModel(session_id=session.session_id)
@@ -79,7 +76,7 @@ class SessionService:
                 db_item.security = session.security.model_dump()
 
                 db.commit()
-                logger.debug("Persisted session %s to PostgreSQL", session.session_id)
+                logger.debug("Persisted session %s to DB", session.session_id)
         except Exception as exc:
             logger.debug("Database sync persist note: %s", exc)
 

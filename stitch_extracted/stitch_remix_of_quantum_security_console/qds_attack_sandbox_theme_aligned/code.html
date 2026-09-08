@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quantum Security Platform - Sandbox</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#45474c",
+                        "surface-container-highest": "#e4e2e4",
+                        "on-tertiary": "#ffffff",
+                        "background": "#fbf8fa",
+                        "surface-tint": "#545f73",
+                        "on-secondary-container": "#fefcff",
+                        "primary": "#091426",
+                        "on-secondary-fixed": "#001a42",
+                        "tertiary": "#041528",
+                        "secondary": "#0058be",
+                        "outline": "#75777d",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#004395",
+                        "surface-container-low": "#f6f3f5",
+                        "on-surface": "#1b1b1d",
+                        "data-success": "#065F46",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-primary-fixed": "#111c2d",
+                        "inverse-surface": "#303032",
+                        "surface-dim": "#dcd9db",
+                        "surface-container": "#f0edef",
+                        "primary-fixed-dim": "#bcc7de",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "on-tertiary-container": "#8191a9",
+                        "on-secondary": "#ffffff",
+                        "surface": "#fbf8fa",
+                        "on-background": "#1b1b1d",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f3f0f2",
+                        "primary-container": "#1e293b",
+                        "error": "#ba1a1a",
+                        "surface-stroke": "#E2E8F0",
+                        "secondary-container": "#2170e4",
+                        "tertiary-fixed": "#d3e4fe",
+                        "inverse-primary": "#bcc7de",
+                        "data-critical": "#B91C1C",
+                        "outline-variant": "#c5c6cd",
+                        "primary-fixed": "#d8e3fb",
+                        "surface-variant": "#e4e2e4",
+                        "error-container": "#ffdad6",
+                        "terminal-bg": "#0F172A",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "surface-container-high": "#eae7e9",
+                        "data-warning": "#B45309",
+                        "surface-bright": "#fbf8fa",
+                        "tertiary-container": "#1a2a3e",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-primary-container": "#8590a6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width": "260px",
+                        "space-lg": "24px",
+                        "space-xl": "48px",
+                        "space-sm": "8px",
+                        "gutter": "16px",
+                        "space-md": "16px",
+                        "drawer-width": "400px",
+                        "unit": "4px",
+                        "space-xs": "4px"
+                    },
+                    "fontFamily": {
+                        "data-mono": ["IBM Plex Mono"],
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-mono": ["IBM Plex Mono"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-mono": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "label-mono": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .terminal-scroll::-webkit-scrollbar { width: 4px; }
+        .terminal-scroll::-webkit-scrollbar-track { background: #0F172A; }
+        .terminal-scroll::-webkit-scrollbar-thumb { background: #3c475a; }
+        .blinking-cursor { animation: blink 1s step-end infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md text-body-md h-screen flex flex-col overflow-hidden">
+<!-- TopNavBar (Shared Component) -->
+<nav class="bg-surface border-b border-surface-stroke w-full flex justify-between items-center px-gutter h-16 shrink-0 relative">
+<div class="flex items-center gap-space-sm cursor-pointer active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-primary" data-icon="policy">policy</span>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">QDS SENTINEL</span>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2 hidden md:flex h-full items-center gap-space-lg">
+<a class="h-full flex items-center border-b-2 border-secondary text-secondary pb-1 transition-colors px-2" href="#">
+<span class="font-headline-md text-headline-md uppercase">Attack Sandbox</span>
+</a>
+</div>
+<div class="flex items-center gap-space-md">
+<button class="p-1 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant relative cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full ring-2 ring-background"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-surface-stroke overflow-hidden flex items-center justify-center ml-space-sm cursor-pointer hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">person</span>
+</div>
+</div>
+</nav>
+<!-- Main Workspace -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Left Sidebar: Attack Scenarios -->
+<aside class="w-sidebar-width border-r border-surface-stroke bg-surface-container-low flex flex-col shrink-0">
+<div class="h-10 border-b border-surface-stroke flex items-center px-space-md bg-surface">
+<span class="font-label-mono text-label-mono uppercase text-on-surface-variant">Attack Scenarios</span>
+</div>
+<div class="flex-1 overflow-y-auto p-space-md flex flex-col gap-unit">
+<!-- Scenario Items -->
+<label class="flex items-center gap-space-sm p-space-sm border border-surface-stroke bg-surface-container-lowest cursor-pointer hover:border-secondary transition-colors">
+<input checked="" class="text-secondary focus:ring-secondary focus:ring-offset-0" name="scenario" type="radio"/>
+<span class="font-data-mono text-data-mono text-on-surface">Clean Signature</span>
+</label>
+<label class="flex items-center gap-space-sm p-space-sm border border-surface-stroke bg-surface cursor-pointer hover:border-secondary transition-colors">
+<input class="text-secondary focus:ring-secondary focus:ring-offset-0" name="scenario" type="radio"/>
+<span class="font-data-mono text-data-mono text-on-surface">MitM Attack</span>
+</label>
+<label class="flex items-center gap-space-sm p-space-sm border border-surface-stroke bg-surface cursor-pointer hover:border-secondary transition-colors">
+<input class="text-secondary focus:ring-secondary focus:ring-offset-0" name="scenario" type="radio"/>
+<span class="font-data-mono text-data-mono text-on-surface">Forgery Attack</span>
+</label>
+<label class="flex items-center gap-space-sm p-space-sm border border-surface-stroke bg-surface cursor-pointer hover:border-secondary transition-colors">
+<input class="text-secondary focus:ring-secondary focus:ring-offset-0" name="scenario" type="radio"/>
+<span class="font-data-mono text-data-mono text-on-surface">Replay Attack</span>
+</label>
+<label class="flex items-center gap-space-sm p-space-sm border border-surface-stroke bg-surface cursor-pointer hover:border-secondary transition-colors">
+<input class="text-secondary focus:ring-secondary focus:ring-offset-0" name="scenario" type="radio"/>
+<span class="font-data-mono text-data-mono text-on-surface">Channel Noise</span>
+</label>
+<label class="flex items-center gap-space-sm p-space-sm border border-surface-stroke bg-surface cursor-pointer hover:border-secondary transition-colors">
+<input class="text-secondary focus:ring-secondary focus:ring-offset-0" name="scenario" type="radio"/>
+<span class="font-data-mono text-data-mono text-on-surface">PNS Attack</span>
+</label>
+</div>
+<div class="p-space-md border-t border-surface-stroke bg-surface">
+<button class="w-full bg-primary-container text-on-primary rounded font-label-mono text-label-mono uppercase py-2 hover:bg-tertiary transition-colors border border-primary-container">
+                    INITIATE HANDSHAKE
+                </button>
+</div>
+</aside>
+<!-- Center: 4-Way Terminal Grid -->
+<main class="flex-1 bg-background p-gutter flex flex-col gap-gutter min-w-0 overflow-y-auto">
+<div class="grid grid-cols-2 grid-rows-2 gap-gutter h-full min-h-[600px]">
+<!-- Terminal: Arbitrator -->
+<div class="border border-surface-stroke bg-terminal-bg flex flex-col overflow-hidden">
+<div class="h-6 border-b border-surface-stroke bg-surface-container-highest flex items-center px-space-sm gap-space-sm shrink-0">
+<div class="w-[6px] h-[6px] rounded-full bg-secondary"></div>
+<span class="font-label-mono text-label-mono uppercase text-on-surface">Arbitrator.sys</span>
+</div>
+<div class="flex-1 p-space-sm font-data-mono text-data-mono text-primary-fixed-dim terminal-scroll overflow-y-auto">
+<div>&gt; initialize_protocol(BB84_EXT)</div>
+<div>&gt; awaiting_registration...</div>
+<div class="text-data-success">&gt; ACK: Alice connected (ID: 0x9F3A)</div>
+<div class="text-data-success">&gt; ACK: Bob connected (ID: 0x1C4B)</div>
+<div>&gt; channel_established: quantum_link_01</div>
+<div>&gt; enforcing_bell_test_constraints...</div>
+<div>&gt; <span class="blinking-cursor">_</span></div>
+</div>
+</div>
+<!-- Terminal: Alice -->
+<div class="border border-surface-stroke bg-terminal-bg flex flex-col overflow-hidden">
+<div class="h-6 border-b border-surface-stroke bg-surface-container-highest flex items-center px-space-sm gap-space-sm shrink-0">
+<div class="w-[6px] h-[6px] rounded-full bg-data-success"></div>
+<span class="font-label-mono text-label-mono uppercase text-on-surface">Alice Node</span>
+</div>
+<div class="flex-1 p-space-sm font-data-mono text-data-mono text-surface-container-high terminal-scroll overflow-y-auto">
+<div>&gt; seq_gen_start()</div>
+<div>&gt; bases: [+, x, +, +, x, x, +, x...]</div>
+<div>&gt; bits:  [1, 0, 1, 1, 0, 1, 0, 0...]</div>
+<div>&gt; transmitting_photons (n=1024)</div>
+<div class="text-surface-tint">&gt; stream_tx: 45% complete</div>
+<div class="text-surface-tint">&gt; stream_tx: 89% complete</div>
+<div class="text-data-success">&gt; stream_tx: complete</div>
+<div>&gt; awaiting_basis_reconciliation...</div>
+</div>
+</div>
+<!-- Terminal: Bob -->
+<div class="border border-surface-stroke bg-terminal-bg flex flex-col overflow-hidden">
+<div class="h-6 border-b border-surface-stroke bg-surface-container-highest flex items-center px-space-sm gap-space-sm shrink-0">
+<div class="w-[6px] h-[6px] rounded-full bg-data-success"></div>
+<span class="font-label-mono text-label-mono uppercase text-on-surface">Bob Node</span>
+</div>
+<div class="flex-1 p-space-sm font-data-mono text-data-mono text-surface-container-high terminal-scroll overflow-y-auto">
+<div>&gt; listener_active(port: 9091)</div>
+<div>&gt; measuring_incoming_stream...</div>
+<div>&gt; rand_bases: [x, x, +, x, +, x, +, +...]</div>
+<div class="text-surface-tint">&gt; capture: 32% complete</div>
+<div class="text-surface-tint">&gt; capture: 75% complete</div>
+<div class="text-data-success">&gt; capture: 1024 photons received</div>
+<div>&gt; sending_basis_log_to_arbitrator()</div>
+<div>&gt; generating_sifted_key()</div>
+</div>
+</div>
+<!-- Terminal: Eve -->
+<div class="border border-surface-stroke bg-terminal-bg flex flex-col overflow-hidden relative">
+<div class="h-6 border-b border-surface-stroke bg-surface-container-highest flex items-center px-space-sm gap-space-sm shrink-0">
+<div class="w-[6px] h-[6px] rounded-full bg-data-critical"></div>
+<span class="font-label-mono text-label-mono uppercase text-on-surface">Eve Intercept</span>
+</div>
+<div class="flex-1 p-space-sm font-data-mono text-data-mono text-error-container terminal-scroll overflow-y-auto">
+<div>&gt; inject_probe(target: quantum_link_01)</div>
+<div>&gt; intercept_resend_active</div>
+<div class="text-data-warning">&gt; WARN: state collapse detected on bit 12</div>
+<div class="text-data-warning">&gt; WARN: state collapse detected on bit 18</div>
+<div>&gt; copying_sifted_fragments...</div>
+<div>&gt; injecting_forged_photons(n=45)</div>
+<div class="text-data-critical">&gt; ERR: Arbitrator probing anomaly.</div>
+<div>&gt; <span class="blinking-cursor text-error-container">_</span></div>
+</div>
+<div class="absolute bottom-4 right-4 border border-data-critical bg-error text-on-error px-2 py-1 font-label-mono text-[9px] uppercase tracking-widest">
+                        Intervention Active
+                    </div>
+</div>
+</div>
+</main>
+<!-- Right Sidebar: Visuals -->
+<aside class="w-[300px] border-l border-surface-stroke bg-surface-container-lowest flex flex-col shrink-0 overflow-y-auto">
+<div class="h-10 border-b border-surface-stroke flex items-center px-space-md bg-surface shrink-0">
+<span class="font-label-mono text-label-mono uppercase text-on-surface-variant">Telemetry</span>
+</div>
+<div class="p-space-md flex flex-col gap-space-lg">
+<!-- Graph 1: QBER -->
+<div class="border border-surface-stroke">
+<div class="h-6 border-b border-surface-stroke bg-surface flex items-center px-space-sm">
+<span class="font-label-mono text-label-mono uppercase text-on-surface">QBER vs Hoeffding</span>
+</div>
+<div class="h-32 bg-background relative p-2 overflow-hidden flex flex-col justify-between">
+<!-- Simulated Graph Grid -->
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#E2E8F0_1px,transparent_1px),linear-gradient(to_bottom,#E2E8F0_1px,transparent_1px)] bg-[size:16px_16px] opacity-30"></div>
+<div class="relative z-10 flex justify-between font-data-mono text-[9px] text-on-surface-variant">
+<span>1.0</span>
+<span class="text-data-critical">0.11 (Threshold)</span>
+</div>
+<!-- Fake SVG Line -->
+<svg class="absolute inset-0 w-full h-full z-10" preserveaspectratio="none">
+<line stroke="#B91C1C" stroke-dasharray="2,2" stroke-width="1" x1="0" x2="100%" y1="40%" y2="40%"></line>
+<polyline fill="none" points="0,90 40,85 80,88 120,60 160,50 200,30 260,25" stroke="#0058be" stroke-width="1.5"></polyline>
+</svg>
+<div class="relative z-10 flex justify-between items-end font-data-mono text-[9px] text-on-surface-variant h-full">
+<span>0.0</span>
+<span class="text-secondary font-bold">Current: 0.14</span>
+</div>
+</div>
+</div>
+<!-- Graph 2: CHSH -->
+<div class="border border-surface-stroke">
+<div class="h-6 border-b border-surface-stroke bg-surface flex items-center px-space-sm">
+<span class="font-label-mono text-label-mono uppercase text-on-surface">CHSH Bell Violation</span>
+</div>
+<div class="h-32 bg-background relative p-2 overflow-hidden flex flex-col justify-between">
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#E2E8F0_1px,transparent_1px),linear-gradient(to_bottom,#E2E8F0_1px,transparent_1px)] bg-[size:16px_16px] opacity-30"></div>
+<div class="relative z-10 flex justify-between font-data-mono text-[9px] text-on-surface-variant">
+<span>S=2.82</span>
+<span></span>
+</div>
+<svg class="absolute inset-0 w-full h-full z-10" preserveaspectratio="none">
+<line stroke="#45474c" stroke-dasharray="2,2" stroke-width="1" x1="0" x2="100%" y1="60%" y2="60%"></line>
+<polyline fill="none" points="0,80 50,70 100,50 150,45 200,65 260,75" stroke="#B45309" stroke-width="1.5"></polyline>
+</svg>
+<div class="relative z-10 flex justify-between items-end font-data-mono text-[9px] text-on-surface-variant h-full">
+<span>Classical limit (S=2)</span>
+<span class="text-data-warning font-bold">S = 1.94</span>
+</div>
+</div>
+</div>
+<!-- Data Readout -->
+<div class="border border-surface-stroke bg-surface p-space-sm flex flex-col gap-unit">
+<div class="flex justify-between font-data-mono text-[10px] uppercase">
+<span class="text-on-surface-variant">Key Rate:</span>
+<span class="text-on-surface font-bold">1.2 kbps</span>
+</div>
+<div class="flex justify-between font-data-mono text-[10px] uppercase">
+<span class="text-on-surface-variant">Sifting Eff:</span>
+<span class="text-on-surface font-bold">49.8%</span>
+</div>
+<div class="flex justify-between font-data-mono text-[10px] uppercase">
+<span class="text-on-surface-variant">Security Status:</span>
+<span class="text-data-critical font-bold">COMPROMISED</span>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</body></html>

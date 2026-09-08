@@ -29,7 +29,7 @@ engine: AsyncEngine = create_async_engine(
     settings.async_database_url,
     echo=False,
     future=True,
-    pool_pre_ping=True,
+    pool_pre_ping=False,
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -39,10 +39,20 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
+sync_engine = None
+
+def get_sync_engine():
+    global sync_engine
+    if sync_engine is None:
+        from sqlalchemy import create_engine
+        sync_url = settings.async_database_url.replace("postgresql+asyncpg://", "postgresql://").replace("sqlite+aiosqlite://", "sqlite://")
+        sync_engine = create_engine(sync_url, echo=False)
+    return sync_engine
+
 
 async def init_db() -> None:
     """Initialize database tables on application startup."""
-    global engine, AsyncSessionLocal
+    global engine, AsyncSessionLocal, sync_engine
 
     try:
         async with engine.begin() as conn:
@@ -57,6 +67,7 @@ async def init_db() -> None:
         )
         # Fallback to local SQLite for zero-friction execution
         fallback_url = "sqlite+aiosqlite:///./qds.db"
+        settings.DATABASE_URL = fallback_url
         engine = create_async_engine(fallback_url, echo=False, future=True)
         AsyncSessionLocal = async_sessionmaker(
             bind=engine,
@@ -64,6 +75,8 @@ async def init_db() -> None:
             expire_on_commit=False,
             autoflush=False,
         )
+        from sqlalchemy import create_engine
+        sync_engine = create_engine("sqlite:///./qds.db", echo=False)
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Local SQLite database initialized as fallback.")
@@ -77,6 +90,13 @@ async def init_db() -> None:
                 ("chat_messages", "file_size", "INTEGER"),
                 ("chat_messages", "file_data", "TEXT"),
                 ("chat_messages", "is_read", "BOOLEAN DEFAULT 0"),
+                ("chat_messages", "reply_to_id", "INTEGER"),
+                ("chat_messages", "reply_preview", "TEXT"),
+                ("chat_messages", "is_pinned", "BOOLEAN DEFAULT 0"),
+                ("chat_messages", "is_starred", "BOOLEAN DEFAULT 0"),
+                ("chat_messages", "ephemeral_ttl", "INTEGER"),
+                ("chat_messages", "expires_at", "DATETIME"),
+                ("chat_messages", "is_audio", "BOOLEAN DEFAULT 0"),
                 ("users", "is_admin", "BOOLEAN DEFAULT 0"),
             ]:
                 try:

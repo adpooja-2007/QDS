@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PROTOCOL VISUALIZER</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "primary": "#091426",
+                "secondary-fixed": "#d8e2ff",
+                "on-secondary": "#ffffff",
+                "primary-fixed": "#d8e3fb",
+                "error": "#ba1a1a",
+                "primary-container": "#1e293b",
+                "surface-bright": "#fbf8fa",
+                "surface-variant": "#e4e2e4",
+                "outline": "#75777d",
+                "on-primary-fixed-variant": "#3c475a",
+                "tertiary-fixed-dim": "#b7c8e1",
+                "error-container": "#ffdad6",
+                "surface-dim": "#dcd9db",
+                "tertiary-container": "#1a2a3e",
+                "data-success": "#065F46",
+                "secondary-fixed-dim": "#adc6ff",
+                "surface-container-highest": "#e4e2e4",
+                "on-secondary-container": "#fefcff",
+                "tertiary-fixed": "#d3e4fe",
+                "inverse-on-surface": "#f3f0f2",
+                "outline-variant": "#c5c6cd",
+                "on-primary-fixed": "#111c2d",
+                "inverse-primary": "#bcc7de",
+                "on-primary-container": "#8590a6",
+                "surface-tint": "#545f73",
+                "on-tertiary": "#ffffff",
+                "data-critical": "#B91C1C",
+                "surface-stroke": "#E2E8F0",
+                "surface": "#fbf8fa",
+                "on-primary": "#ffffff",
+                "data-warning": "#B45309",
+                "on-secondary-fixed-variant": "#004395",
+                "inverse-surface": "#303032",
+                "terminal-bg": "#0F172A",
+                "on-tertiary-fixed-variant": "#38485d",
+                "secondary-container": "#2170e4",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-high": "#eae7e9",
+                "on-background": "#1b1b1d",
+                "on-surface": "#1b1b1d",
+                "on-error-container": "#93000a",
+                "on-error": "#ffffff",
+                "secondary": "#0058be",
+                "tertiary": "#041528",
+                "on-surface-variant": "#45474c",
+                "on-tertiary-container": "#8191a9",
+                "on-secondary-fixed": "#001a42",
+                "background": "#fbf8fa",
+                "primary-fixed-dim": "#bcc7de",
+                "surface-container": "#f0edef",
+                "surface-container-low": "#f6f3f5",
+                "on-tertiary-fixed": "#0b1c30"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "space-xs": "4px",
+                "space-md": "16px",
+                "gutter": "16px",
+                "space-lg": "24px",
+                "unit": "4px",
+                "drawer-width": "400px",
+                "space-xl": "48px",
+                "space-sm": "8px",
+                "sidebar-width": "260px"
+        },
+        "fontFamily": {
+                "body-md": [
+                        "Inter"
+                ],
+                "headline-md": [
+                        "Inter"
+                ],
+                "label-mono": [
+                        "IBM Plex Mono"
+                ],
+                "body-lg": [
+                        "Inter"
+                ],
+                "headline-lg-mobile": [
+                        "Inter"
+                ],
+                "headline-lg": [
+                        "Inter"
+                ],
+                "body-sm": [
+                        "Inter"
+                ],
+                "data-mono": [
+                        "IBM Plex Mono"
+                ]
+        },
+        "fontSize": {
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-md": [
+                        "18px",
+                        {
+                                "lineHeight": "24px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "label-mono": [
+                        "11px",
+                        {
+                                "lineHeight": "14px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "headline-lg": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "data-mono": [
+                        "13px",
+                        {
+                                "lineHeight": "18px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        /* Base styles */
+        body {
+            background-color: theme('colors.surface-bright');
+            color: theme('colors.on-surface');
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Material Icons setup */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom UI Elements */
+        .ui-panel {
+            border: 1px solid theme('colors.surface-stroke');
+            background-color: theme('colors.surface-bright');
+        }
+        
+        .ui-btn-primary {
+            background-color: theme('colors.primary-container');
+            color: theme('colors.on-primary');
+            border-radius: theme('borderRadius.DEFAULT');
+            padding: theme('spacing.space-xs') theme('spacing.space-md');
+            font-family: theme('fontFamily.label-mono');
+            font-size: theme('fontSize.label-mono')[0];
+            font-weight: 500;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        
+        .ui-btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .ui-btn-secondary {
+            background-color: transparent;
+            color: theme('colors.primary-container');
+            border: 1px solid theme('colors.primary-container');
+            border-radius: theme('borderRadius.DEFAULT');
+            padding: theme('spacing.space-xs') theme('spacing.space-md');
+            font-family: theme('fontFamily.label-mono');
+            font-size: theme('fontSize.label-mono')[0];
+            font-weight: 500;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        
+        .ui-btn-secondary:hover {
+            border-color: theme('colors.secondary');
+            color: theme('colors.secondary');
+        }
+
+        .ui-btn-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: 1px solid theme('colors.surface-stroke');
+            border-radius: theme('borderRadius.DEFAULT');
+            color: theme('colors.primary-container');
+            background: transparent;
+            transition: all 0.2s;
+        }
+
+        .ui-btn-icon:hover {
+            border-color: theme('colors.secondary');
+            color: theme('colors.secondary');
+            background-color: theme('colors.surface-container-highest');
+        }
+        
+        /* Custom scrollbar for data tables and panels */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: theme('colors.surface-container-lowest'); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.surface-stroke'); 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.outline'); 
+        }
+
+        /* Animations */
+        @keyframes photon-pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.5); opacity: 0.4; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        
+        .photon {
+            animation: photon-pulse 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col font-body-md text-body-md bg-surface-bright text-on-surface antialiased overflow-hidden selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- TopNavBar -->
+<nav class="bg-background text-primary w-full h-16 border-b border-surface-stroke flex justify-between items-center px-gutter shrink-0 z-50">
+<!-- Brand Logo -->
+<div class="flex items-center gap-space-sm cursor-pointer active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-primary" data-icon="policy">policy</span>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">QDS SENTINEL</span>
+</div>
+<!-- Title Center -->
+<div class="hidden md:flex h-full items-center justify-center absolute left-1/2 -translate-x-1/2">
+<a class="h-full flex items-center border-b-2 text-secondary pb-1 transition-colors px-2 border-secondary" href="#">
+<span class="font-headline-md text-headline-md font-bold tracking-tight uppercase">PROTOCOL VISUALIZER</span>
+</a>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-space-md flex-1 justify-end">
+<!-- Search Icon (Mobile) -->
+<button class="md:hidden p-1 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<!-- Trailing Icons -->
+<button class="p-1 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant relative cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full ring-2 ring-background"></span>
+</button>
+<!-- Profile Avatar -->
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-surface-stroke flex items-center justify-center cursor-pointer overflow-hidden ml-space-sm hover:bg-surface-container-low transition-colors">
+<img alt="Administrator Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWUKUkX4iAVRyPxnlWNMdHiJG4-IjNkujLi3tD4aL7gH0UcHME5ys0-EMolJR6YZYiXVDeQBAS41uPLQYb_nryde5Uhd5ET9dYyvIQUi39SXjuGakqaOPhMryiTsokjYT50hOpYmT54YzFWAgNneJrtFqGuLprSxKMQ-lEiQPhySi3wkPic8Ahgn_YDjWPbxWzAPIT9_W6p5D0Zi-UpRfrIfnlqu84OpWL5AG5ZAeEe9BdnSnRrS-h"/>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col p-gutter gap-gutter overflow-hidden bg-background">
+<!-- Top Row: Controls & Tracker -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter shrink-0">
+<!-- Simulator Control -->
+<div class="ui-panel p-space-md flex flex-col gap-space-sm lg:col-span-4">
+<div class="flex items-center justify-between border-b border-surface-stroke pb-space-xs mb-space-xs">
+<span class="font-label-mono text-label-mono uppercase text-on-surface-variant">SIMULATOR CONTROL</span>
+<span class="font-data-mono text-data-mono text-primary-container bg-surface-bright px-2 py-0.5 border border-surface-stroke">T+0.045s</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="ui-btn-primary flex-1 flex justify-center items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+                        PLAY
+                    </button>
+<button class="ui-btn-icon" title="Pause">
+<span class="material-symbols-outlined text-[18px]">pause</span>
+</button>
+<button class="ui-btn-icon" title="Next Step">
+<span class="material-symbols-outlined text-[18px]">skip_next</span>
+</button>
+<button class="ui-btn-icon" title="Reset">
+<span class="material-symbols-outlined text-[18px]">restart_alt</span>
+</button>
+</div>
+<div class="mt-2">
+<button class="w-full ui-btn-secondary flex justify-center items-center gap-2 text-data-critical border-data-critical hover:bg-error-container hover:text-data-critical hover:border-data-critical">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+                        EXECUTE LIVE RUN
+                    </button>
+</div>
+</div>
+<!-- 6-Phase Tracker -->
+<div class="ui-panel p-space-md flex flex-col lg:col-span-8">
+<div class="border-b border-surface-stroke pb-space-xs mb-space-md">
+<span class="font-label-mono text-label-mono uppercase text-on-surface-variant">PROTOCOL PHASE</span>
+</div>
+<div class="flex items-center justify-between relative flex-1">
+<!-- Progress Line -->
+<div class="absolute top-1/2 left-[5%] right-[5%] h-px bg-surface-stroke -z-10 -translate-y-1/2"></div>
+<div class="absolute top-1/2 left-[5%] w-[40%] h-[2px] bg-secondary -z-10 -translate-y-1/2 transition-all duration-500"></div>
+<!-- Steps -->
+<div class="flex flex-col items-center gap-2 z-10">
+<div class="w-8 h-8 rounded-full bg-secondary text-on-primary flex items-center justify-center border-2 border-background">
+<span class="material-symbols-outlined text-[16px]">source</span>
+</div>
+<span class="font-label-mono text-[10px] text-primary-container uppercase text-center w-16">EPR PREP</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10">
+<div class="w-8 h-8 rounded-full bg-secondary text-on-primary flex items-center justify-center border-2 border-background">
+<span class="material-symbols-outlined text-[16px]">sync_alt</span>
+</div>
+<span class="font-label-mono text-[10px] text-primary-container uppercase text-center w-16">DISTRIBUTION</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10">
+<div class="w-8 h-8 rounded-full bg-secondary text-on-primary flex items-center justify-center border-2 border-background shadow-[0_0_0_4px_rgba(0,88,190,0.2)]">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</div>
+<span class="font-label-mono text-[10px] text-primary-container font-bold uppercase text-center w-16">MEASUREMENT</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10 opacity-50">
+<div class="w-8 h-8 rounded-full bg-surface-bright text-on-surface-variant flex items-center justify-center border border-surface-stroke">
+<span class="material-symbols-outlined text-[16px]">compare_arrows</span>
+</div>
+<span class="font-label-mono text-[10px] text-on-surface-variant uppercase text-center w-16">SIFTING</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10 opacity-50">
+<div class="w-8 h-8 rounded-full bg-surface-bright text-on-surface-variant flex items-center justify-center border border-surface-stroke">
+<span class="material-symbols-outlined text-[16px]">bug_report</span>
+</div>
+<span class="font-label-mono text-[10px] text-on-surface-variant uppercase text-center w-16">ERROR EST.</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10 opacity-50">
+<div class="w-8 h-8 rounded-full bg-surface-bright text-on-surface-variant flex items-center justify-center border border-surface-stroke">
+<span class="material-symbols-outlined text-[16px]">vpn_key</span>
+</div>
+<span class="font-label-mono text-[10px] text-on-surface-variant uppercase text-center w-16">KEY GEN</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Central Canvas: Topology -->
+<div class="ui-panel flex-1 relative overflow-hidden flex flex-col">
+<div class="flex items-center justify-between border-b border-surface-stroke px-space-md py-space-xs bg-surface-container-lowest z-10">
+<span class="font-label-mono text-label-mono uppercase text-on-surface-variant">OPTICAL CHANNEL TOPOLOGY</span>
+<div class="flex items-center gap-3">
+<span class="font-label-mono text-label-mono uppercase text-on-surface-variant">EVE INTERCEPTION</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-stroke peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-data-critical"></div>
+<span class="ml-2 font-data-mono text-data-mono text-data-critical">35% MitM</span>
+</label>
+</div>
+</div>
+<!-- Canvas Area -->
+<div class="flex-1 bg-surface-bright relative flex items-center justify-between px-12 py-8">
+<!-- Background Grid -->
+<div class="absolute inset-0 bg-[radial-gradient(theme('colors.surface-stroke')_1px,transparent_1px)] [background-size:20px_20px] opacity-40"></div>
+<!-- Alice Node -->
+<div class="flex flex-col items-center z-10 w-48">
+<div class="w-24 h-24 border border-primary-container bg-surface-container-lowest flex items-center justify-center mb-4 relative rounded-full">
+<span class="material-symbols-outlined text-[48px] text-primary-container">computer</span>
+<div class="absolute -bottom-2 -right-2 w-6 h-6 bg-secondary text-on-primary rounded-full flex items-center justify-center font-label-mono text-[10px]">A</div>
+</div>
+<span class="font-body-md text-primary-container font-medium">ALICE NODE</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant mt-1 text-center">TX MOD 99<br/>Basis: {+, x}</span>
+</div>
+<!-- Arbitrator (EPR) -->
+<div class="flex flex-col items-center z-10 w-48 relative">
+<div class="w-20 h-20 rounded-full border border-secondary bg-surface-container-lowest flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(0,88,190,0.1)]">
+<span class="material-symbols-outlined text-[32px] text-secondary">all_inclusive</span>
+</div>
+<span class="font-body-md text-primary-container font-medium">ARBITRATOR</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant mt-1 text-center">EPR Source<br/>λ=1550nm</span>
+</div>
+<!-- Bob Node -->
+<div class="flex flex-col items-center z-10 w-48">
+<div class="w-24 h-24 border border-primary-container bg-surface-container-lowest flex items-center justify-center mb-4 relative rounded-full">
+<span class="material-symbols-outlined text-[48px] text-primary-container">storage</span>
+<div class="absolute -bottom-2 -right-2 w-6 h-6 bg-secondary text-on-primary rounded-full flex items-center justify-center font-label-mono text-[10px]">B</div>
+</div>
+<span class="font-body-md text-primary-container font-medium">BOB NODE</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant mt-1 text-center">RX DET 01<br/>Basis: {+, x}</span>
+</div>
+<!-- Eve Node (Injected via toggle) -->
+<div class="absolute top-1/4 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
+<div class="w-16 h-16 border-2 border-data-critical bg-error-container flex items-center justify-center mb-2 rounded-full">
+<span class="material-symbols-outlined text-[24px] text-data-critical">bug_report</span>
+</div>
+<span class="font-label-mono text-data-critical uppercase bg-surface-bright px-1 rounded">EVE (MITM)</span>
+</div>
+<!-- Connections / Streams -->
+<div class="absolute top-1/2 left-48 right-1/2 h-px bg-secondary -translate-y-1/2 z-0 opacity-50" style="left: 12rem; right: 50%;"></div>
+<div class="absolute top-1/2 left-1/2 right-48 h-px bg-secondary -translate-y-1/2 z-0 opacity-50" style="left: 50%; right: 12rem;"></div>
+<!-- Eve Interception Lines -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-0" style="stroke-dasharray: 4; animation: dash 20s linear infinite;">
+<path d="M 300, 200 Q 500, 100 500, 120" fill="none" stroke="theme('colors.data-critical')" stroke-width="1.5"></path>
+<path d="M 500, 120 Q 500, 100 700, 200" fill="none" stroke="theme('colors.data-critical')" stroke-width="1.5"></path>
+</svg>
+<!-- Photons -->
+<div class="absolute top-1/2 left-[35%] w-3 h-3 rounded-full bg-secondary -translate-y-1/2 photon shadow-[0_0_8px_theme('colors.secondary')]"></div>
+<div class="absolute top-1/2 left-[65%] w-3 h-3 rounded-full bg-secondary -translate-y-1/2 photon shadow-[0_0_8px_theme('colors.secondary')]" style="animation-delay: 0.5s;"></div>
+<!-- Eve intercepted photon -->
+<div class="absolute top-[35%] left-[45%] w-2 h-2 rounded-full bg-data-critical photon shadow-[0_0_6px_theme('colors.data-critical')]"></div>
+</div>
+</div>
+<!-- Bottom: Data Matrix -->
+<div class="ui-panel h-64 shrink-0 flex flex-col overflow-hidden">
+<div class="flex items-center justify-between border-b border-surface-stroke px-space-md py-space-xs bg-surface-container-lowest shrink-0">
+<span class="font-label-mono text-label-mono uppercase text-on-surface-variant">QUANTUM BITSTREAM &amp; PAULI ALIGNMENT MATRIX</span>
+<button class="ui-btn-icon h-6 w-6" title="Export Data">
+<span class="material-symbols-outlined text-[14px]">download</span>
+</button>
+</div>
+<div class="flex-1 overflow-auto bg-surface-bright">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-lowest z-10 border-b border-surface-stroke">
+<tr>
+<th class="font-label-mono text-label-mono text-on-surface-variant uppercase p-2 border-r border-surface-stroke font-normal w-12 text-center">PLS</th>
+<th class="font-label-mono text-label-mono text-on-surface-variant uppercase p-2 border-r border-surface-stroke font-normal text-center">ALICE BASIS</th>
+<th class="font-label-mono text-label-mono text-on-surface-variant uppercase p-2 border-r border-surface-stroke font-normal text-center">ALICE BIT</th>
+<th class="font-label-mono text-label-mono text-on-surface-variant uppercase p-2 border-r border-surface-stroke font-normal text-center">BOB BASIS</th>
+<th class="font-label-mono text-label-mono text-on-surface-variant uppercase p-2 border-r border-surface-stroke font-normal text-center">BOB BIT</th>
+<th class="font-label-mono text-label-mono text-on-surface-variant uppercase p-2 border-r border-surface-stroke font-normal text-center">BELL STATE</th>
+<th class="font-label-mono text-label-mono text-on-surface-variant uppercase p-2 border-r border-surface-stroke font-normal text-center">EVE INT</th>
+<th class="font-label-mono text-label-mono text-on-surface-variant uppercase p-2 font-normal text-right">SIFT STATUS</th>
+</tr>
+</thead>
+<tbody class="font-data-mono text-data-mono divide-y divide-surface-stroke bg-surface-container-lowest">
+<!-- Static simulation rows to match density -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-2 border-r border-surface-stroke text-on-surface-variant text-center">01</td>
+<td class="p-2 border-r border-surface-stroke text-center">x</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">0</td>
+<td class="p-2 border-r border-surface-stroke text-center">x</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">1</td>
+<td class="p-2 border-r border-surface-stroke text-center text-on-surface-variant">Φ-</td>
+<td class="p-2 border-r border-surface-stroke text-center">
+<span class="text-data-critical material-symbols-outlined text-[14px]">warning</span>
+</td>
+<td class="p-2 text-right"><span class="text-data-critical font-medium bg-error-container px-1">QBER Error</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-2 border-r border-surface-stroke text-on-surface-variant text-center">02</td>
+<td class="p-2 border-r border-surface-stroke text-center">+</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">1</td>
+<td class="p-2 border-r border-surface-stroke text-center">+</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">0</td>
+<td class="p-2 border-r border-surface-stroke text-center text-on-surface-variant">Φ+</td>
+<td class="p-2 border-r border-surface-stroke text-center">
+<span class="text-data-critical material-symbols-outlined text-[14px]">warning</span>
+</td>
+<td class="p-2 text-right"><span class="text-data-critical font-medium bg-error-container px-1">QBER Error</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-2 border-r border-surface-stroke text-on-surface-variant text-center">03</td>
+<td class="p-2 border-r border-surface-stroke text-center">+</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">1</td>
+<td class="p-2 border-r border-surface-stroke text-center">+</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">1</td>
+<td class="p-2 border-r border-surface-stroke text-center text-on-surface-variant">Ψ+</td>
+<td class="p-2 border-r border-surface-stroke text-center">-</td>
+<td class="p-2 text-right"><span class="text-data-success font-medium">Kept</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-2 border-r border-surface-stroke text-on-surface-variant text-center">04</td>
+<td class="p-2 border-r border-surface-stroke text-center">x</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">1</td>
+<td class="p-2 border-r border-surface-stroke text-center">+</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">1</td>
+<td class="p-2 border-r border-surface-stroke text-center text-on-surface-variant">Φ+</td>
+<td class="p-2 border-r border-surface-stroke text-center">
+<span class="text-data-critical material-symbols-outlined text-[14px]">warning</span>
+</td>
+<td class="p-2 text-right"><span class="text-on-surface-variant">Discarded</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-2 border-r border-surface-stroke text-on-surface-variant text-center">05</td>
+<td class="p-2 border-r border-surface-stroke text-center">x</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">0</td>
+<td class="p-2 border-r border-surface-stroke text-center">+</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">0</td>
+<td class="p-2 border-r border-surface-stroke text-center text-on-surface-variant">Φ-</td>
+<td class="p-2 border-r border-surface-stroke text-center">-</td>
+<td class="p-2 text-right"><span class="text-on-surface-variant">Discarded</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-2 border-r border-surface-stroke text-on-surface-variant text-center">06</td>
+<td class="p-2 border-r border-surface-stroke text-center">+</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">0</td>
+<td class="p-2 border-r border-surface-stroke text-center">+</td>
+<td class="p-2 border-r border-surface-stroke text-center font-medium">0</td>
+<td class="p-2 border-r border-surface-stroke text-center text-on-surface-variant">Ψ-</td>
+<td class="p-2 border-r border-surface-stroke text-center">-</td>
+<td class="p-2 text-right"><span class="text-data-success font-medium">Kept</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</body></html>

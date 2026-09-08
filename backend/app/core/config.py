@@ -63,6 +63,36 @@ class Settings(BaseSettings):
 
     TELEMETRY_MAX_ENTRIES: int = 10000
 
+    # ── Browser Security & Attack Mitigations ───────────────────────────
+    MAX_FILE_SIZE_BYTES: int = 5 * 1024 * 1024  # 5 MB
+    ALLOWED_FILE_EXTENSIONS: List[str] = [
+        ".png", ".jpg", ".jpeg", ".gif", ".webp",
+        ".pdf", ".txt", ".json", ".csv", ".docx", ".xlsx", ".zip"
+    ]
+    BLOCKED_FILE_EXTENSIONS: List[str] = [
+        ".html", ".htm", ".svg", ".exe", ".bat", ".cmd", ".sh",
+        ".vbs", ".js", ".mjs", ".py", ".php", ".scr", ".msi", ".dll",
+        ".com", ".jar", ".ps1", ".hta"
+    ]
+
+    # Content Security Policy (CSP)
+    CSP_HEADER: str = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com data:; "
+        "img-src 'self' data: blob: https:; "
+        "connect-src 'self' http://localhost:* http://127.0.0.1:* ws: wss:; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none';"
+    )
+
+    # Rate Limiting
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 3000
+    AUTH_RATE_LIMIT_PER_MINUTE: int = 300
+
     # ── Session ───────────────────────────────────────────────────────
     SESSION_EXPIRY_SECONDS: int = 3600  # 1 hour
 

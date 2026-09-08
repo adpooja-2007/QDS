@@ -20,7 +20,12 @@ from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.core.middleware import TelemetryMiddleware, telemetry_store
+from app.core.middleware import (
+    TelemetryMiddleware,
+    SecurityHeadersMiddleware,
+    RateLimitMiddleware,
+    telemetry_store,
+)
 from app.core.exceptions import register_exception_handlers
 from app.api import arbitrator, alice, bob, security, attacks, sessions, ghz, quarc, network, auth, chat
 from app.services.session_service import session_service
@@ -115,6 +120,11 @@ app.add_middleware(
     allow_methods=settings.CORS_ALLOW_METHODS,
     allow_headers=settings.CORS_ALLOW_HEADERS,
 )
+
+
+# ── Browser Security & Attack Mitigations ─────────────────────────────
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware)
 
 
 # ── Telemetry Middleware ─────────────────────────────────────────────

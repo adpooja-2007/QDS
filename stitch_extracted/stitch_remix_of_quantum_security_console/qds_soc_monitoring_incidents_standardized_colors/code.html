@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QDS SENTINEL - Incidents</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#45474c",
+                        "surface-tint": "#545f73",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "inverse-surface": "#303032",
+                        "on-primary-fixed": "#111c2d",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-surface": "#1b1b1d",
+                        "on-secondary-fixed-variant": "#004395",
+                        "terminal-bg": "#0F172A",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-stroke": "#E2E8F0",
+                        "on-secondary-container": "#fefcff",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#041528",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "tertiary-container": "#1a2a3e",
+                        "primary-container": "#1e293b",
+                        "primary-fixed-dim": "#bcc7de",
+                        "on-background": "#1b1b1d",
+                        "inverse-on-surface": "#f3f0f2",
+                        "surface-bright": "#fbf8fa",
+                        "surface-container-highest": "#e4e2e4",
+                        "surface": "#fbf8fa",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#bcc7de",
+                        "on-primary": "#ffffff",
+                        "data-success": "#065F46",
+                        "on-primary-container": "#8590a6",
+                        "outline": "#75777d",
+                        "primary-fixed": "#d8e3fb",
+                        "surface-container-low": "#f6f3f5",
+                        "tertiary-fixed": "#d3e4fe",
+                        "on-tertiary-container": "#8191a9",
+                        "secondary-container": "#2170e4",
+                        "data-warning": "#B45309",
+                        "primary": "#091426",
+                        "background": "#fbf8fa",
+                        "outline-variant": "#c5c6cd",
+                        "surface-variant": "#e4e2e4",
+                        "surface-container-high": "#eae7e9",
+                        "surface-dim": "#dcd9db",
+                        "secondary": "#0058be",
+                        "surface-container": "#f0edef",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "data-critical": "#B91C1C",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-secondary-fixed": "#001a42"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "space-sm": "8px",
+                        "space-xs": "4px",
+                        "space-md": "16px",
+                        "gutter": "16px",
+                        "space-xl": "48px",
+                        "drawer-width": "400px",
+                        "unit": "4px",
+                        "sidebar-width": "260px",
+                        "space-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-mono": ["IBM Plex Mono"],
+                        "data-mono": ["IBM Plex Mono"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "label-mono": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "data-mono": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="font-body-md text-body-md min-h-screen flex flex-col antialiased">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-primary-fixed font-headline-md text-headline-md font-label-mono text-label-mono border-b border-surface-stroke dark:border-on-surface-variant fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16">
+<div class="flex items-center gap-space-md">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed tracking-tight">QDS SENTINEL</span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex border border-surface-stroke rounded-DEFAULT px-space-sm py-space-xs focus-within:border-secondary transition-colors items-center gap-space-sm bg-surface-container-low">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">search</span>
+<input class="bg-transparent border-none outline-none font-data-mono text-data-mono text-on-surface w-48 p-0 h-auto focus:ring-0 placeholder:text-on-surface-variant" placeholder="QUERY..." type="text"/>
+</div>
+<div class="flex items-center gap-space-sm border-l border-surface-stroke pl-space-md">
+<button class="p-space-xs rounded-DEFAULT hover:bg-surface-container-low dark:hover:bg-primary-container transition-colors cursor-pointer active:opacity-80 text-on-surface-variant dark:text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+<button class="p-space-xs rounded-DEFAULT hover:bg-surface-container-low dark:hover:bg-primary-container transition-colors cursor-pointer active:opacity-80 text-on-surface-variant dark:text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-DEFAULT bg-surface-stroke overflow-hidden ml-space-sm cursor-pointer active:opacity-80">
+<img alt="Security Analyst Avatar" class="w-full h-full object-cover" data-alt="A small, square, high-contrast black and white portrait of a mature, focused professional wearing minimal techwear. The lighting is harsh and directional, emphasizing cheekbones and intense gaze. The style is reminiscent of high-end corporate ID badges with a touch of cyberpunk grittiness. The background is pure, stark white." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkAMPWCV7-glfYCUW-NY9GBH88uVDM8J2t6MKwg__SqDakIjOG7ksp0h-LoQnG0e7XQCay4MEXixQr_BmCj46TlM_W0n6zSZL_lbGOMvr85J_ifGa7v7pxhvdzcDb7kWjtuBN5UP-EGA8GS0ZxLYtBKrnBzPImD7lrF0nssR3yhmaj7NO6f2G65iInRKhpEYC0eADzOf4WvNLiWMvwsb-0dPP0jYuWOWW6EYVJYnxkZ5F18zZiQP-O"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 pt-16">
+<!-- SideNavBar -->
+<aside class="bg-surface dark:bg-surface text-primary dark:text-primary-fixed font-label-mono text-label-mono uppercase border-r border-surface-stroke dark:border-on-surface-variant fixed left-0 top-16 h-[calc(100vh-64px)] w-sidebar-width flex flex-col py-space-md z-40 hidden md:flex">
+<div class="px-space-md pb-space-md mb-space-md border-b border-surface-stroke flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<div class="w-6 h-6 rounded-sm bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-primary">shield</span>
+</div>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed tracking-tight">SYSTEM SECURE</span>
+</div>
+<span class="text-on-surface-variant opacity-70">V.2.4.0-STABLE</span>
+<button class="mt-space-sm w-full py-space-xs px-space-sm bg-primary text-on-primary rounded-DEFAULT font-label-mono text-label-mono hover:bg-on-primary-fixed-variant transition-colors text-center border border-primary">
+                    DEPLOY COUNTERMEASURE
+                </button>
+</div>
+<nav class="flex-1 flex flex-col px-space-sm gap-unit overflow-y-auto no-scrollbar">
+<a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-r-DEFAULT transition-transform duration-150 ease-in-out hover:bg-surface-container-low dark:hover:bg-primary-container text-on-surface-variant dark:text-on-surface-variant opacity-70" href="#">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-r-DEFAULT transition-transform duration-150 ease-in-out hover:bg-surface-container-low dark:hover:bg-primary-container text-on-surface-variant dark:text-on-surface-variant opacity-70" href="#">
+<span class="material-symbols-outlined text-[18px]">security</span>
+<span>Threats</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-r-DEFAULT transition-transform duration-150 ease-in-out hover:bg-surface-container-low dark:hover:bg-primary-container border-l-2 border-secondary text-secondary bg-surface-container-low dark:bg-primary-container font-bold" href="#">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+<span>Incidents</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-r-DEFAULT transition-transform duration-150 ease-in-out hover:bg-surface-container-low dark:hover:bg-primary-container text-on-surface-variant dark:text-on-surface-variant opacity-70" href="#">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+<span>Sessions</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-r-DEFAULT transition-transform duration-150 ease-in-out hover:bg-surface-container-low dark:hover:bg-primary-container text-on-surface-variant dark:text-on-surface-variant opacity-70" href="#">
+<span class="material-symbols-outlined text-[18px]">lan</span>
+<span>Network</span>
+</a>
+</nav>
+<div class="px-space-sm pt-space-md border-t border-surface-stroke mt-auto flex flex-col gap-unit">
+<a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-r-DEFAULT transition-transform duration-150 ease-in-out hover:bg-surface-container-low dark:hover:bg-primary-container text-on-surface-variant dark:text-on-surface-variant opacity-70" href="#">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span>Audit Logs</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-r-DEFAULT transition-transform duration-150 ease-in-out hover:bg-surface-container-low dark:hover:bg-primary-container text-on-surface-variant dark:text-on-surface-variant opacity-70" href="#">
+<span class="material-symbols-outlined text-[18px]">description</span>
+<span>Documentation</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-sidebar-width p-gutter">
+<div class="mb-space-lg">
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">INCIDENTS</h1>
+<p class="font-data-mono text-data-mono text-on-surface-variant mt-unit">SYSTEM LOG: 10/24/2023 - 10/25/2023</p>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-gutter">
+<!-- Data Table Section (Left Side) -->
+<div class="xl:col-span-8 border border-surface-stroke bg-surface rounded-DEFAULT flex flex-col">
+<div class="h-10 border-b border-surface-stroke bg-surface-container-low flex items-center px-space-md gap-space-md font-label-mono text-label-mono uppercase text-on-surface-variant">
+<div class="flex-1">Incident ID</div>
+<div class="w-32">Status</div>
+<div class="w-40">Assigned</div>
+<div class="w-24 text-right">Impact</div>
+</div>
+<div class="flex-1 overflow-y-auto">
+<!-- Table Row 1 -->
+<div class="group border-b border-surface-stroke hover:bg-surface-container-low cursor-pointer transition-colors relative">
+<!-- Selection indicator -->
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center px-space-md py-space-sm gap-space-md">
+<div class="flex-1 font-data-mono text-data-mono text-on-surface font-medium">INC-9482-A</div>
+<div class="w-32 flex items-center gap-unit">
+<div class="w-[6px] h-[6px] rounded-full bg-data-warning"></div>
+<span class="font-label-mono text-label-mono uppercase text-data-warning">INVESTIGATING</span>
+</div>
+<div class="w-40 font-body-sm text-body-sm text-on-surface-variant truncate">J. Doe (L2)</div>
+<div class="w-24 font-data-mono text-data-mono text-right text-data-warning">HIGH</div>
+</div>
+</div>
+<!-- Table Row 2 -->
+<div class="group border-b border-surface-stroke hover:bg-surface-container-low cursor-pointer transition-colors relative">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center px-space-md py-space-sm gap-space-md">
+<div class="flex-1 font-data-mono text-data-mono text-on-surface font-medium">INC-9481-B</div>
+<div class="w-32 flex items-center gap-unit">
+<div class="w-[6px] h-[6px] rounded-full bg-data-critical"></div>
+<span class="font-label-mono text-label-mono uppercase text-data-critical">ESCALATED</span>
+</div>
+<div class="w-40 font-body-sm text-body-sm text-on-surface-variant truncate">A. Smith (L3)</div>
+<div class="w-24 font-data-mono text-data-mono text-right text-data-critical font-medium">CRITICAL</div>
+</div>
+</div>
+<!-- Table Row 3 -->
+<div class="group border-b border-surface-stroke bg-surface-container-low cursor-pointer transition-colors relative">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-secondary opacity-100 transition-opacity"></div>
+<div class="flex items-center px-space-md py-space-sm gap-space-md">
+<div class="flex-1 font-data-mono text-data-mono text-on-surface font-medium">INC-9479-X</div>
+<div class="w-32 flex items-center gap-unit">
+<div class="w-[6px] h-[6px] rounded-full bg-data-success"></div>
+<span class="font-label-mono text-label-mono uppercase text-data-success">RESOLVED</span>
+</div>
+<div class="w-40 font-body-sm text-body-sm text-on-surface-variant truncate">SYSTEM AUTO</div>
+<div class="w-24 font-data-mono text-data-mono text-right text-data-success">LOW</div>
+</div>
+</div>
+<!-- Table Row 4 -->
+<div class="group border-b border-surface-stroke hover:bg-surface-container-low cursor-pointer transition-colors relative">
+<div class="absolute left-0 top-0 bottom-0 w-[2px] bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center px-space-md py-space-sm gap-space-md">
+<div class="flex-1 font-data-mono text-data-mono text-on-surface font-medium">INC-9475-C</div>
+<div class="w-32 flex items-center gap-unit">
+<div class="w-[6px] h-[6px] rounded-full bg-data-success"></div>
+<span class="font-label-mono text-label-mono uppercase text-data-success">RESOLVED</span>
+</div>
+<div class="w-40 font-body-sm text-body-sm text-on-surface-variant truncate">M. Chen (L1)</div>
+<div class="w-24 font-data-mono text-data-mono text-right text-data-success">MED</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline / Inspector Section (Right Side) -->
+<div class="xl:col-span-4 border border-surface-stroke bg-surface rounded-DEFAULT flex flex-col h-[600px]">
+<div class="h-10 border-b border-surface-stroke bg-surface-container-low flex items-center px-space-md gap-space-md font-label-mono text-label-mono uppercase text-on-surface-variant shrink-0">
+                        INSPECTOR: INC-9479-X
+                    </div>
+<div class="p-space-md flex-1 overflow-y-auto">
+<div class="mb-space-lg">
+<div class="font-headline-md text-headline-md text-primary tracking-tight mb-unit">Brute Force Mitigation</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Automated lock applied to repeated failed auth attempts.</p>
+</div>
+<!-- Timeline -->
+<div class="relative border-l border-surface-stroke ml-3 space-y-space-lg">
+<!-- Timeline Event 1 -->
+<div class="relative pl-space-md">
+<div class="absolute w-2 h-2 rounded-full bg-surface-stroke -left-[4.5px] top-1"></div>
+<div class="font-label-mono text-label-mono text-on-surface-variant mb-unit">10:42:01 UTC</div>
+<div class="font-data-mono text-data-mono text-on-surface">Initial Detection</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-unit">Anomaly detected in auth sequence from IP 192.168.1.55.</p>
+</div>
+<!-- Timeline Event 2 -->
+<div class="relative pl-space-md">
+<div class="absolute w-2 h-2 rounded-full bg-data-warning -left-[4.5px] top-1"></div>
+<div class="font-label-mono text-label-mono text-on-surface-variant mb-unit">10:42:15 UTC</div>
+<div class="font-data-mono text-data-mono text-data-warning">Threshold Exceeded</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-unit">Failed attempts &gt; 5 within 10s window.</p>
+</div>
+<!-- Timeline Event 3 -->
+<div class="relative pl-space-md">
+<div class="absolute w-2 h-2 rounded-full bg-data-success -left-[4.5px] top-1"></div>
+<div class="font-label-mono text-label-mono text-on-surface-variant mb-unit">10:42:16 UTC</div>
+<div class="font-data-mono text-data-mono text-data-success">Auto-Resolution</div>
+<div class="bg-terminal-bg rounded-sm p-space-sm mt-unit border border-primary">
+<div class="font-data-mono text-data-mono text-on-primary">&gt; ip_block add 192.168.1.55 3600</div>
+<div class="font-data-mono text-data-mono text-data-success mt-unit">[OK] Rule applied to perimeter firewall.</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-space-md border-t border-surface-stroke shrink-0">
+<button class="w-full py-space-sm px-space-sm bg-transparent border border-primary text-primary rounded-DEFAULT font-label-mono text-label-mono hover:border-secondary transition-colors text-center">
+                            VIEW FULL TELEMETRY
+                        </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

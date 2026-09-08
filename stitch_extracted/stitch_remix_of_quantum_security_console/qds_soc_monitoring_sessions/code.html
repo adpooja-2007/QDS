@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QDS SENTINEL - Sessions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface-variant": "#45474c",
+                      "surface-tint": "#545f73",
+                      "tertiary-fixed-dim": "#b7c8e1",
+                      "inverse-surface": "#303032",
+                      "on-primary-fixed": "#111c2d",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-surface": "#1b1b1d",
+                      "on-secondary-fixed-variant": "#004395",
+                      "terminal-bg": "#0F172A",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-stroke": "#E2E8F0",
+                      "on-secondary-container": "#fefcff",
+                      "error-container": "#ffdad6",
+                      "tertiary": "#041528",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "tertiary-container": "#1a2a3e",
+                      "primary-container": "#1e293b",
+                      "primary-fixed-dim": "#bcc7de",
+                      "on-background": "#1b1b1d",
+                      "inverse-on-surface": "#f3f0f2",
+                      "surface-bright": "#fbf8fa",
+                      "surface-container-highest": "#e4e2e4",
+                      "surface": "#fbf8fa",
+                      "error": "#ba1a1a",
+                      "inverse-primary": "#bcc7de",
+                      "on-primary": "#ffffff",
+                      "data-success": "#065F46",
+                      "on-primary-container": "#8590a6",
+                      "outline": "#75777d",
+                      "primary-fixed": "#d8e3fb",
+                      "surface-container-low": "#f6f3f5",
+                      "tertiary-fixed": "#d3e4fe",
+                      "on-tertiary-container": "#8191a9",
+                      "secondary-container": "#2170e4",
+                      "data-warning": "#B45309",
+                      "primary": "#091426",
+                      "background": "#fbf8fa",
+                      "outline-variant": "#c5c6cd",
+                      "surface-variant": "#e4e2e4",
+                      "surface-container-high": "#eae7e9",
+                      "surface-dim": "#dcd9db",
+                      "secondary": "#0058be",
+                      "surface-container": "#f0edef",
+                      "on-error-container": "#93000a",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed-variant": "#3c475a",
+                      "on-tertiary-fixed-variant": "#38485d",
+                      "data-critical": "#B91C1C",
+                      "on-error": "#ffffff",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "on-secondary-fixed": "#001a42"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "space-sm": "8px",
+                      "space-xs": "4px",
+                      "space-md": "16px",
+                      "gutter": "16px",
+                      "space-xl": "48px",
+                      "drawer-width": "400px",
+                      "unit": "4px",
+                      "sidebar-width": "260px",
+                      "space-lg": "24px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "label-mono": [
+                              "IBM Plex Mono"
+                      ],
+                      "data-mono": [
+                              "IBM Plex Mono"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-mono": [
+                              "11px",
+                              {
+                                      "lineHeight": "14px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "data-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+        
+        .table-row-hover:hover {
+            background-color: #f6f3f5;
+        }
+        
+        /* Custom Sparkline Animations */
+        @keyframes drawSparkline {
+            to { stroke-dashoffset: 0; }
+        }
+        .sparkline-path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawSparkline 1.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-surface dark:bg-surface border-b border-surface-stroke dark:border-on-surface-variant">
+<div class="flex items-center gap-space-md">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed tracking-tight">QDS SENTINEL</span>
+</div>
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-space-sm text-on-surface-variant dark:text-on-surface-variant">
+<button class="hover:bg-surface-container-low dark:hover:bg-primary-container transition-colors cursor-pointer active:opacity-80 p-2 rounded-DEFAULT">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="hover:bg-surface-container-low dark:hover:bg-primary-container transition-colors cursor-pointer active:opacity-80 p-2 rounded-DEFAULT">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+<div class="h-8 w-8 rounded-full bg-surface-stroke overflow-hidden border border-surface-stroke">
+<img alt="Security Analyst Avatar" class="w-full h-full object-cover" data-alt="A small, stylized avatar image representing a security analyst. The portrait is simple, flat, and professional, rendered in a muted color palette suitable for a high-end tech interface. Light mode background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMBggowAKLOBlvrveMLsBtTzEW8eKgDPBPOOOj0trRFShzEeAhwzNUtFww5lpHzT3OEvl9tQmH_i9tHdG0CyZIaCIen5ce7MskqPsgoOjviSL8gsCDuJoQvQftbWvCmrXgXvzR1tevlKFDSHLsTdGlD9BV42zJ0jQihZm8d9OG6kMfSnRGA33zGjdCk9bi8E_CRdlGFNFD4LAeVCWB8TSTHqaS9Gz_OaLzw6W2IxHeueGkWyLeCIpK"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-sidebar-width flex flex-col py-space-md bg-surface dark:bg-surface border-r border-surface-stroke dark:border-on-surface-variant z-40 hidden md:flex">
+<div class="px-space-md mb-space-lg">
+<div class="flex items-center gap-space-sm mb-space-xs">
+<div class="w-10 h-10 rounded-DEFAULT bg-surface-container-highest overflow-hidden flex items-center justify-center border border-surface-stroke">
+<span class="material-symbols-outlined text-data-success">verified_user</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md text-primary">SYSTEM SECURE</div>
+<div class="font-label-mono text-label-mono text-on-surface-variant">V.2.4.0-STABLE</div>
+</div>
+</div>
+<button class="w-full mt-space-sm bg-primary text-on-primary font-label-mono text-label-mono uppercase py-2 px-4 rounded-DEFAULT transition-all hover:opacity-90 cursor-pointer active:opacity-80 border border-primary">
+                DEPLOY COUNTERMEASURE
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto">
+<ul class="flex flex-col gap-1 px-space-sm font-label-mono text-label-mono uppercase">
+<li>
+<a class="flex items-center gap-space-md px-space-md py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container transition-all cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                        Overview
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-space-md px-space-md py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container transition-all cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">security</span>
+                        Threats
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-space-md px-space-md py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container transition-all cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">warning</span>
+                        Incidents
+                    </a>
+</li>
+<li>
+<!-- Active State -->
+<a class="flex items-center gap-space-md px-space-md py-2 rounded-DEFAULT border-l-2 border-secondary text-secondary bg-surface-container-low dark:bg-primary-container font-bold transition-all cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">terminal</span>
+                        Sessions
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-space-md px-space-md py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container transition-all cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">lan</span>
+                        Network
+                    </a>
+</li>
+</ul>
+</div>
+<div class="mt-auto px-space-sm">
+<ul class="flex flex-col gap-1 font-label-mono text-label-mono uppercase">
+<li>
+<a class="flex items-center gap-space-md px-space-md py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container transition-all cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">history</span>
+                        Audit Logs
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-space-md px-space-md py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container transition-all cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">description</span>
+                        Documentation
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="md:ml-sidebar-width pt-16 min-h-screen bg-surface-bright">
+<div class="p-gutter max-w-[1440px] mx-auto">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-space-lg pb-space-sm border-b border-surface-stroke">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">SESSIONS</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Active Quantum Communication Channels</p>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="w-2 h-2 rounded-full bg-data-success animate-pulse"></span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">12 ACTIVE STREAMS</span>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Main Sessions Table (Span 12) -->
+<div class="col-span-12 border border-surface-stroke bg-surface rounded-DEFAULT flex flex-col">
+<div class="h-6 border-b border-surface-stroke flex items-center px-space-md bg-surface-container-low">
+<h2 class="font-label-mono text-label-mono text-primary uppercase">Active Channel Telemetry</h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-surface-stroke bg-surface-container-low">
+<th class="py-2 px-space-md font-label-mono text-label-mono text-on-surface-variant uppercase w-12 text-center">ID</th>
+<th class="py-2 px-space-md font-label-mono text-label-mono text-on-surface-variant uppercase">Endpoint</th>
+<th class="py-2 px-space-md font-label-mono text-label-mono text-on-surface-variant uppercase">Status</th>
+<th class="py-2 px-space-md font-label-mono text-label-mono text-on-surface-variant uppercase">Fidelity</th>
+<th class="py-2 px-space-md font-label-mono text-label-mono text-on-surface-variant uppercase text-right">Key Rate (kbps)</th>
+<th class="py-2 px-space-md font-label-mono text-label-mono text-on-surface-variant uppercase text-right">Duration</th>
+<th class="py-2 px-space-md font-label-mono text-label-mono text-on-surface-variant uppercase text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-data-mono text-data-mono text-primary">
+<!-- Row 1 -->
+<tr class="border-b border-surface-stroke table-row-hover transition-colors relative">
+<td class="py-3 px-space-md text-center border-l-2 border-secondary">
+<span class="text-on-surface-variant">01</span>
+</td>
+<td class="py-3 px-space-md">QNode-A-09</td>
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-data-success"></span>
+<span>STABLE</span>
+</div>
+</td>
+<td class="py-3 px-space-md w-32">
+<!-- Minimal Sparkline -->
+<svg class="w-full h-auto" height="20" viewbox="0 0 100 20" width="100">
+<path class="sparkline-path" d="M0 15 Q 10 5, 20 15 T 40 10 T 60 15 T 80 5 T 100 12" fill="none" stroke="#065F46" stroke-width="1.5"></path>
+</svg>
+</td>
+<td class="py-3 px-space-md text-right">245.8</td>
+<td class="py-3 px-space-md text-right">04:12:33</td>
+<td class="py-3 px-space-md text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="border border-primary text-primary px-2 py-1 rounded-DEFAULT hover:border-secondary hover:text-secondary transition-colors" title="Audit Logs">
+<span class="material-symbols-outlined text-[16px] leading-none">history</span>
+</button>
+<button class="bg-primary text-on-primary px-2 py-1 rounded-DEFAULT hover:opacity-90 transition-opacity" title="Terminate Session">
+<span class="material-symbols-outlined text-[16px] leading-none">stop</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-surface-stroke table-row-hover transition-colors">
+<td class="py-3 px-space-md text-center border-l-2 border-transparent">
+<span class="text-on-surface-variant">02</span>
+</td>
+<td class="py-3 px-space-md">QNode-F-22</td>
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-data-warning"></span>
+<span>DEGRADED</span>
+</div>
+</td>
+<td class="py-3 px-space-md w-32">
+<svg class="w-full h-auto" height="20" viewbox="0 0 100 20" width="100">
+<path class="sparkline-path" d="M0 10 Q 15 15, 30 5 T 60 18 T 90 8 T 100 12" fill="none" stroke="#B45309" stroke-width="1.5"></path>
+</svg>
+</td>
+<td class="py-3 px-space-md text-right">112.4</td>
+<td class="py-3 px-space-md text-right">01:45:10</td>
+<td class="py-3 px-space-md text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="border border-primary text-primary px-2 py-1 rounded-DEFAULT hover:border-secondary hover:text-secondary transition-colors" title="Audit Logs">
+<span class="material-symbols-outlined text-[16px] leading-none">history</span>
+</button>
+<button class="bg-primary text-on-primary px-2 py-1 rounded-DEFAULT hover:opacity-90 transition-opacity" title="Terminate Session">
+<span class="material-symbols-outlined text-[16px] leading-none">stop</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-surface-stroke table-row-hover transition-colors">
+<td class="py-3 px-space-md text-center border-l-2 border-transparent">
+<span class="text-on-surface-variant">03</span>
+</td>
+<td class="py-3 px-space-md">Sat-Link-Alpha</td>
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-data-success"></span>
+<span>STABLE</span>
+</div>
+</td>
+<td class="py-3 px-space-md w-32">
+<svg class="w-full h-auto" height="20" viewbox="0 0 100 20" width="100">
+<path class="sparkline-path" d="M0 5 L 20 5 L 25 15 L 30 5 L 100 5" fill="none" stroke="#065F46" stroke-width="1.5"></path>
+</svg>
+</td>
+<td class="py-3 px-space-md text-right">450.1</td>
+<td class="py-3 px-space-md text-right">12:05:44</td>
+<td class="py-3 px-space-md text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="border border-primary text-primary px-2 py-1 rounded-DEFAULT hover:border-secondary hover:text-secondary transition-colors" title="Audit Logs">
+<span class="material-symbols-outlined text-[16px] leading-none">history</span>
+</button>
+<button class="bg-primary text-on-primary px-2 py-1 rounded-DEFAULT hover:opacity-90 transition-opacity" title="Terminate Session">
+<span class="material-symbols-outlined text-[16px] leading-none">stop</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

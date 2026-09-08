@@ -50,6 +50,10 @@ class ChatSendMessageRequest(BaseModel):
     file_type: Optional[str] = None
     file_size: Optional[int] = None
     file_data: Optional[str] = None
+    reply_to_id: Optional[int] = None
+    reply_preview: Optional[str] = None
+    ephemeral_ttl: Optional[int] = None
+    is_audio: Optional[bool] = False
 
 
 class ChatMessageResponse(BaseModel):
@@ -64,10 +68,18 @@ class ChatMessageResponse(BaseModel):
     threshold_percentage: float
     route_path: List[str]
     is_pass: bool
+    is_read: Optional[bool] = False
     file_name: Optional[str] = None
     file_type: Optional[str] = None
     file_size: Optional[int] = None
     file_data: Optional[str] = None
+    reply_to_id: Optional[int] = None
+    reply_preview: Optional[str] = None
+    is_pinned: Optional[bool] = False
+    is_starred: Optional[bool] = False
+    ephemeral_ttl: Optional[int] = None
+    expires_at: Optional[str] = None
+    is_audio: Optional[bool] = False
     timestamp: Optional[str] = None
 
 

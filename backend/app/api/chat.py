@@ -54,6 +54,20 @@ async def get_chat_messages(
 
 
 @router.get(
+    "/conversations",
+    summary="Get summary of all conversations (latest messages + unread counts) in a single request",
+)
+async def get_conversations_endpoint(
+    username: str = Query(..., description="Username of participant"),
+):
+    summary = await auth_service.get_conversations_summary(username)
+    return {
+        "success": True,
+        **summary,
+    }
+
+
+@router.get(
     "/unread",
     summary="Get unread message counts per contact for a user",
 )
@@ -67,6 +81,41 @@ async def get_unread_counts(
         "total_unread": sum(counts.values()),
     }
 
+
+@router.post(
+    "/mark-read",
+    summary="Mark unread messages from sender as read for current recipient",
+)
+async def mark_messages_read(
+    recipient: str = Query(..., description="Username of the recipient (current user)"),
+    sender: str = Query(..., description="Username of the contact whose messages are read"),
+):
+    marked = await auth_service.mark_messages_read(recipient, sender)
+    return {
+        "success": True,
+        "message": f"Marked {marked} messages from @{sender} as read for @{recipient}.",
+        "marked_count": marked,
+    }
+
+
+@router.get(
+    "/search",
+    response_model=ChatHistoryResponse,
+    summary="Search message contents across conversations for a user",
+)
+async def search_messages_endpoint(
+    username: str = Query(..., description="Username of participant"),
+    q: str = Query(..., description="Text query or file name to search"),
+    limit: int = Query(50, ge=1, le=200),
+):
+    results = await auth_service.search_messages(username, q, limit=limit)
+    msgs = [ChatMessageResponse(**m) for m in results]
+    return ChatHistoryResponse(
+        success=True,
+        message=f"Found {len(msgs)} matching quantum messages for '{q}'.",
+        messages=msgs,
+        total=len(msgs),
+    )
 
 
 @router.get(
@@ -99,6 +148,23 @@ async def get_all_messages(
 
 
 
+import os
+import re
+import html
+from app.core.config import settings
+
+def sanitize_filename(filename: Optional[str]) -> Optional[str]:
+    """Sanitize filename to prevent path traversal and XSS injection."""
+    if not filename:
+        return None
+    # Strip directory paths
+    clean = os.path.basename(filename).replace("\\", "").replace("/", "")
+    # Strip dangerous HTML/script characters
+    clean = re.sub(r'[<>:"|?*\x00-\x1f]', '', clean)
+    # Escape HTML entities
+    clean = html.escape(clean)
+    return clean[:100] if clean else "document"
+
 @router.post(
     "/send",
     response_model=ChatMessageResponse,
@@ -118,8 +184,8 @@ async def send_chat_message(request: ChatSendMessageRequest):
     sender = request.sender.strip().lower()
     recipient = request.recipient.strip().lower()
     text = (request.text or "").strip()
-    file_name = request.file_name
-    file_type = request.file_type
+    file_name = sanitize_filename(request.file_name)
+    file_type = (request.file_type or "").strip().lower()
     file_size = request.file_size
     file_data = request.file_data
 
@@ -128,6 +194,35 @@ async def send_chat_message(request: ChatSendMessageRequest):
 
     if not text and not file_data:
         raise HTTPException(status_code=400, detail="Message text or file attachment is required.")
+
+    if text and len(text) > 2000:
+        raise HTTPException(status_code=400, detail="Message text exceeds maximum length of 2000 characters.")
+
+    # ── File Upload Security Mitigations ──
+    if file_data:
+        # 1. Enforce strict file size limit (5MB)
+        if file_size and file_size > settings.MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File exceeds maximum allowed size of {settings.MAX_FILE_SIZE_BYTES // (1024*1024)}MB."
+            )
+
+        # 2. Block dangerous executable and script extensions
+        if file_name:
+            ext = os.path.splitext(file_name)[1].lower()
+            if ext in settings.BLOCKED_FILE_EXTENSIONS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Security Violation: Uploading '{ext}' executable or active script files is blocked to prevent browser exploitation."
+                )
+
+        # 3. Block malicious data URI schemes (e.g. data:text/html, javascript:)
+        lower_data = file_data.strip().lower()
+        if lower_data.startswith("javascript:") or lower_data.startswith("vbscript:") or "data:text/html" in lower_data or "data:application/javascript" in lower_data or "data:image/svg+xml" in lower_data:
+            raise HTTPException(
+                status_code=400,
+                detail="Security Violation: Unsafe data URI format detected. Script execution vectors are blocked."
+            )
 
     num_pairs = request.num_pairs or 1000
     baseline_noise = request.baseline_noise if request.baseline_noise is not None else 0.02
@@ -201,9 +296,92 @@ async def send_chat_message(request: ChatSendMessageRequest):
         file_type=file_type,
         file_size=file_size,
         file_data=file_data,
+        reply_to_id=request.reply_to_id,
+        reply_preview=request.reply_preview,
+        ephemeral_ttl=request.ephemeral_ttl,
+        is_audio=bool(request.is_audio),
     )
 
     return ChatMessageResponse(**saved_msg)
+
+
+@router.post(
+    "/messages/{message_id}/pin",
+    response_model=ChatMessageResponse,
+    summary="Toggle pin status on a message",
+)
+async def toggle_pin_endpoint(
+    message_id: int,
+    is_pinned: bool = Query(..., description="True to pin, False to unpin"),
+):
+    msg = await auth_service.toggle_pin_message(message_id, is_pinned)
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found.")
+    return ChatMessageResponse(**msg)
+
+
+@router.post(
+    "/messages/{message_id}/star",
+    response_model=ChatMessageResponse,
+    summary="Toggle star status on a message / proof",
+)
+async def toggle_star_endpoint(
+    message_id: int,
+    is_starred: bool = Query(..., description="True to star, False to unstar"),
+):
+    msg = await auth_service.toggle_star_message(message_id, is_starred)
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found.")
+    return ChatMessageResponse(**msg)
+
+
+@router.delete(
+    "/messages/{message_id}",
+    response_model=BaseResponse,
+    summary="Delete / purge a specific message (for ephemeral expiry or manual delete)",
+)
+async def delete_single_message_endpoint(
+    message_id: int,
+):
+    success = await auth_service.delete_message(message_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Message not found or already purged.")
+    return BaseResponse(
+        success=True,
+        message=f"Message {message_id} purged successfully.",
+    )
+
+
+@router.get(
+    "/pinned-starred",
+    summary="Get all pinned and starred messages for a user/conversation",
+)
+async def get_pinned_starred_endpoint(
+    username: str = Query(..., description="Current user username"),
+    contact: Optional[str] = Query(None, description="Optional peer contact username"),
+):
+    data = await auth_service.get_pinned_starred_messages(username, contact)
+    return {
+        "success": True,
+        "pinned": [ChatMessageResponse(**m) for m in data["pinned"]],
+        "starred": [ChatMessageResponse(**m) for m in data["starred"]],
+        "total": data["total"],
+    }
+
+
+@router.get(
+    "/export",
+    summary="Export cryptographically verifiable conversation transcript JSON",
+)
+async def export_transcript_endpoint(
+    user1: str = Query(..., description="First participant username"),
+    user2: str = Query(..., description="Second participant username"),
+):
+    data = await auth_service.export_chat_transcript(user1, user2)
+    return {
+        "success": True,
+        "transcript": data,
+    }
 
 
 @router.delete(

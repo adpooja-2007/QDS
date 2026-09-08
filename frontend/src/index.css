@@ -2,6 +2,10 @@
 @config "../tailwind.config.js";
 
 @layer base {
+  * {
+    scroll-behavior: smooth;
+  }
+
   ::-webkit-scrollbar {
     width: 5px;
     height: 5px;
@@ -10,7 +14,509 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(24, 27, 32, 0.15);
-    border-radius: 4px;
+    background: rgba(120, 120, 120, 0.2);
+    border-radius: 6px;
+    transition: background 0.2s ease;
   }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(120, 120, 120, 0.4);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MINIMALISTIC WHATSAPP-STYLE QUANTUM CHAT WALLPAPER
+   ══════════════════════════════════════════════════════════ */
+.chat-wallpaper {
+  background-color: #F8F5EE;
+  background-image: radial-gradient(#DDD5C8 0.75px, transparent 0.75px), url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23554F46' stroke-width='0.75' stroke-linecap='round' stroke-linejoin='round' opacity='0.045'%3E%3Ccircle cx='20' cy='20' r='5'/%3E%3Cpath d='M20 15v10M15 20h10'/%3E%3Cpath d='M60 14l7 7-7 7-7-7z'/%3E%3Cpath d='M14 60q10-7 20 0t20 0'/%3E%3Crect x='52' y='52' width='12' height='12' rx='3'/%3E%3Ccircle cx='58' cy='58' r='1.5' fill='%23554F46'/%3E%3Ccircle cx='40' cy='40' r='1.5' fill='%23554F46'/%3E%3Cpath d='M40 33v2M40 45v2M33 40h2M45 40h2'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 24px 24px, 80px 80px;
+}
+
+[data-theme="dark"] .chat-wallpaper {
+  background-color: #0B0E14 !important;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 0.75px, transparent 0.75px), url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='0.75' stroke-linecap='round' stroke-linejoin='round' opacity='0.035'%3E%3Ccircle cx='20' cy='20' r='5'/%3E%3Cpath d='M20 15v10M15 20h10'/%3E%3Cpath d='M60 14l7 7-7 7-7-7z'/%3E%3Cpath d='M14 60q10-7 20 0t20 0'/%3E%3Crect x='52' y='52' width='12' height='12' rx='3'/%3E%3Ccircle cx='58' cy='58' r='1.5' fill='%23FFFFFF'/%3E%3Ccircle cx='40' cy='40' r='1.5' fill='%23FFFFFF'/%3E%3Cpath d='M40 33v2M40 45v2M33 40h2M45 40h2'/%3E%3C/g%3E%3C/svg%3E") !important;
+  background-size: 24px 24px, 80px 80px !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DARK / OBSIDIAN QUANTUM THEME (ZERO-SATURATION REFINED)
+   ══════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] .bg-\[\#FBF9F5\],
+[data-theme="dark"] .from-\[\#FBF9F5\] {
+  background-color: #0A0D12 !important;
+  --tw-gradient-from: #0A0D12 !important;
+}
+
+[data-theme="dark"] .bg-\[\#F7F4EF\],
+[data-theme="dark"] .to-\[\#F7F4EF\] {
+  background-color: #11141A !important;
+  --tw-gradient-to: #11141A !important;
+}
+
+[data-theme="dark"] .bg-\[\#FCFBF8\],
+[data-theme="dark"] .bg-\[\#F7F3EC\] {
+  background-color: #151A22 !important;
+}
+
+[data-theme="dark"] .bg-\[\#F4EFEA\] {
+  background-color: #19202A !important;
+}
+
+[data-theme="dark"] .bg-\[\#EAE3DA\] {
+  background-color: #202733 !important;
+}
+
+/* ── Desaturated, Elegant Dark Hover States (Zero Garish Orange/Red) ── */
+[data-theme="dark"] .hover\:bg-\[\#F4EFEA\]:hover,
+[data-theme="dark"] .hover\:bg-\[\#EAE3DA\]:hover,
+[data-theme="dark"] .hover\:bg-\[\#EFEAE2\]:hover,
+[data-theme="dark"] .hover\:bg-\[\#DDD5C8\]:hover {
+  background-color: #1E2633 !important;
+}
+
+[data-theme="dark"] .bg-\[\#EAE3DA\]\/60 {
+  background-color: rgba(32, 39, 51, 0.6) !important;
+}
+
+/* Active Contact item border & tile in Dark Mode */
+[data-theme="dark"] .border-l-terracotta-600 {
+  border-left-color: #58A6FF !important;
+}
+[data-theme="dark"] .border-l-forest-600 {
+  border-left-color: #3FB950 !important;
+}
+
+/* Dark Borders */
+[data-theme="dark"] .border-\[\#EAE3DA\],
+[data-theme="dark"] .border-\[\#E5DEC7\],
+[data-theme="dark"] .border-\[\#E0D7CC\] {
+  border-color: #232C38 !important;
+}
+
+[data-theme="dark"] .border-\[\#DDD5C8\],
+[data-theme="dark"] .border-\[\#DDD4C5\],
+[data-theme="dark"] .border-\[\#CCC2B2\],
+[data-theme="dark"] .border-\[\#B5AA9A\] {
+  border-color: #2A3442 !important;
+}
+
+[data-theme="dark"] .hover\:border-\[\#E5DEC7\]:hover,
+[data-theme="dark"] .hover\:border-\[\#DDD5C8\]:hover,
+[data-theme="dark"] .hover\:border-\[\#C5BCAD\]:hover,
+[data-theme="dark"] .hover\:border-\[\#B5AA9A\]:hover {
+  border-color: #3D4A5C !important;
+}
+
+/* Dark Text (Crisp, High-Legibility, Soft Contrast) */
+[data-theme="dark"] .text-\[\#181B20\],
+[data-theme="dark"] .text-\[\#1F2228\],
+[data-theme="dark"] .text-\[\#111317\],
+[data-theme="dark"] .text-\[\#2D2A26\],
+[data-theme="dark"] .text-\[\#24211D\],
+[data-theme="dark"] .text-\[\#332E27\] {
+  color: #E6EDF3 !important;
+}
+
+[data-theme="dark"] .text-\[\#797167\],
+[data-theme="dark"] .text-\[\#6E665A\],
+[data-theme="dark"] .text-\[\#746C61\],
+[data-theme="dark"] .text-\[\#746D62\],
+[data-theme="dark"] .text-\[\#867E73\],
+[data-theme="dark"] .text-\[\#8B8477\],
+[data-theme="dark"] .text-\[\#7F776B\] {
+  color: #8B949E !important;
+}
+
+[data-theme="dark"] .text-\[\#554F46\],
+[data-theme="dark"] .text-\[\#524B41\],
+[data-theme="dark"] .text-\[\#443E35\] {
+  color: #C9D1D9 !important;
+}
+
+[data-theme="dark"] .text-\[\#9C9488\] {
+  color: #6E7681 !important;
+}
+
+/* Neutral Hover Text in Dark Mode (Pure White / Slate, NOT Orange) */
+[data-theme="dark"] .hover\:text-\[\#181B20\]:hover,
+[data-theme="dark"] .group-hover\:text-\[\#181B20\]:hover,
+[data-theme="dark"] .group-hover\:text-terracotta-600:hover,
+[data-theme="dark"] .hover\:text-terracotta-600:hover {
+  color: #FFFFFF !important;
+}
+
+/* ── Desaturated Badge & Pill Overrides in Dark Mode ── */
+[data-theme="dark"] .bg-forest-50,
+[data-theme="dark"] .bg-forest-100 {
+  background-color: #122419 !important;
+  border-color: #1B3D2A !important;
+  color: #4ADE80 !important;
+}
+[data-theme="dark"] .text-forest-800,
+[data-theme="dark"] .text-forest-900 {
+  color: #4ADE80 !important;
+}
+
+[data-theme="dark"] .bg-terracotta-50,
+[data-theme="dark"] .bg-terracotta-100 {
+  background-color: #241A18 !important;
+  border-color: #3C2420 !important;
+  color: #E5876E !important;
+}
+[data-theme="dark"] .text-terracotta-700,
+[data-theme="dark"] .text-terracotta-800,
+[data-theme="dark"] .text-terracotta-900 {
+  color: #E5876E !important;
+}
+[data-theme="dark"] .hover\:bg-terracotta-100:hover {
+  background-color: #2F1E1B !important;
+}
+
+[data-theme="dark"] .bg-amber-50,
+[data-theme="dark"] .bg-amber-100 {
+  background-color: #221B11 !important;
+  border-color: #382B17 !important;
+  color: #E3B341 !important;
+}
+[data-theme="dark"] .text-amber-800,
+[data-theme="dark"] .text-amber-900,
+[data-theme="dark"] .text-amber-950 {
+  color: #E3B341 !important;
+}
+
+/* ── Filter Buttons in Dark Mode ── */
+[data-theme="dark"] .bg-terracotta-600 {
+  background-color: #263140 !important;
+  border-color: #38465A !important;
+  color: #F0F6FC !important;
+}
+[data-theme="dark"] .bg-forest-800 {
+  background-color: #1B3526 !important;
+  border-color: #254A35 !important;
+  color: #4ADE80 !important;
+}
+
+/* ── Message Bubble Hover Action Toolbar ── */
+[data-theme="dark"] .message-bubble .group-hover\:opacity-100 {
+  background-color: #181F2A !important;
+  border-color: #2E3846 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── Inputs in Dark Mode ── */
+[data-theme="dark"] input {
+  color: #E6EDF3 !important;
+  background-color: transparent !important;
+}
+
+[data-theme="dark"] input::placeholder {
+  color: #6E7681 !important;
+}
+
+/* ── Modals & Drawers in Dark Mode ── */
+[data-theme="dark"] .shadcn-dialog-content {
+  background-color: #13171F !important;
+  border-color: #2A3340 !important;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   HIGH-CONTRAST TERMINAL PHOSPHOR THEME OVERRIDES
+   ══════════════════════════════════════════════════════════ */
+[data-theme="terminal"] {
+  color-scheme: dark;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+}
+
+[data-theme="terminal"] * {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+}
+
+[data-theme="terminal"] body,
+[data-theme="terminal"] .bg-\[\#FBF9F5\],
+[data-theme="terminal"] .from-\[\#FBF9F5\] {
+  background-color: #000000 !important;
+  --tw-gradient-from: #000000 !important;
+}
+
+[data-theme="terminal"] .bg-\[\#F7F4EF\],
+[data-theme="terminal"] .to-\[\#F7F4EF\] {
+  background-color: #050C05 !important;
+  --tw-gradient-to: #050C05 !important;
+}
+
+[data-theme="terminal"] .bg-\[\#FCFBF8\],
+[data-theme="terminal"] .bg-\[\#F7F3EC\] {
+  background-color: #0A160A !important;
+}
+
+[data-theme="terminal"] .bg-\[\#F4EFEA\] {
+  background-color: #0F200F !important;
+}
+
+[data-theme="terminal"] .bg-\[\#EAE3DA\],
+[data-theme="terminal"] .hover\:bg-\[\#EAE3DA\]:hover,
+[data-theme="terminal"] .hover\:bg-\[\#F4EFEA\]:hover {
+  background-color: #142B14 !important;
+}
+
+[data-theme="terminal"] .bg-\[\#EAE3DA\]\/60 {
+  background-color: rgba(20, 43, 20, 0.6) !important;
+}
+
+/* Terminal Borders */
+[data-theme="terminal"] .border-\[\#EAE3DA\],
+[data-theme="terminal"] .border-\[\#E5DEC7\],
+[data-theme="terminal"] .border-\[\#E0D7CC\],
+[data-theme="terminal"] .border-\[\#DDD5C8\],
+[data-theme="terminal"] .border-\[\#DDD4C5\],
+[data-theme="terminal"] .border-\[\#CCC2B2\] {
+  border-color: #1A3D1A !important;
+}
+
+/* Terminal Text */
+[data-theme="terminal"] .text-\[\#181B20\],
+[data-theme="terminal"] .text-\[\#1F2228\],
+[data-theme="terminal"] .text-\[\#111317\],
+[data-theme="terminal"] .text-\[\#2D2A26\],
+[data-theme="terminal"] .text-\[\#24211D\],
+[data-theme="terminal"] .text-\[\#332E27\] {
+  color: #00FF66 !important;
+  text-shadow: 0 0 2px rgba(0, 255, 102, 0.4);
+}
+
+[data-theme="terminal"] .text-\[\#797167\],
+[data-theme="terminal"] .text-\[\#6E665A\],
+[data-theme="terminal"] .text-\[\#746C61\],
+[data-theme="terminal"] .text-\[\#746D62\],
+[data-theme="terminal"] .text-\[\#867E73\],
+[data-theme="terminal"] .text-\[\#8B8477\],
+[data-theme="terminal"] .text-\[\#7F776B\] {
+  color: #00BB44 !important;
+}
+
+[data-theme="terminal"] .text-\[\#554F46\],
+[data-theme="terminal"] .text-\[\#524B41\],
+[data-theme="terminal"] .text-\[\#443E35\] {
+  color: #00DD55 !important;
+}
+
+[data-theme="terminal"] .text-\[\#9C9488\] {
+  color: #007722 !important;
+}
+
+[data-theme="terminal"] input {
+  color: #00FF66 !important;
+}
+
+[data-theme="terminal"] input::placeholder {
+  color: #007722 !important;
+}
+
+/* ── Density Overrides ── */
+[data-density="compact"] .message-bubble {
+  margin-top: 0.15rem;
+  margin-bottom: 0.15rem;
+}
+[data-density="compact"] .chat-stream {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+/* ── shadcn/ui Keyframe Animations & Smooth Open/Close Transitions ── */
+@keyframes shadcn-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shadcn-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes shadcn-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes shadcn-zoom-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+}
+
+@keyframes shadcn-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shadcn-slide-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes shadcn-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shadcn-drawer-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes shadcn-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shadcn-pop-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+/* shadcn Utility classes */
+.shadcn-dialog-overlay {
+  animation: shadcn-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shadcn-dialog-overlay-closing {
+  animation: shadcn-fade-out 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+.shadcn-dialog-content {
+  animation: shadcn-zoom-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shadcn-dialog-content-closing {
+  animation: shadcn-zoom-out 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+.shadcn-slide-in {
+  animation: shadcn-slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shadcn-slide-closing {
+  animation: shadcn-slide-down 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+.shadcn-drawer-content {
+  animation: shadcn-drawer-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shadcn-drawer-content-closing {
+  animation: shadcn-drawer-out 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+.shadcn-pop-in {
+  animation: shadcn-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.shadcn-pop-closing {
+  animation: shadcn-pop-out 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+/* Micro-interaction & Hover helpers */
+.shadcn-btn {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+.shadcn-btn:hover {
+  filter: brightness(1.06);
+}
+.shadcn-btn:active {
+  transform: scale(0.96);
+}
+
+.shadcn-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.shadcn-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.2);
+}
+.shadcn-card:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.hover-glow {
+  transition: all 0.2s ease;
+}
+.hover-glow:hover {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-color: #3D4A5C;
+}
+
+.message-bubble {
+  animation: shadcn-slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.15s ease;
+}
+.message-bubble:hover {
+  transform: translateY(-0.5px);
 }

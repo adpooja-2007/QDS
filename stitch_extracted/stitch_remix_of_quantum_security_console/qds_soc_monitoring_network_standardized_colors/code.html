@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QDS SENTINEL - Network</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#45474c",
+                        "surface-tint": "#545f73",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "inverse-surface": "#303032",
+                        "on-primary-fixed": "#111c2d",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-surface": "#1b1b1d",
+                        "on-secondary-fixed-variant": "#004395",
+                        "terminal-bg": "#0F172A",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-stroke": "#E2E8F0",
+                        "on-secondary-container": "#fefcff",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#041528",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "tertiary-container": "#1a2a3e",
+                        "primary-container": "#1e293b",
+                        "primary-fixed-dim": "#bcc7de",
+                        "on-background": "#1b1b1d",
+                        "inverse-on-surface": "#f3f0f2",
+                        "surface-bright": "#fbf8fa",
+                        "surface-container-highest": "#e4e2e4",
+                        "surface": "#fbf8fa",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#bcc7de",
+                        "on-primary": "#ffffff",
+                        "data-success": "#065F46",
+                        "on-primary-container": "#8590a6",
+                        "outline": "#75777d",
+                        "primary-fixed": "#d8e3fb",
+                        "surface-container-low": "#f6f3f5",
+                        "tertiary-fixed": "#d3e4fe",
+                        "on-tertiary-container": "#8191a9",
+                        "secondary-container": "#2170e4",
+                        "data-warning": "#B45309",
+                        "primary": "#091426",
+                        "background": "#fbf8fa",
+                        "outline-variant": "#c5c6cd",
+                        "surface-variant": "#e4e2e4",
+                        "surface-container-high": "#eae7e9",
+                        "surface-dim": "#dcd9db",
+                        "secondary": "#0058be",
+                        "surface-container": "#f0edef",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "data-critical": "#B91C1C",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-secondary-fixed": "#001a42"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "space-sm": "8px",
+                        "space-xs": "4px",
+                        "space-md": "16px",
+                        "gutter": "16px",
+                        "space-xl": "48px",
+                        "drawer-width": "400px",
+                        "unit": "4px",
+                        "sidebar-width": "260px",
+                        "space-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-mono": ["IBM Plex Mono"],
+                        "data-mono": ["IBM Plex Mono"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "label-mono": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "data-mono": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #fbf8fa; }
+        .grid-bg {
+            background-size: 24px 24px;
+            background-image: 
+                linear-gradient(to right, #E2E8F0 1px, transparent 1px),
+                linear-gradient(to bottom, #E2E8F0 1px, transparent 1px);
+            background-position: center;
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface bg-background antialiased overflow-hidden selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-surface dark:bg-surface border-b border-surface-stroke dark:border-on-surface-variant">
+<div class="flex items-center gap-space-md">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed tracking-tight">QDS SENTINEL</span>
+<div class="h-4 w-px bg-surface-stroke mx-space-xs hidden md:block"></div>
+<span class="font-label-mono text-label-mono text-on-surface-variant hidden md:block uppercase">Network Topology Active</span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="relative hidden md:flex items-center">
+<input class="bg-surface-container-low border border-surface-stroke rounded px-space-md py-space-xs font-data-mono text-data-mono text-on-surface focus:outline-none focus:border-secondary w-64" placeholder="Search nodes..." type="text"/>
+<span class="material-symbols-outlined absolute right-space-sm text-on-surface-variant text-[18px]">search</span>
+</div>
+<div class="flex gap-space-xs">
+<button class="p-space-xs rounded hover:bg-surface-container-low dark:hover:bg-primary-container transition-colors cursor-pointer active:opacity-80 text-on-surface-variant">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-space-xs rounded hover:bg-surface-container-low dark:hover:bg-primary-container transition-colors cursor-pointer active:opacity-80 text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full border border-surface-stroke bg-surface-container-high overflow-hidden ml-space-xs">
+<img alt="Security Analyst Avatar" class="w-full h-full object-cover" data-alt="A macro photograph of a polished metallic security badge or token, highly detailed, sharp focus, clean corporate aesthetic, cold blue and silver tones, professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvI39SfHuerCKWpRFVHuqRIGz5TSYWCidinVsWjq9OFxO2bYaYjW0R4eV1JZDqQRcoU5mBXt2opyfFY4awK-5KVkQmtfaPc_Q0AjGN_kX75yQ4v6tRxhnRAjM4xeyOXXeRmJxW3nzassaEysG85Mr-4hvenDg2JIfQ7u08nWgBw-j-KcEF-Tct-7GfrAP9hKX5uOuJjDbZ3INLiMC_CUOqj_t0d69ea0LNT7NO3XugXQ6MMnLMXyvX"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-sidebar-width flex flex-col py-space-md bg-surface dark:bg-surface border-r border-surface-stroke dark:border-on-surface-variant hidden md:flex z-40">
+<div class="px-space-md mb-space-lg">
+<div class="flex items-center gap-space-sm mb-space-sm">
+<div class="w-2 h-2 rounded-full bg-data-success"></div>
+<h2 class="font-label-mono text-label-mono text-primary dark:text-primary-fixed uppercase tracking-wider">SYSTEM SECURE</h2>
+</div>
+<p class="font-label-mono text-label-mono text-on-surface-variant uppercase">V.2.4.0-STABLE</p>
+</div>
+<div class="flex-1 overflow-y-auto px-space-sm flex flex-col gap-space-xs">
+<!-- Tabs -->
+<a class="flex items-center gap-space-md px-space-sm py-space-sm rounded transition-all duration-150 ease-in-out text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-mono text-label-mono uppercase">Overview</span>
+</a>
+<a class="flex items-center gap-space-md px-space-sm py-space-sm rounded transition-all duration-150 ease-in-out text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container" href="#">
+<span class="material-symbols-outlined">security</span>
+<span class="font-label-mono text-label-mono uppercase">Threats</span>
+</a>
+<a class="flex items-center gap-space-md px-space-sm py-space-sm rounded transition-all duration-150 ease-in-out text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-label-mono text-label-mono uppercase">Incidents</span>
+</a>
+<a class="flex items-center gap-space-md px-space-sm py-space-sm rounded transition-all duration-150 ease-in-out text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container" href="#">
+<span class="material-symbols-outlined">terminal</span>
+<span class="font-label-mono text-label-mono uppercase">Sessions</span>
+</a>
+<a class="flex items-center gap-space-md px-space-sm py-space-sm rounded transition-all duration-150 ease-in-out border-l-2 border-secondary text-secondary bg-surface-container-low dark:bg-primary-container font-bold" href="#">
+<span class="material-symbols-outlined">lan</span>
+<span class="font-label-mono text-label-mono uppercase">Network</span>
+</a>
+</div>
+<div class="px-space-md mt-auto mb-space-md">
+<button class="w-full bg-primary-container text-on-primary py-space-sm rounded font-label-mono text-label-mono uppercase hover:bg-tertiary-container transition-colors">
+                DEPLOY COUNTERMEASURE
+            </button>
+</div>
+<div class="px-space-sm flex flex-col gap-space-xs border-t border-surface-stroke pt-space-md">
+<a class="flex items-center gap-space-md px-space-sm py-space-sm rounded transition-all duration-150 ease-in-out text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container" href="#">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span class="font-label-mono text-label-mono uppercase">Audit Logs</span>
+</a>
+<a class="flex items-center gap-space-md px-space-sm py-space-sm rounded transition-all duration-150 ease-in-out text-on-surface-variant dark:text-on-surface-variant opacity-70 hover:bg-surface-container-low dark:hover:bg-primary-container" href="#">
+<span class="material-symbols-outlined text-[18px]">description</span>
+<span class="font-label-mono text-label-mono uppercase">Documentation</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="md:ml-sidebar-width pt-16 h-screen flex flex-col lg:flex-row relative">
+<!-- Topology Canvas -->
+<div class="flex-1 relative bg-surface-container-lowest grid-bg overflow-hidden flex items-center justify-center border-r border-surface-stroke">
+<div class="absolute top-space-md left-space-md z-10">
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight mb-space-xs">NETWORK TOPOLOGY</h1>
+<div class="flex gap-space-md items-center">
+<div class="flex items-center gap-space-xs"><div class="w-2 h-2 rounded-full bg-data-success"></div><span class="font-label-mono text-label-mono text-on-surface-variant">ACTIVE</span></div>
+<div class="flex items-center gap-space-xs"><div class="w-2 h-2 rounded-full bg-data-warning"></div><span class="font-label-mono text-label-mono text-on-surface-variant">DEGRADED</span></div>
+<div class="flex items-center gap-space-xs"><div class="w-2 h-2 rounded-full bg-data-critical"></div><span class="font-label-mono text-label-mono text-on-surface-variant">OFFLINE</span></div>
+</div>
+</div>
+<!-- Nodes & Links (Conceptual Layout) -->
+<div class="relative w-full max-w-[800px] h-[600px]">
+<!-- Link: Alice to Arbitrator -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 0;">
+<line stroke="#065F46" stroke-dasharray="4" stroke-width="2" x1="200" x2="400" y1="300" y2="150"></line>
+<!-- Link Stats -->
+<g transform="translate(280, 210)">
+<rect fill="#fbf8fa" height="24" rx="2" stroke="#E2E8F0" stroke-width="1" width="60" x="-30" y="-12"></rect>
+<text fill="#45474c" font-family="'IBM Plex Mono', monospace" font-size="10" font-weight="500" text-anchor="middle" x="0" y="4">12ms | 0%</text>
+</g>
+<!-- Link: Bob to Arbitrator -->
+<line stroke="#B45309" stroke-width="2" x1="600" x2="400" y1="300" y2="150"></line>
+<g transform="translate(520, 210)">
+<rect fill="#fbf8fa" height="24" rx="2" stroke="#E2E8F0" stroke-width="1" width="60" x="-30" y="-12"></rect>
+<text fill="#B45309" font-family="'IBM Plex Mono', monospace" font-size="10" font-weight="500" text-anchor="middle" x="0" y="4">85ms | 2%</text>
+</g>
+<!-- Link: Alice to Bob -->
+<line stroke="#E2E8F0" stroke-dasharray="2" stroke-width="1" x1="200" x2="600" y1="300" y2="300"></line>
+</svg>
+<!-- Node: Alice -->
+<div class="absolute w-24 h-24 rounded-full border border-secondary bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer hover:border-2" style="left: 200px; top: 300px; z-index: 10;">
+<span class="material-symbols-outlined text-secondary mb-1">memory</span>
+<span class="font-label-mono text-label-mono font-bold text-primary">QN-ALICE</span>
+<div class="w-2 h-2 rounded-full bg-data-success absolute top-2 right-2 border border-white"></div>
+</div>
+<!-- Node: Bob -->
+<div class="absolute w-24 h-24 rounded-full border border-surface-stroke bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer hover:border-secondary" style="left: 600px; top: 300px; z-index: 10;">
+<span class="material-symbols-outlined text-on-surface-variant mb-1">memory</span>
+<span class="font-label-mono text-label-mono font-bold text-primary">QN-BOB</span>
+<div class="w-2 h-2 rounded-full bg-data-warning absolute top-2 right-2 border border-white"></div>
+</div>
+<!-- Node: Arbitrator -->
+<div class="absolute w-32 h-32 rounded-full border-2 border-primary bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer hover:bg-surface-container-low" style="left: 400px; top: 150px; z-index: 10;">
+<span class="material-symbols-outlined text-primary text-[32px] mb-2">hub</span>
+<span class="font-label-mono text-label-mono font-bold text-primary">ARB-CORE</span>
+<div class="w-3 h-3 rounded-full bg-data-success absolute top-3 right-3 border-2 border-white"></div>
+</div>
+</div>
+<!-- Controls bottom right -->
+<div class="absolute bottom-space-md right-space-md flex flex-col gap-space-xs bg-surface border border-surface-stroke rounded p-space-xs shadow-sm">
+<button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-low rounded text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+<div class="w-6 h-px bg-surface-stroke mx-auto"></div>
+<button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-low rounded text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+</div>
+</div>
+<!-- Node Inventory Panel -->
+<aside class="w-full lg:w-drawer-width bg-surface border-l border-surface-stroke flex flex-col h-full overflow-y-auto">
+<div class="p-space-md border-b border-surface-stroke sticky top-0 bg-surface z-20 flex justify-between items-center">
+<h2 class="font-label-mono text-label-mono uppercase font-bold text-primary tracking-wider">Node Inventory</h2>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer text-[18px]">filter_list</span>
+</div>
+<div class="p-space-md flex flex-col gap-space-md">
+<!-- Selected Node Detail Card -->
+<div class="border border-secondary rounded overflow-hidden">
+<div class="bg-secondary-container bg-opacity-10 px-space-md py-space-sm border-b border-secondary flex justify-between items-center">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]">memory</span>
+<h3 class="font-label-mono text-label-mono font-bold text-secondary">QN-ALICE</h3>
+</div>
+<div class="px-2 py-1 rounded bg-data-success bg-opacity-20 border border-data-success font-label-mono text-[9px] text-data-success font-bold uppercase">Online</div>
+</div>
+<div class="p-space-md">
+<table class="w-full text-left font-data-mono text-data-mono">
+<tbody>
+<tr class="border-b border-surface-stroke">
+<td class="py-space-xs text-on-surface-variant w-1/2">Uptime</td>
+<td class="py-space-xs text-right text-primary font-medium">99.998%</td>
+</tr>
+<tr class="border-b border-surface-stroke">
+<td class="py-space-xs text-on-surface-variant">Hardware</td>
+<td class="py-space-xs text-right text-primary font-medium">Q-PROC-v4</td>
+</tr>
+<tr class="border-b border-surface-stroke">
+<td class="py-space-xs text-on-surface-variant">Protocol Support</td>
+<td class="py-space-xs text-right text-primary font-medium">BB84, E91</td>
+</tr>
+<tr>
+<td class="py-space-xs text-on-surface-variant">Key Gen Rate</td>
+<td class="py-space-xs text-right text-primary font-medium">1.2 kbps</td>
+</tr>
+</tbody>
+</table>
+<div class="mt-space-md flex gap-space-sm">
+<button class="flex-1 bg-surface-container-low border border-surface-stroke py-space-xs rounded font-label-mono text-label-mono text-primary hover:border-primary transition-colors text-center">PING</button>
+<button class="flex-1 bg-surface-container-low border border-surface-stroke py-space-xs rounded font-label-mono text-label-mono text-primary hover:border-primary transition-colors text-center">REBOOT</button>
+</div>
+</div>
+</div>
+<!-- Other Nodes List -->
+<div class="border border-surface-stroke rounded">
+<div class="px-space-md py-space-sm border-b border-surface-stroke bg-surface-container-low">
+<h4 class="font-label-mono text-label-mono uppercase text-on-surface-variant">Connected Nodes (2)</h4>
+</div>
+<!-- Node List Item -->
+<div class="p-space-md border-b border-surface-stroke hover:bg-surface-container-lowest cursor-pointer transition-colors flex justify-between items-center group">
+<div class="flex items-center gap-space-sm">
+<div class="w-2 h-2 rounded-full bg-data-warning"></div>
+<div>
+<div class="font-label-mono text-label-mono font-bold text-primary group-hover:text-secondary">QN-BOB</div>
+<div class="font-data-mono text-[11px] text-on-surface-variant mt-1">Degraded Link</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-data-mono text-data-mono text-primary">85ms</div>
+<div class="font-label-mono text-[10px] text-data-warning mt-1">2% Loss</div>
+</div>
+</div>
+<!-- Node List Item -->
+<div class="p-space-md hover:bg-surface-container-lowest cursor-pointer transition-colors flex justify-between items-center group">
+<div class="flex items-center gap-space-sm">
+<div class="w-2 h-2 rounded-full bg-data-success"></div>
+<div>
+<div class="font-label-mono text-label-mono font-bold text-primary group-hover:text-secondary">ARB-CORE</div>
+<div class="font-data-mono text-[11px] text-on-surface-variant mt-1">Central Hub</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-data-mono text-data-mono text-primary">0ms</div>
+<div class="font-label-mono text-[10px] text-data-success mt-1">Local</div>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</main>
+</body></html>

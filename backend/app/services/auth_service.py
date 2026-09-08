@@ -5,10 +5,10 @@ Provides user management, session validation, and quantum chat storage.
 
 import hashlib
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
 
-from sqlalchemy import select, or_, and_, desc
+from sqlalchemy import select, or_, and_, desc, delete
 from app.core.database import get_session
 from app.models.db_models import UserModel, ChatMessageModel
 
@@ -67,7 +67,7 @@ DEFAULT_USERS = [
         "display_name": "Eve (MitM Simulator)",
         "role": "Intercept-Resend Attacker",
         "node_id": "#666999",
-        "avatar_text": "⚠",
+        "avatar_text": "EV",
         "avatar_bg": "bg-terracotta-700",
         "is_admin": False,
     },
@@ -98,8 +98,9 @@ class AuthService:
                     )
                     db.add(new_user)
                 else:
-                    # Update is_admin if needed
+                    # Update is_admin and avatar_text if needed
                     user.is_admin = u.get("is_admin", False)
+                    user.avatar_text = u.get("avatar_text", user.avatar_text)
             await db.commit()
             logger.info("Default user accounts verified/seeded.")
 
@@ -183,8 +184,17 @@ class AuthService:
         file_type: Optional[str] = None,
         file_size: Optional[int] = None,
         file_data: Optional[str] = None,
+        reply_to_id: Optional[int] = None,
+        reply_preview: Optional[str] = None,
+        ephemeral_ttl: Optional[int] = None,
+        is_audio: bool = False,
     ) -> dict:
         async with get_session() as db:
+            now = datetime.now(timezone.utc)
+            expires_at = None
+            if ephemeral_ttl and ephemeral_ttl > 0:
+                expires_at = now + timedelta(seconds=int(ephemeral_ttl))
+
             msg = ChatMessageModel(
                 sender=sender.strip().lower(),
                 recipient=recipient.strip().lower(),
@@ -200,7 +210,12 @@ class AuthService:
                 file_type=file_type,
                 file_size=file_size,
                 file_data=file_data,
-                timestamp=datetime.now(timezone.utc),
+                reply_to_id=reply_to_id,
+                reply_preview=reply_preview,
+                ephemeral_ttl=ephemeral_ttl if ephemeral_ttl and ephemeral_ttl > 0 else None,
+                expires_at=expires_at,
+                is_audio=is_audio,
+                timestamp=now,
             )
             db.add(msg)
             await db.commit()
@@ -210,13 +225,30 @@ class AuthService:
     async def get_messages(self, user1: str, user2: str, limit: int = 100, mark_read: bool = True) -> List[dict]:
         u1 = user1.strip().lower()
         u2 = user2.strip().lower()
+        now = datetime.now(timezone.utc)
         async with get_session() as db:
+            # Purge expired ephemeral messages first
+            purge_stmt = delete(ChatMessageModel).where(
+                and_(
+                    ChatMessageModel.expires_at != None,
+                    ChatMessageModel.expires_at <= now,
+                )
+            )
+            await db.execute(purge_stmt)
+            await db.commit()
+
             stmt = (
                 select(ChatMessageModel)
                 .where(
-                    or_(
-                        and_(ChatMessageModel.sender == u1, ChatMessageModel.recipient == u2),
-                        and_(ChatMessageModel.sender == u2, ChatMessageModel.recipient == u1),
+                    and_(
+                        or_(
+                            and_(ChatMessageModel.sender == u1, ChatMessageModel.recipient == u2),
+                            and_(ChatMessageModel.sender == u2, ChatMessageModel.recipient == u1),
+                        ),
+                        or_(
+                            ChatMessageModel.expires_at == None,
+                            ChatMessageModel.expires_at > now,
+                        ),
                     )
                 )
                 .order_by(ChatMessageModel.timestamp.desc())
@@ -248,6 +280,205 @@ class AuthService:
             for s in senders:
                 counts[s] = counts.get(s, 0) + 1
             return counts
+
+    async def get_conversations_summary(self, username: str) -> dict:
+        """Get summary of all conversations for a user including latest messages and unread counts in a single query."""
+        u = username.strip().lower()
+        now = datetime.now(timezone.utc)
+        async with get_session() as db:
+            # 1. Fetch unread counts
+            unread_stmt = (
+                select(ChatMessageModel.sender)
+                .where(and_(ChatMessageModel.recipient == u, ChatMessageModel.is_read == False))
+            )
+            unread_res = await db.execute(unread_stmt)
+            senders = unread_res.scalars().all()
+            unread_map: Dict[str, int] = {}
+            for s in senders:
+                unread_map[s] = unread_map.get(s, 0) + 1
+
+            # 2. Fetch all non-expired messages involving user ordered by timestamp desc
+            msgs_stmt = (
+                select(ChatMessageModel)
+                .where(
+                    and_(
+                        or_(ChatMessageModel.sender == u, ChatMessageModel.recipient == u),
+                        or_(ChatMessageModel.expires_at == None, ChatMessageModel.expires_at > now),
+                    )
+                )
+                .order_by(ChatMessageModel.timestamp.desc())
+            )
+            msgs_res = await db.execute(msgs_stmt)
+            all_msgs = msgs_res.scalars().all()
+
+            latest_map: Dict[str, dict] = {}
+            for m in all_msgs:
+                other = m.recipient if m.sender == u else m.sender
+                if other not in latest_map:
+                    latest_map[other] = m.to_dict()
+
+            return {
+                "latest_messages": latest_map,
+                "unread_counts": unread_map,
+                "total_unread": sum(unread_map.values()),
+            }
+
+    async def mark_messages_read(self, recipient: str, sender: str) -> int:
+        """Explicitly mark all unread messages from sender to recipient as read."""
+        r = recipient.strip().lower()
+        s = sender.strip().lower()
+        async with get_session() as db:
+            stmt = (
+                select(ChatMessageModel)
+                .where(
+                    and_(
+                        ChatMessageModel.recipient == r,
+                        ChatMessageModel.sender == s,
+                        ChatMessageModel.is_read == False,
+                    )
+                )
+            )
+            res = await db.execute(stmt)
+            unreads = res.scalars().all()
+            count = 0
+            for m in unreads:
+                m.is_read = True
+                count += 1
+            if count > 0:
+                await db.commit()
+            return count
+
+    async def search_messages(self, username: str, query: str, limit: int = 50) -> List[dict]:
+        """Search all messages involving the user that match the query text or file_name."""
+        u = username.strip().lower()
+        q = query.strip()
+        if not q or not u:
+            return []
+        
+        async with get_session() as db:
+            pattern = f"%{q}%"
+            stmt = (
+                select(ChatMessageModel)
+                .where(
+                    and_(
+                        or_(ChatMessageModel.sender == u, ChatMessageModel.recipient == u),
+                        or_(
+                            ChatMessageModel.text.ilike(pattern),
+                            ChatMessageModel.file_name.ilike(pattern),
+                            ChatMessageModel.session_id.ilike(pattern),
+                        )
+                    )
+                )
+                .order_by(ChatMessageModel.timestamp.desc())
+                .limit(limit)
+            )
+            res = await db.execute(stmt)
+            messages = res.scalars().all()
+            return [m.to_dict() for m in messages]
+
+    async def toggle_pin_message(self, message_id: int, is_pinned: bool) -> Optional[dict]:
+        """Pin or unpin a chat message."""
+        async with get_session() as db:
+            stmt = select(ChatMessageModel).where(ChatMessageModel.id == message_id)
+            res = await db.execute(stmt)
+            msg = res.scalar_one_or_none()
+            if not msg:
+                return None
+            msg.is_pinned = is_pinned
+            await db.commit()
+            await db.refresh(msg)
+            return msg.to_dict()
+
+    async def toggle_star_message(self, message_id: int, is_starred: bool) -> Optional[dict]:
+        """Star or unstar a quantum proof / chat message."""
+        async with get_session() as db:
+            stmt = select(ChatMessageModel).where(ChatMessageModel.id == message_id)
+            res = await db.execute(stmt)
+            msg = res.scalar_one_or_none()
+            if not msg:
+                return None
+            msg.is_starred = is_starred
+            await db.commit()
+            await db.refresh(msg)
+            return msg.to_dict()
+
+    async def delete_message(self, message_id: int) -> bool:
+        """Delete a single message by ID (used for manual retraction or self-destruct)."""
+        async with get_session() as db:
+            stmt = delete(ChatMessageModel).where(ChatMessageModel.id == message_id)
+            res = await db.execute(stmt)
+            await db.commit()
+            return res.rowcount > 0
+
+    async def get_pinned_starred_messages(self, username: str, contact_username: Optional[str] = None) -> Dict[str, List[dict]]:
+        """Retrieve all pinned and starred messages for user."""
+        u = username.strip().lower()
+        async with get_session() as db:
+            conditions = [or_(ChatMessageModel.sender == u, ChatMessageModel.recipient == u)]
+            if contact_username:
+                c = contact_username.strip().lower()
+                conditions.append(or_(ChatMessageModel.sender == c, ChatMessageModel.recipient == c))
+
+            stmt = (
+                select(ChatMessageModel)
+                .where(
+                    and_(
+                        *conditions,
+                        or_(ChatMessageModel.is_pinned == True, ChatMessageModel.is_starred == True),
+                    )
+                )
+                .order_by(ChatMessageModel.timestamp.desc())
+            )
+            res = await db.execute(stmt)
+            messages = res.scalars().all()
+            
+            pinned = [m.to_dict() for m in messages if m.is_pinned]
+            starred = [m.to_dict() for m in messages if m.is_starred]
+            return {
+                "pinned": pinned,
+                "starred": starred,
+                "total": len(messages)
+            }
+
+    async def export_chat_transcript(self, user1: str, user2: str) -> dict:
+        """Export full cryptographically signed transcript between two nodes."""
+        u1 = user1.strip().lower()
+        u2 = user2.strip().lower()
+        async with get_session() as db:
+            stmt = (
+                select(ChatMessageModel)
+                .where(
+                    or_(
+                        and_(ChatMessageModel.sender == u1, ChatMessageModel.recipient == u2),
+                        and_(ChatMessageModel.sender == u2, ChatMessageModel.recipient == u1),
+                    )
+                )
+                .order_by(ChatMessageModel.timestamp.asc())
+            )
+            res = await db.execute(stmt)
+            raw_messages = res.scalars().all()
+
+            msg_list = [m.to_dict() for m in raw_messages]
+            
+            # Compute session cryptographic digest
+            transcript_payload = "".join(
+                f"{m['id']}:{m['sender']}:{m['recipient']}:{m['text']}:{m['session_id']}:{m['qds_status']}"
+                for m in msg_list
+            )
+            session_hash = hashlib.sha256(transcript_payload.encode("utf-8")).hexdigest()
+            quantum_cert = f"QDS-CERT-{session_hash[:16].upper()}-CHSH-2.82-BELL"
+
+            return {
+                "export_id": f"EXP-{int(datetime.now(timezone.utc).timestamp())}",
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "node_a": u1,
+                "node_b": u2,
+                "messages_count": len(msg_list),
+                "cryptographic_integrity_hash": session_hash,
+                "quantum_signature_certificate": quantum_cert,
+                "verification_protocol": "Joint Bell State Measurement (E91/BBM92)",
+                "messages": msg_list,
+            }
 
     async def get_all_messages(self, limit: int = 200) -> List[dict]:
         """Retrieve all messages across all users for auditing."""

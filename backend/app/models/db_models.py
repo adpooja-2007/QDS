@@ -207,6 +207,13 @@ class ChatMessageModel(Base):
     file_size: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     file_data: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
+    reply_to_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    reply_preview: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_starred: Mapped[bool] = mapped_column(Boolean, default=False)
+    ephemeral_ttl: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_audio: Mapped[bool] = mapped_column(Boolean, default=False)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     def to_dict(self) -> dict:
@@ -227,6 +234,13 @@ class ChatMessageModel(Base):
             "file_size": self.file_size,
             "file_data": self.file_data,
             "is_read": bool(self.is_read),
+            "reply_to_id": self.reply_to_id,
+            "reply_preview": self.reply_preview,
+            "is_pinned": bool(self.is_pinned),
+            "is_starred": bool(self.is_starred),
+            "ephemeral_ttl": self.ephemeral_ttl,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "is_audio": bool(self.is_audio),
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
         }
 

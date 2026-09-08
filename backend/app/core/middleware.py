@@ -177,4 +177,95 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
             return real_ip.strip()
         if request.client:
             return request.client.host
-        return "unknown"
+        return "127.0.0.1"
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware that injects industry-standard HTTP security headers onto every response
+    to block browser-based attacks:
+    - Content-Security-Policy (XSS, code injection, unauthorized scripts)
+    - X-Frame-Options: DENY (Clickjacking & UI Redressing)
+    - X-Content-Type-Options: nosniff (MIME Sniffing drive-by execution)
+    - X-XSS-Protection: 1; mode=block (Reflected XSS filter)
+    - Referrer-Policy: strict-origin-when-cross-origin (Information leakage)
+    - Permissions-Policy: camera=(), microphone=(), etc. (Unauthorized device exploitation)
+    - Cross-Origin-Opener-Policy: same-origin (Spectre / Window Hijacking)
+    """
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response: Response = await call_next(request)
+
+        # Instate browser attack mitigations
+        response.headers["Content-Security-Policy"] = settings.CSP_HEADER
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=(), payment=(), usb=(), "
+            "accelerometer=(), gyroscope=(), magnetometer=()"
+        )
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+
+        return response
+
+
+# ── Sliding Window Rate Limiting Store ───────────────────────────────
+_rate_limit_records: dict[str, list[float]] = {}
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """
+    In-memory rate limiting middleware to mitigate DoS, credential stuffing,
+    and automated message injection attacks against quantum API endpoints.
+    """
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        client_ip = TelemetryMiddleware._extract_client_ip(request)
+        now = time.time()
+        window_size = 60.0  # 1 minute sliding window
+
+        # Determine rate limit based on endpoint sensitivity
+        path = request.url.path
+        is_sensitive = any(
+            p in path for p in ("/auth/login", "/auth/register", "/chat/send")
+        )
+        max_requests = (
+            settings.AUTH_RATE_LIMIT_PER_MINUTE if is_sensitive
+            else settings.RATE_LIMIT_REQUESTS_PER_MINUTE
+        )
+
+        key = f"{client_ip}:{path if is_sensitive else 'global'}"
+
+        if key not in _rate_limit_records:
+            _rate_limit_records[key] = []
+
+        # Clean timestamps older than window_size
+        timestamps = [t for t in _rate_limit_records[key] if now - t < window_size]
+        _rate_limit_records[key] = timestamps
+
+        if len(timestamps) >= max_requests:
+            logger.warning(
+                "Rate limit exceeded for %s on %s (%d/%d req/min)",
+                client_ip, path, len(timestamps), max_requests
+            )
+            from starlette.responses import JSONResponse
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "success": False,
+                    "detail": "Too many requests. Rate limit exceeded. Please wait a minute.",
+                    "client_ip": client_ip,
+                },
+                headers={
+                    "Retry-After": "60",
+                    "X-RateLimit-Limit": str(max_requests),
+                    "X-RateLimit-Remaining": "0",
+                },
+            )
+
+        _rate_limit_records[key].append(now)
+        response = await call_next(request)
+        response.headers["X-RateLimit-Limit"] = str(max_requests)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, max_requests - len(timestamps) - 1))
+        return response
