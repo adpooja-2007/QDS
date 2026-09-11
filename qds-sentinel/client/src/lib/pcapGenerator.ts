@@ -27,15 +27,23 @@ function macToBytes(macStr: string): number[] {
   return macStr.split(':').map((b) => parseInt(b, 16) & 0xff);
 }
 
+function parseNumber(val: number | string | undefined, defaultVal: number): number {
+  if (val === undefined || val === null) return defaultVal;
+  if (typeof val === 'number') return isNaN(val) ? defaultVal : val;
+  const cleaned = String(val).replace(/%/g, '').trim();
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? defaultVal : parsed;
+}
+
 export interface ThreatPcapData {
   id?: string;
   severity?: string;
   type?: string;
   origin?: string;
   time?: string;
-  baselineQber?: number;
-  measuredQber?: number;
-  chshScore?: number;
+  baselineQber?: number | string;
+  measuredQber?: number | string;
+  chshScore?: number | string;
   isCritical?: boolean;
   pqcDefense?: string;
 }
@@ -44,9 +52,11 @@ export interface ThreatPcapData {
  * Builds a standard binary .pcap file representing a multi-packet quantum telemetry capture.
  */
 export function generateThreatPcap(threat: ThreatPcapData): Uint8Array {
-  const isCritical = threat.isCritical || threat.severity === 'CRITICAL' || (threat.measuredQber || 0) > 0.05;
-  const qberPct = ((threat.measuredQber || 0.142) * 100).toFixed(2);
-  const chsh = (threat.chshScore || 1.86).toFixed(3);
+  const qberRaw = parseNumber(threat.measuredQber, 14.2);
+  const qberPct = qberRaw > 1 ? qberRaw.toFixed(2) : (qberRaw * 100).toFixed(2);
+  const isCritical = threat.isCritical || threat.severity === 'CRITICAL' || qberRaw > 5.5 || (qberRaw <= 1 && qberRaw > 0.055);
+  const chshNum = parseNumber(threat.chshScore, isCritical ? 1.76 : 2.76);
+  const chsh = chshNum.toFixed(2);
   const threatType = threat.type || 'Intercept-resend attack';
   const threatId = threat.id || 'THR-104';
   const originNode = threat.origin || 'EVE';
@@ -105,7 +115,7 @@ export function generateThreatPcap(threat: ThreatPcapData): Uint8Array {
         measured_qber: `${qberPct}%`,
         chsh_score: chsh,
         hoeffding_bound_breach: isCritical,
-        disturbance_status: 'COLLAPSED_ENTANGLEMENT'
+        disturbance_status: isCritical ? 'COLLAPSED_ENTANGLEMENT' : 'NOMINAL_MONITOR'
       })
     },
     // Packet 4: SOC Sentinel Threat Telemetry & PQC Quarantine Guard
@@ -221,15 +231,24 @@ export function generateThreatPcap(threat: ThreatPcapData): Uint8Array {
  * Initiates browser download of standard binary .pcap file
  */
 export function downloadThreatPcap(threat: ThreatPcapData) {
-  const pcapBytes = generateThreatPcap(threat);
-  const blob = new Blob([pcapBytes.buffer as ArrayBuffer], { type: 'application/vnd.tcpdump.pcap' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const idStr = (threat.id || 'THR-104').replace(/[^a-zA-Z0-9_-]/g, '_');
-  a.download = `threat_capture_${idStr}_${Date.now()}.pcap`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  try {
+    const pcapBytes = generateThreatPcap(threat);
+    const blob = new Blob([pcapBytes], { type: 'application/vnd.tcpdump.pcap' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const idStr = (threat.id || 'THR-104').replace(/[^a-zA-Z0-9_-]/g, '_');
+    a.download = `threat_capture_${idStr}_${Date.now()}.pcap`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (document.body.contains(a)) {
+        document.body.removeChild(a);
+      }
+      URL.revokeObjectURL(url);
+    }, 200);
+  } catch (err) {
+    console.error('Failed to download PCAP:', err);
+    throw err;
+  }
 }

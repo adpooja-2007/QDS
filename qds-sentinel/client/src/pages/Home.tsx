@@ -1239,19 +1239,24 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
   }, [item, isCritical, isHigh]);
 
   const handleExportThreatPcap = () => {
-    downloadThreatPcap({
-      id: item?.id || "THR-104",
-      severity: item?.severity || "CRITICAL",
-      type: item?.type || "Intercept-resend",
-      origin: item?.origin || "EVE",
-      time: item?.time || "23:41:16",
-      baselineQber: baselineVal,
-      measuredQber: qberVal,
-      chshScore: chshVal,
-      isCritical: isCritical,
-      pqcDefense: isCritical ? "CRYSTALS-Dilithium3 / ML-DSA-65" : "None"
-    });
-    toast.success(`Exported Wireshark packet capture (.pcap) for ${item?.id || "threat"}`);
+    try {
+      downloadThreatPcap({
+        id: item?.id || "THR-104",
+        severity: item?.severity || "CRITICAL",
+        type: item?.type || "Intercept-resend",
+        origin: item?.origin || "EVE",
+        time: item?.time || "23:41:16",
+        baselineQber: item?.baseline || "1.9%",
+        measuredQber: item?.current || (item?.qber ? `${(item.qber * 100).toFixed(1)}%` : "14.2%"),
+        chshScore: item?.chsh || (isCritical ? 1.76 : isHigh ? 1.95 : 2.45),
+        isCritical: isCritical,
+        pqcDefense: isCritical ? "CRYSTALS-Dilithium3 / ML-DSA-65" : "None"
+      });
+      toast.success(`Exported Wireshark packet capture (.pcap) for ${item?.id || "threat"}`);
+    } catch (e: any) {
+      console.error("PCAP export error:", e);
+      toast.error(`PCAP export failed: ${e?.message || "Unknown error"}`);
+    }
   };
 
   return (
