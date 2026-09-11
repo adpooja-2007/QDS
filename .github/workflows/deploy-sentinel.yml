@@ -29,24 +29,26 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10.4.1
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: 'qds-sentinel/pnpm-lock.yaml'
+
       - name: Install Dependencies
         working-directory: ./qds-sentinel
         run: pnpm install --frozen-lockfile=false
 
-      - name: Build Application
+      - name: Build Static Site
         working-directory: ./qds-sentinel
         run: |
-          pnpm run build
+          pnpm exec vite build
           cp dist/public/index.html dist/public/404.html
 
       - name: Setup Pages
