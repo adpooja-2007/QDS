@@ -1168,6 +1168,7 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
 }
 
 function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => void }) {
+  const { threats, activeAttack, eveActive } = useSentinel();
   const [filter, setFilter] = useState(() => {
     try {
       const saved = localStorage.getItem("qds_threats_filter");
