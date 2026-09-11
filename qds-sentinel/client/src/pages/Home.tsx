@@ -54,9 +54,9 @@ import { apiClient } from "@/lib/apiClient";
 import { generateAiRemediation, AiRemediationResponse } from "@/lib/groqAiService";
 import { SkeletonKpiGrid, SkeletonTableRows, SkeletonChartBox } from "@/components/ui/skeleton";
 
-const MARK = "/manus-storage/qds-sentinel-mark_81058a94.png";
-const HERO = "/manus-storage/qds-sentinel-hero_77975680.png";
-const NETWORK = "/manus-storage/qds-sentinel-network_2c79b0d7.png";
+import MARK from "@/assets/qds-sentinel-mark_81058a94.png";
+import HERO from "@/assets/qds-sentinel-hero_77975680.png";
+import NETWORK from "@/assets/qds-sentinel-network_2c79b0d7.png";
 
 const navItems = [
   { href: "/home", label: "Home portal", code: "00", icon: HomeIcon },
