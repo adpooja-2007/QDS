@@ -77,6 +77,7 @@ export interface QuantumNotification {
   message: string;
   timestamp: string;
   timeAgo?: string;
+  createdAt?: number;
   severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'SUCCESS';
   category: 'security' | 'telemetry' | 'protocol' | 'attestation' | 'system';
   read: boolean;
@@ -207,10 +208,32 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
 
+  const computeTimeAgo = (createdAt?: number, fallbackStr?: string): string => {
+    if (!createdAt) return fallbackStr || 'Just now';
+    const elapsed = Math.max(0, Date.now() - createdAt);
+    const seconds = Math.floor(elapsed / 1000);
+    if (seconds < 15) return 'Just now';
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
   const [notifications, setNotifications] = useState<QuantumNotification[]>(() => {
     try {
       const stored = localStorage.getItem('qds_notifications');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((n: QuantumNotification) => ({
+            ...n,
+            timeAgo: computeTimeAgo(n.createdAt, n.timeAgo)
+          }));
+        }
+      }
     } catch {}
     const now = Date.now();
     const formatRelTime = (offsetMs: number) => {
@@ -225,6 +248,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         message: 'Arbitrator SPDC crystal emitting correlated photon pairs at λ=1550nm. Bell non-locality calibrated at S = 2.78 ≥ 2.00.',
         timestamp: formatRelTime(45000),
         timeAgo: '1m ago',
+        createdAt: now - 45000,
         severity: 'SUCCESS',
         category: 'protocol',
         sourceNode: 'ARB-CORE',
@@ -240,6 +264,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         message: 'Alice completed Joint Bell State Measurement on payload hash. Feed-forward bits (b1, b2) synced with Bob Pauli corrections.',
         timestamp: formatRelTime(120000),
         timeAgo: '2m ago',
+        createdAt: now - 120000,
         severity: 'INFO',
         category: 'attestation',
         sourceNode: 'QN-ALICE',
@@ -255,6 +280,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         message: 'Quantum bit error rate strictly within Hoeffding bound τ = 5.0%. Eavesdropping detection certainty > 99.99999%.',
         timestamp: formatRelTime(340000),
         timeAgo: '6m ago',
+        createdAt: now - 340000,
         severity: 'INFO',
         category: 'telemetry',
         sourceNode: 'HOEFFDING-GATE',
@@ -270,6 +296,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         message: 'Privacy amplification distilled unforgeable 256-bit quantum one-time-pad signature token.',
         timestamp: formatRelTime(600000),
         timeAgo: '10m ago',
+        createdAt: now - 600000,
         severity: 'SUCCESS',
         category: 'attestation',
         sourceNode: 'PRIVACY_AMP',
@@ -280,6 +307,136 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     ];
   });
 
+  const broadcastNotifications = (next: QuantumNotification[]) => {
+    try {
+      localStorage.setItem('qds_notifications', JSON.stringify(next));
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('qds_notifications_bus');
+        bc.postMessage({ type: 'SYNC_NOTIFICATIONS', payload: next });
+        bc.close();
+      }
+    } catch {}
+  };
+
+  // Cross-tab real-time sync
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('qds_notifications_bus');
+        bc.onmessage = (event) => {
+          if (event.data && event.data.type === 'SYNC_NOTIFICATIONS' && Array.isArray(event.data.payload)) {
+            setNotifications(event.data.payload);
+          }
+        };
+      }
+    } catch {}
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'qds_notifications' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setNotifications(parsed);
+          }
+        } catch {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  // Live dynamic relative time ticker (updates "Just now", "25s ago", "2m ago" continuously)
+  useEffect(() => {
+    const ticker = setInterval(() => {
+      setNotifications((prev) =>
+        prev.map((n) => ({
+          ...n,
+          timeAgo: computeTimeAgo(n.createdAt, n.timeAgo)
+        }))
+      );
+    }, 5000);
+    return () => clearInterval(ticker);
+  }, []);
+
+  // Live background quantum event & telemetry stream
+  useEffect(() => {
+    const liveQuantumEvents = [
+      {
+        title: 'SPDC Entangled Pair Stream Calibrated',
+        message: 'Arbitrator continuous wave pump verified photon pair emission at 775nm -> 1550nm. Bell non-locality S = 2.79 ≥ 2.00.',
+        severity: 'SUCCESS' as const,
+        category: 'protocol' as const,
+        sourceNode: 'ARB-CORE',
+        qber: '1.8%',
+        chsh: '2.79',
+        actionLabel: 'View Protocol Visualizer',
+        actionRoute: '/demonstration'
+      },
+      {
+        title: 'Hoeffding Statistical Confidence Refreshed',
+        message: 'Quantum Bit Error Rate sampled over 10,000 pulses. Bound τ = 1.90% is strictly below 5.5% security gate cutoff.',
+        severity: 'INFO' as const,
+        category: 'telemetry' as const,
+        sourceNode: 'HOEFFDING-GATE',
+        qber: '1.9%',
+        chsh: '2.76',
+        actionLabel: 'Open SOC Telemetry',
+        actionRoute: '/monitoring'
+      },
+      {
+        title: 'Toeplitz OTP Hash Block Distilled',
+        message: 'Toeplitz matrix hashing completed privacy amplification. Unconditional 256-bit one-time pad key generated.',
+        severity: 'SUCCESS' as const,
+        category: 'attestation' as const,
+        sourceNode: 'PRIVACY_AMP',
+        actionLabel: 'Inspect Transfer Log',
+        actionRoute: '/transfer'
+      },
+      {
+        title: 'Pauli Frame Synchronization Heartbeat',
+        message: 'Feed-forward Pauli corrections σ_Z / σ_X aligned between Alice and Bob nodes with zero packet jitter.',
+        severity: 'INFO' as const,
+        category: 'protocol' as const,
+        sourceNode: 'QN-BOB',
+        qber: '1.9%',
+        chsh: '2.78',
+        actionLabel: 'View Topology',
+        actionRoute: '/demonstration'
+      }
+    ];
+
+    let pulseIndex = 0;
+    const streamTimer = setInterval(() => {
+      if (eveActive) {
+        addNotification({
+          title: 'LIVE ALERT: Active Interception Disturbance',
+          message: 'Continuous optical monitor detected photon splitting tap on fiber channel 01. QBER at 14.2%, Bell score collapsed to S=1.76.',
+          severity: 'CRITICAL',
+          category: 'security',
+          sourceNode: 'EVE-SENSOR',
+          qber: '14.2%',
+          chsh: '1.76',
+          actionLabel: 'Inspect in SOC Console',
+          actionRoute: '/monitoring'
+        });
+      } else {
+        const item = liveQuantumEvents[pulseIndex % liveQuantumEvents.length];
+        pulseIndex++;
+        addNotification({
+          ...item,
+          timestamp: new Date().toTimeString().split(' ')[0]
+        });
+      }
+    }, 28000);
+
+    return () => clearInterval(streamTimer);
+  }, [eveActive]);
+
   const unreadNotificationCount = useMemo(() => {
     return notifications.filter((n) => !n.read).length;
   }, [notifications]);
@@ -288,22 +445,23 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const closeNotificationCenter = () => setIsNotificationCenterOpen(false);
   const toggleNotificationCenter = () => setIsNotificationCenterOpen((prev) => !prev);
 
-  const addNotification = (notif: Omit<QuantumNotification, 'id' | 'timestamp' | 'read'> & { id?: string; timestamp?: string; read?: boolean }) => {
-    const newId = notif.id || `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const addNotification = (notif: Omit<QuantumNotification, 'id' | 'timestamp' | 'read'> & { id?: string; timestamp?: string; read?: boolean; createdAt?: number }) => {
+    const createdAt = notif.createdAt || Date.now();
+    const newId = notif.id || `notif-${createdAt}-${Math.floor(Math.random() * 1000)}`;
     const newTimestamp = notif.timestamp || new Date().toTimeString().split(' ')[0];
     const newNotif: QuantumNotification = {
       ...notif,
       id: newId,
       timestamp: newTimestamp,
-      timeAgo: 'Just now',
+      createdAt,
+      timeAgo: computeTimeAgo(createdAt),
       read: notif.read ?? false
     };
 
     setNotifications((prev) => {
+      if (prev.some((n) => n.id === newId)) return prev;
       const next = [newNotif, ...prev].slice(0, 50);
-      try {
-        localStorage.setItem('qds_notifications', JSON.stringify(next));
-      } catch {}
+      broadcastNotifications(next);
       return next;
     });
 
@@ -313,9 +471,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const markNotificationAsRead = (id: string) => {
     setNotifications((prev) => {
       const next = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
-      try {
-        localStorage.setItem('qds_notifications', JSON.stringify(next));
-      } catch {}
+      broadcastNotifications(next);
       return next;
     });
   };
@@ -323,9 +479,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const markAllNotificationsAsRead = () => {
     setNotifications((prev) => {
       const next = prev.map((n) => ({ ...n, read: true }));
-      try {
-        localStorage.setItem('qds_notifications', JSON.stringify(next));
-      } catch {}
+      broadcastNotifications(next);
       return next;
     });
     toast.success('All notifications marked as read');
@@ -334,18 +488,14 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const deleteNotification = (id: string) => {
     setNotifications((prev) => {
       const next = prev.filter((n) => n.id !== id);
-      try {
-        localStorage.setItem('qds_notifications', JSON.stringify(next));
-      } catch {}
+      broadcastNotifications(next);
       return next;
     });
   };
 
   const clearAllNotifications = () => {
     setNotifications([]);
-    try {
-      localStorage.removeItem('qds_notifications');
-    } catch {}
+    broadcastNotifications([]);
     toast.success('All notifications cleared');
   };
 
