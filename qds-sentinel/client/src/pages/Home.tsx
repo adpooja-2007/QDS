@@ -402,7 +402,16 @@ function MonitoringPage() {
   const { eveActive, toggleEve, qber, chsh, telemetryLogs, incidents, activeAttack } = useSentinel();
   const [tab, setTab] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get("section");
-    return ["overview", "threats", "incidents", "network", "pqc"].includes(requested ?? "") ? requested! : "overview";
+    if (["overview", "threats", "incidents", "network", "pqc"].includes(requested ?? "")) {
+      return requested!;
+    }
+    try {
+      const saved = localStorage.getItem("qds_active_monitor_tab");
+      if (["overview", "threats", "incidents", "network", "pqc"].includes(saved ?? "")) {
+        return saved!;
+      }
+    } catch { }
+    return "overview";
   });
   const threat = eveActive;
   const setThreat = toggleEve;
@@ -412,8 +421,31 @@ function MonitoringPage() {
   const [selectedIncident, setSelectedIncident] = useState<any>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [isolated, setIsolated] = useState<string[]>([]);
-  const selectTab = (nextTab: string) => { if (!["overview", "threats", "incidents", "network", "pqc"].includes(nextTab)) return; setTab(nextTab); const params = new URLSearchParams(window.location.search); params.set("section", nextTab); window.history.replaceState({}, "", window.location.pathname + "?" + params.toString()); };
-  useEffect(() => { const onTab = (event: Event) => selectTab((event as CustomEvent<string>).detail); const onPopState = () => { const requested = new URLSearchParams(window.location.search).get("section"); setTab(["overview", "threats", "incidents", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"); }; window.addEventListener("qds-monitor-tab", onTab); window.addEventListener("popstate", onPopState); return () => { window.removeEventListener("qds-monitor-tab", onTab); window.removeEventListener("popstate", onPopState); }; }, []);
+  const selectTab = (nextTab: string) => {
+    if (!["overview", "threats", "incidents", "network", "pqc"].includes(nextTab)) return;
+    setTab(nextTab);
+    try {
+      localStorage.setItem("qds_active_monitor_tab", nextTab);
+    } catch { }
+    const params = new URLSearchParams(window.location.search);
+    params.set("section", nextTab);
+    window.history.replaceState({}, "", window.location.pathname + "?" + params.toString());
+  };
+  useEffect(() => {
+    const onTab = (event: Event) => selectTab((event as CustomEvent<string>).detail);
+    const onPopState = () => {
+      const requested = new URLSearchParams(window.location.search).get("section");
+      if (requested && ["overview", "threats", "incidents", "network", "pqc"].includes(requested)) {
+        setTab(requested);
+      }
+    };
+    window.addEventListener("qds-monitor-tab", onTab);
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("qds-monitor-tab", onTab);
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, []);
   
   const rows = telemetryLogs.map((item) => ({
     ...item,
@@ -1136,9 +1168,36 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
 }
 
 function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => void }) {
-  const { threats, activeAttack, eveActive } = useSentinel();
-  const [filter, setFilter] = useState("ALL");
-  const [selected, setSelected] = useState(0);
+  const [filter, setFilter] = useState(() => {
+    try {
+      const saved = localStorage.getItem("qds_threats_filter");
+      if (saved) return saved;
+    } catch { }
+    return "ALL";
+  });
+  const [selected, setSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem("qds_threats_selected");
+      if (saved) return parseInt(saved, 10);
+    } catch { }
+    return 0;
+  });
+
+  const handleFilterChange = (nextFilter: string) => {
+    setFilter(nextFilter);
+    setSelected(0);
+    try {
+      localStorage.setItem("qds_threats_filter", nextFilter);
+      localStorage.setItem("qds_threats_selected", "0");
+    } catch { }
+  };
+
+  const handleSelectThreat = (idx: number) => {
+    setSelected(idx);
+    try {
+      localStorage.setItem("qds_threats_selected", String(idx));
+    } catch { }
+  };
 
   const visible = filter === "ALL" ? threats : threats.filter((item) => item.severity === filter);
   const item = visible[selected] ?? visible[0] ?? threats[0];
@@ -1201,7 +1260,7 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
           <h2>Threats</h2>
           <div className="threat-filter-tabs">
             {[["ALL", `ALL (${threats.length})`], ["CRITICAL", `CRITICAL (${threats.filter(t => t.severity === 'CRITICAL').length})`], ["HIGH", `HIGH (${threats.filter(t => t.severity === 'HIGH').length})`]].map(([key, label]) => (
-              <button key={key} className={cn("threat-filter-tab", filter === key && "threat-filter-tab-active")} onClick={() => { setFilter(key); setSelected(0); }}>{label}</button>
+              <button key={key} className={cn("threat-filter-tab", filter === key && "threat-filter-tab-active")} onClick={() => handleFilterChange(key)}>{label}</button>
             ))}
           </div>
           <span className="threats-v2-count">{threat || eveActive ? `Active Anomaly: ${activeAttack}` : `${threats.length} records in review`}</span>
@@ -1211,7 +1270,7 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
             <span>severity</span><span>origin node</span><span>anomaly type</span><span>time</span>
           </div>
           {visible.map((row, idx) => (
-            <button key={row.id} className={cn("threats-v2-row", selected === idx && "threats-v2-row-selected")} onClick={() => setSelected(idx)}>
+            <button key={row.id} className={cn("threats-v2-row", selected === idx && "threats-v2-row-selected")} onClick={() => handleSelectThreat(idx)}>
               <span className={cn("severity-cell", row.severity === "CRITICAL" ? "severity-critical" : row.severity === "HIGH" ? "severity-high" : "severity-medium")}>
                 <i />{row.severity}
               </span>
@@ -1226,7 +1285,7 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
       <aside className="threats-v2-inspector">
         <div className="inspector-head">
           <span className="eyebrow">Threat inspector · {item?.id || "THR-104"}</span>
-          <button className="icon-button" onClick={() => setSelected(0)} aria-label="Reset selection"><RotateCcw size={14} /></button>
+          <button className="icon-button" onClick={() => handleSelectThreat(0)} aria-label="Reset selection"><RotateCcw size={14} /></button>
         </div>
 
         <div className="threat-meta-head">

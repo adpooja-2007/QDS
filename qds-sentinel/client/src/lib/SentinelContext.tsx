@@ -107,11 +107,34 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   });
   const [activeSessionId, setActiveSessionId] = useState('QKD-260827-91F4');
-  const [qber, setQber] = useState(0.019);
-  const [chsh, setChsh] = useState(2.76);
-  const [pqcMode, setPqcMode] = useState(false);
+  const [qber, setQber] = useState<number>(() => {
+    try {
+      const val = localStorage.getItem('qds_qber');
+      if (val) return parseFloat(val);
+    } catch { }
+    return 0.019;
+  });
+  const [chsh, setChsh] = useState<number>(() => {
+    try {
+      const val = localStorage.getItem('qds_chsh');
+      if (val) return parseFloat(val);
+    } catch { }
+    return 2.76;
+  });
+  const [pqcMode, setPqcMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('qds_pqc_mode') === 'true';
+    } catch { }
+    return false;
+  });
   const [remediationReport, setRemediationReport] = useState<string | null>(null);
-  const [activeAttack, setActiveAttack] = useState('Clean signature');
+  const [activeAttack, setActiveAttack] = useState<string>(() => {
+    try {
+      const val = localStorage.getItem('qds_active_attack');
+      if (val) return val;
+    } catch { }
+    return 'Clean signature';
+  });
 
   const [telemetryLogs, setTelemetryLogs] = useState<TelemetryItem[]>(() => {
     try {
@@ -217,81 +240,114 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     toast.success("Telemetry logs cleared");
   };
 
-  const [incidents, setIncidents] = useState<IncidentItem[]>([
-    {
-      id: 'INC-9482-A',
-      title: 'Quantum correlation breach',
-      severity: 'HIGH',
-      status: 'INVESTIGATING',
-      assigned: 'A. Kovacs (L2)',
-      impact: 'HIGH',
-      qber: '7.42%',
-      chsh: '2.12',
-      timestamp: '10:58:02',
-      analyst: 'A. Kovacs',
-      detail: 'A QBER divergence on the authenticated channel is under active forensic review.',
-      events: [
-        ['10:58:02 UTC', 'Threat detected', 'QBER moved above the nominal confidence envelope (7.42% > 5.50%).'],
-        ['10:58:10 UTC', 'Threshold exceeded', 'Photon-pair records sealed after the Hoeffding confidence boundary was crossed.'],
-        ['10:59:01 UTC', 'Operator assignment', 'Incident assigned to the optical assurance queue.']
-      ],
-      helstrom: 'P_e ≥ 0.1140',
-      traceDistance: 'D = 0.4140',
-      targetNode: 'QN-ALICE (signer)'
-    },
-    {
-      id: 'INC-9481-B',
-      title: 'Quantum channel intercept-resend',
-      severity: 'CRITICAL',
-      status: 'INVESTIGATING',
-      assigned: 'M. Ito (L3)',
-      impact: 'CRITICAL',
-      qber: '14.20%',
-      chsh: '1.76',
-      timestamp: '10:48:16',
-      analyst: 'M. Ito',
-      detail: '[CLASSIFIED: INTERCEPT_RESEND] Eavesdropper Eve intercepted and measured photons on the quantum channel, collapsing quantum superposition.',
-      events: [
-        ['10:48:16 UTC', 'Threat detected', 'CRITICAL: Intercept-resend attack detected. QBER (14.2%) breached Hoeffding cutoff (5.5%). Bell correlation collapsed (S=1.76 < 2.00).'],
-        ['10:48:24 UTC', 'Threshold exceeded', 'QBER 14.20% breached security cutoff (5.0%). Non-locality collapsed (S=1.76).'],
-        ['10:48:32 UTC', 'Escalation', 'Channel held for signature acceptance review and L3 forensic handoff.']
-      ],
-      helstrom: 'P_e ≥ 0.0820',
-      traceDistance: 'D = 0.8360',
-      targetNode: 'QN-BOB (receiver)'
-    },
-    {
-      id: 'INC-9479-X',
-      title: 'Channel lockout mitigation',
-      severity: 'LOW',
-      status: 'RESOLVED',
-      assigned: 'SYSTEM AUTO',
-      impact: 'LOW',
-      qber: '4.88%',
-      chsh: '2.68',
-      timestamp: '10:42:01',
-      analyst: 'SYSTEM AUTO',
-      detail: 'An automated channel lock was applied after repeated authentication failures on the secure transport boundary.',
-      events: [
-        ['10:42:01 UTC', 'Threat detected', 'Anomaly detected in the authenticated command sequence from 192.168.1.55.'],
-        ['10:42:15 UTC', 'Threshold exceeded', 'Five failed authentication attempts occurred inside the ten-second observation window.'],
-        ['10:42:16 UTC', 'Auto-resolution', 'A temporary perimeter quarantine was applied and the node was removed from active routing.']
-      ],
-      helstrom: 'P_e ≥ 0.1464',
-      traceDistance: 'D = 0.1720',
-      targetNode: 'ARBITRATOR core'
-    }
-  ]);
+  const [incidents, setIncidents] = useState<IncidentItem[]>(() => {
+    try {
+      const stored = localStorage.getItem('qds_incidents');
+      if (stored) return JSON.parse(stored);
+    } catch { }
+    return [
+      {
+        id: 'INC-9482-A',
+        title: 'Quantum correlation breach',
+        severity: 'HIGH',
+        status: 'INVESTIGATING',
+        assigned: 'A. Kovacs (L2)',
+        impact: 'HIGH',
+        qber: '7.42%',
+        chsh: '2.12',
+        timestamp: '10:58:02',
+        analyst: 'A. Kovacs',
+        detail: 'A QBER divergence on the authenticated channel is under active forensic review.',
+        events: [
+          ['10:58:02 UTC', 'Threat detected', 'QBER moved above the nominal confidence envelope (7.42% > 5.50%).'],
+          ['10:58:10 UTC', 'Threshold exceeded', 'Photon-pair records sealed after the Hoeffding confidence boundary was crossed.'],
+          ['10:59:01 UTC', 'Operator assignment', 'Incident assigned to the optical assurance queue.']
+        ],
+        helstrom: 'P_e ≥ 0.1140',
+        traceDistance: 'D = 0.4140',
+        targetNode: 'QN-ALICE (signer)'
+      },
+      {
+        id: 'INC-9481-B',
+        title: 'Quantum channel intercept-resend',
+        severity: 'CRITICAL',
+        status: 'INVESTIGATING',
+        assigned: 'M. Ito (L3)',
+        impact: 'CRITICAL',
+        qber: '14.20%',
+        chsh: '1.76',
+        timestamp: '10:48:16',
+        analyst: 'M. Ito',
+        detail: '[CLASSIFIED: INTERCEPT_RESEND] Eavesdropper Eve intercepted and measured photons on the quantum channel, collapsing quantum superposition.',
+        events: [
+          ['10:48:16 UTC', 'Threat detected', 'CRITICAL: Intercept-resend attack detected. QBER (14.2%) breached Hoeffding cutoff (5.5%). Bell correlation collapsed (S=1.76 < 2.00).'],
+          ['10:48:24 UTC', 'Threshold exceeded', 'QBER 14.20% breached security cutoff (5.0%). Non-locality collapsed (S=1.76).'],
+          ['10:48:32 UTC', 'Escalation', 'Channel held for signature acceptance review and L3 forensic handoff.']
+        ],
+        helstrom: 'P_e ≥ 0.0820',
+        traceDistance: 'D = 0.8360',
+        targetNode: 'QN-BOB (receiver)'
+      },
+      {
+        id: 'INC-9479-X',
+        title: 'Channel lockout mitigation',
+        severity: 'LOW',
+        status: 'RESOLVED',
+        assigned: 'SYSTEM AUTO',
+        impact: 'LOW',
+        qber: '4.88%',
+        chsh: '2.68',
+        timestamp: '10:42:01',
+        analyst: 'SYSTEM AUTO',
+        detail: 'An automated channel lock was applied after repeated authentication failures on the secure transport boundary.',
+        events: [
+          ['10:42:01 UTC', 'Threat detected', 'Anomaly detected in the authenticated command sequence from 192.168.1.55.'],
+          ['10:42:15 UTC', 'Threshold exceeded', 'Five failed authentication attempts occurred inside the ten-second observation window.'],
+          ['10:42:16 UTC', 'Auto-resolution', 'A temporary perimeter quarantine was applied and the node was removed from active routing.']
+        ],
+        helstrom: 'P_e ≥ 0.1464',
+        traceDistance: 'D = 0.1720',
+        targetNode: 'ARBITRATOR core'
+      }
+    ];
+  });
 
-  const [threats, setThreats] = useState<ThreatAnomalyItem[]>([
-    { id: 'THR-104', severity: 'CRITICAL', origin: 'THREAT ENGINE', badge: 'QUARANTINED', type: 'Signature aborted (intercept-resend eavesdropping)', time: '23:41:16', baseline: '1.2%', current: '14.2%', detail: 'Intercept-resend disturbance triggered the confidence boundary and halted the signature stream.', qber: 0.142, chsh: 1.76 },
-    { id: 'THR-103', severity: 'CRITICAL', origin: 'NODE-EVE-01', badge: '', type: 'Quantum channel intercept-resend', time: '23:40:57', baseline: '1.5%', current: '12.7%', detail: 'Unauthorized basis observation was inferred from the observed QBER uplift.', qber: 0.127, chsh: 1.82 },
-    { id: 'THR-102', severity: 'CRITICAL', origin: 'NONCE-CACHE-01', badge: '', type: 'Stale nonce and payload replay', time: '23:40:50', baseline: '0.8%', current: '9.1%', detail: 'Replay candidate reappeared outside the permitted one-time-pad window.', qber: 0.091, chsh: 1.91 },
-    { id: 'THR-101', severity: 'CRITICAL', origin: 'ARB-CORE-01', badge: '', type: 'One-time pad signature forgery', time: '23:40:43', baseline: '1.0%', current: '8.4%', detail: 'Signature mismatch appeared after the classical correction frame closed.', qber: 0.084, chsh: 1.95 },
-    { id: 'THR-100', severity: 'HIGH', origin: '192.168.1.104', badge: '', type: 'Sift mismatch breach', time: '23:39:08', baseline: '1.9%', current: '7.7%', detail: 'Sifting disagreement exceeded the nominal data-reconciliation threshold.', qber: 0.077, chsh: 2.05 },
-    { id: 'THR-099', severity: 'HIGH', origin: 'QKD-NODE-07', badge: '', type: 'Pauli frame mismatch', time: '23:35:56', baseline: '2.1%', current: '5.7%', detail: 'A correction frame checksum failed verification.', qber: 0.057, chsh: 2.22 },
-    { id: 'THR-098', severity: 'MEDIUM', origin: 'FIBER-22', badge: '', type: 'Optical noise envelope', time: '22:20:56', baseline: '1.4%', current: '3.9%', detail: 'Attenuation drift is observable but remains below the intervention threshold.', qber: 0.039, chsh: 2.45 }
-  ]);
+  const [threats, setThreats] = useState<ThreatAnomalyItem[]>(() => {
+    try {
+      const stored = localStorage.getItem('qds_threats');
+      if (stored) return JSON.parse(stored);
+    } catch { }
+    return [
+      { id: 'THR-104', severity: 'CRITICAL', origin: 'THREAT ENGINE', badge: 'QUARANTINED', type: 'Signature aborted (intercept-resend eavesdropping)', time: '23:41:16', baseline: '1.2%', current: '14.2%', detail: 'Intercept-resend disturbance triggered the confidence boundary and halted the signature stream.', qber: 0.142, chsh: 1.76 },
+      { id: 'THR-103', severity: 'CRITICAL', origin: 'NODE-EVE-01', badge: '', type: 'Quantum channel intercept-resend', time: '23:40:57', baseline: '1.5%', current: '12.7%', detail: 'Unauthorized basis observation was inferred from the observed QBER uplift.', qber: 0.127, chsh: 1.82 },
+      { id: 'THR-102', severity: 'CRITICAL', origin: 'NONCE-CACHE-01', badge: '', type: 'Stale nonce and payload replay', time: '23:40:50', baseline: '0.8%', current: '9.1%', detail: 'Replay candidate reappeared outside the permitted one-time-pad window.', qber: 0.091, chsh: 1.91 },
+      { id: 'THR-101', severity: 'CRITICAL', origin: 'ARB-CORE-01', badge: '', type: 'One-time pad signature forgery', time: '23:40:43', baseline: '1.0%', current: '8.4%', detail: 'Signature mismatch appeared after the classical correction frame closed.', qber: 0.084, chsh: 1.95 },
+      { id: 'THR-100', severity: 'HIGH', origin: '192.168.1.104', badge: '', type: 'Sift mismatch breach', time: '23:39:08', baseline: '1.9%', current: '7.7%', detail: 'Sifting disagreement exceeded the nominal data-reconciliation threshold.', qber: 0.077, chsh: 2.05 },
+      { id: 'THR-099', severity: 'HIGH', origin: 'QKD-NODE-07', badge: '', type: 'Pauli frame mismatch', time: '23:35:56', baseline: '2.1%', current: '5.7%', detail: 'A correction frame checksum failed verification.', qber: 0.057, chsh: 2.22 },
+      { id: 'THR-098', severity: 'MEDIUM', origin: 'FIBER-22', badge: '', type: 'Optical noise envelope', time: '22:20:56', baseline: '1.4%', current: '3.9%', detail: 'Attenuation drift is observable but remains below the intervention threshold.', qber: 0.039, chsh: 2.45 }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('qds_threats', JSON.stringify(threats));
+    } catch { }
+  }, [threats]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('qds_incidents', JSON.stringify(incidents));
+    } catch { }
+  }, [incidents]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('qds_qber', String(qber));
+      localStorage.setItem('qds_chsh', String(chsh));
+      localStorage.setItem('qds_active_attack', activeAttack);
+      localStorage.setItem('qds_pqc_mode', String(pqcMode));
+    } catch { }
+  }, [qber, chsh, activeAttack, pqcMode]);
 
   const [sessions, setSessions] = useState<SessionStreamItem[]>([
     { id: '01', endpoint: 'QNode-A-09', state: 'STABLE', rate: '245.8', duration: '04:12:33', trace: 'wave', tone: 'good' },
