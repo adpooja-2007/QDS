@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { AlertTriangle, ArrowLeft, Bell, Check, ChevronRight, Download, FileKey2, Pause, Play, Plus, RotateCcw, Settings2, ShieldCheck, Sparkles, X, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { useSentinel } from "@/lib/SentinelContext";
 
 type NodeId = "alice" | "arb" | "bob" | "eve";
 type Point = { x: number; y: number };
@@ -40,73 +41,64 @@ function DeskModal({ title, eyebrow, children, onClose }: { title: string; eyebr
   return <div className="modal-backdrop" onClick={onClose}><section className="modal-card demo-desk-modal" role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}><header className="modal-head"><div><span className="eyebrow">{eyebrow}</span><h3>{title}</h3></div><button className="icon-button" aria-label={`Close ${title}`} onClick={onClose}><X size={15} /></button></header>{children}</section></div>;
 }
 
-
-export function DemonstrationDesk() {
+export default function DemonstrationDesk() {
+  const { toggleNotificationCenter, unreadNotificationCount } = useSentinel();
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [eve, setEve] = useState(false);
-  const [dragging, setDragging] = useState<NodeId | null>(null);
-  const [simSpeed, setSimSpeed] = useState(1);
-  const [showNewSession, setShowNewSession] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showNewSession, setShowNewSession] = useState(false);
   const [executingLive, setExecutingLive] = useState(false);
-  const [nodes, setNodes] = useState<Record<NodeId, Point>>({ alice: { x: 15, y: 55 }, arb: { x: 50, y: 44 }, bob: { x: 85, y: 55 }, eve: { x: 50, y: 12 } });
+  const [speed, setSpeed] = useState(1);
+  const [streamPulse, setStreamPulse] = useState(1);
+  const [activePulse, setActivePulse] = useState(0);
+  const [dragging, setDragging] = useState<NodeId | null>(null);
+  const [nodes, setNodes] = useState<Record<NodeId, Point>>({
+    alice: { x: 18, y: 38 },
+    arb: { x: 48, y: 18 },
+    bob: { x: 78, y: 38 },
+    eve: { x: 48, y: 68 },
+  });
+
   const stageRef = useRef<HTMLDivElement>(null);
-  const dragFrame = useRef<number | null>(null);
-  const pendingNode = useRef<{ id: NodeId; x: number; y: number } | null>(null);
+  const phase = phases[step];
+  const qber = eve ? "14.2%" : "1.9%";
+  const chsh = eve ? "1.76" : "2.76";
 
   useEffect(() => {
     if (!playing) return;
-    const timer = window.setInterval(() => setStep((current) => current >= phases.length - 1 ? 0 : current + 1), Math.max(650, 2500 / simSpeed));
-    return () => window.clearInterval(timer);
-  }, [playing, simSpeed]);
-
-  useEffect(() => () => { if (dragFrame.current !== null) window.cancelAnimationFrame(dragFrame.current); }, []);
-
-  const resetLayout = () => {
-    setNodes({ alice: { x: 15, y: 55 }, arb: { x: 50, y: 44 }, bob: { x: 85, y: 55 }, eve: { x: 50, y: 12 } });
-    setDragging(null);
-    toast.success("Optical topology reset");
-  };
-
-  const beginDrag = (id: NodeId, event: React.PointerEvent<HTMLButtonElement>) => {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDragging(id);
-  };
+    const interval = window.setInterval(() => {
+      setStep((current) => (current >= phases.length - 1 ? 0 : current + 1));
+      setStreamPulse((current) => (current >= 8 ? 1 : current + 1));
+      setActivePulse((current) => (current >= 7 ? 0 : current + 1));
+    }, Math.max(700, Math.round(2400 / speed)));
+    return () => window.clearInterval(interval);
+  }, [playing, speed]);
 
   const updateDrag = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging || !stageRef.current) return;
     const rect = stageRef.current.getBoundingClientRect();
-    pendingNode.current = { id: dragging, x: clamp(((event.clientX - rect.left) / rect.width) * 100, 9, 91), y: clamp(((event.clientY - rect.top) / rect.height) * 100, 12, 81) };
-    if (dragFrame.current !== null) return;
-    dragFrame.current = window.requestAnimationFrame(() => {
-      const next = pendingNode.current;
-      if (next) setNodes((current) => ({ ...current, [next.id]: { x: next.x, y: next.y } }));
-      dragFrame.current = null;
-    });
+    const x = clamp(Math.round(((event.clientX - rect.left) / rect.width) * 100), 8, 92);
+    const y = clamp(Math.round(((event.clientY - rect.top) / rect.height) * 100), 12, 88);
+    setNodes((current) => ({ ...current, [dragging]: { x, y } }));
   };
 
-  const endDrag = () => {
-    if (dragFrame.current !== null) { window.cancelAnimationFrame(dragFrame.current); dragFrame.current = null; }
-    const next = pendingNode.current;
-    if (next) setNodes((current) => ({ ...current, [next.id]: { x: next.x, y: next.y } }));
-    pendingNode.current = null;
-    setDragging(null);
-  };
+  const endDrag = () => setDragging(null);
+  const resetLayout = () => setNodes({ alice: { x: 18, y: 38 }, arb: { x: 48, y: 18 }, bob: { x: 78, y: 38 }, eve: { x: 48, y: 68 } });
 
   const exportMatrix = () => {
     const rows = ["Pulse,Alice basis,Alice bit,Bob basis,Bob bit,Bell state,Eve intercept,Sift status", ...matrixRows.map((row) => [row.pulse, row.aliceBasis, row.aliceBit, row.bobBasis, row.bobBit, row.bell, eve ? "Active" : "Bypassed", row.discarded ? "Discarded" : "Kept"].join(","))].join("\n");
-    const url = URL.createObjectURL(new Blob([rows], { type: "text/csv;charset=utf-8" }));
-    const anchor = document.createElement("a"); anchor.href = url; anchor.download = "qds-bitstream-matrix.csv"; anchor.click(); URL.revokeObjectURL(url); toast.success("Bitstream matrix exported");
+    const blob = new Blob([rows], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `qds_matrix_${Date.now()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Quantum matrix CSV downloaded");
   };
 
-  const activePulse = (step + 2) % matrixRows.length;
-  const qber = eve ? "14.2%" : "2.1%";
-  const streamPulse = String(activePulse + 1).padStart(2, "0");
-  const phase = phases[step];
   const phaseLabel = `Phase ${String(step + 1).padStart(2, "0")} of 06 · ${phase.short}`;
   const dataLine = (from: Point, to: Point) => ({ x1: from.x, y1: from.y, x2: to.x, y2: to.y });
   const links = eve ? [dataLine(nodes.arb, nodes.alice), dataLine(nodes.arb, nodes.eve), dataLine(nodes.eve, nodes.bob)] : [dataLine(nodes.arb, nodes.alice), dataLine(nodes.arb, nodes.bob), dataLine(nodes.alice, nodes.bob)];
@@ -115,7 +107,43 @@ export function DemonstrationDesk() {
     <header className="demo-desk-header">
       <Link href="/home" className="demo-desk-brand" aria-label="QDS Sentinel home"><span className="demo-desk-mark"><ShieldCheck size={15} /></span><strong>QDS SENTINEL</strong><span>signal atelier / protocol desk</span></Link>
       <div className="demo-desk-route"><span>01 / quantum protocol</span><strong>Demonstration</strong></div>
-      <div className="demo-desk-header-actions"><button className="button button-copper button-small" onClick={() => setShowNewSession(true)}><Plus size={14} /> New session</button><button className="icon-button" onClick={() => setShowSettings(true)} aria-label="Simulation settings"><Settings2 size={15} /></button><button className="icon-button" onClick={() => setShowNotifications((current) => !current)} aria-label="Notifications"><Bell size={15} /></button><Link href="/home" className="demo-desk-home"><ArrowLeft size={13} /> Home</Link></div>
+      <div className="demo-desk-header-actions">
+        <button className="button button-copper button-small" onClick={() => setShowNewSession(true)}><Plus size={14} /> New session</button>
+        <button className="icon-button" onClick={() => setShowSettings(true)} aria-label="Simulation settings"><Settings2 size={15} /></button>
+        <button
+          className="icon-button"
+          onClick={toggleNotificationCenter}
+          aria-label="Notifications"
+          style={{ position: 'relative' }}
+          title={unreadNotificationCount > 0 ? `${unreadNotificationCount} unread signal notifications` : "Notification Center"}
+        >
+          <Bell size={15} />
+          {unreadNotificationCount > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: '-3px',
+                right: '-3px',
+                minWidth: '14px',
+                height: '14px',
+                padding: '0 3px',
+                borderRadius: '999px',
+                background: 'var(--copper)',
+                color: '#fff',
+                fontSize: '8px',
+                fontWeight: 'bold',
+                fontFamily: 'var(--mono)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+            </span>
+          )}
+        </button>
+        <Link href="/home" className="demo-desk-home"><ArrowLeft size={13} /> Home</Link>
+      </div>
     </header>
 
     <section className="demo-desk-command-strip" aria-label="Simulator controls and protocol phases">

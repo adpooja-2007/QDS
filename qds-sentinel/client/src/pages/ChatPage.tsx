@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, ShieldAlert, Bell } from 'lucide-react';
+import { useSentinel } from '@/lib/SentinelContext';
 import AuthPage from '@/components/chat/AuthPage';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatArea from '@/components/chat/ChatArea';
@@ -81,6 +82,7 @@ const DEFAULT_DEMO_USERS = [
 ];
 
 export default function ChatPage() {
+  const { toggleNotificationCenter, unreadNotificationCount, eveActive } = useSentinel();
   const [usersList, setUsersList] = useState<any[]>(DEFAULT_DEMO_USERS);
   const [currentUser, setCurrentUser] = useState<any>(() => {
     const saved = localStorage.getItem('qds_chat_current_user');
@@ -625,6 +627,36 @@ export default function ChatPage() {
           >
             <span>Command Palette</span>
             <kbd className="text-[10px] px-1 bg-[#EAE3DA] dark:bg-[#202733] rounded">Ctrl+K</kbd>
+          </button>
+          <button
+            onClick={toggleNotificationCenter}
+            className="relative p-1 text-[#746D62] dark:text-[#8B949E] hover:text-[#181B20] dark:hover:text-white rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            title={unreadNotificationCount > 0 ? `${unreadNotificationCount} unread signal notifications` : "Notification Center"}
+            aria-label="Notifications"
+          >
+            <Bell size={15} className={eveActive ? "text-[#b94a2f] animate-bounce" : ""} />
+            {unreadNotificationCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-3px',
+                  right: '-3px',
+                  minWidth: '14px',
+                  height: '14px',
+                  padding: '0 3px',
+                  borderRadius: '999px',
+                  background: eveActive ? '#b94a2f' : '#2f6f85',
+                  color: '#fff',
+                  fontSize: '8px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+              </span>
+            )}
           </button>
           <div className="flex items-center gap-2">
             <span className="text-[#8B8477] dark:text-[#6E7681]">OPERATOR:</span>

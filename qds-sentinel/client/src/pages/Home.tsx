@@ -165,7 +165,62 @@ function Sidebar({ location, isCollapsed, onToggle }: { location: string; isColl
 
 
 function Topbar({ eyebrow, title, subtitle, action, onNotifications }: { eyebrow: string; title: string; subtitle: string; action?: React.ReactNode; onNotifications?: () => void }) {
-  return <header className="topbar"><div className="topbar-heading"><Link href="/home" className="topbar-identity" aria-label="QDS Sentinel home"><img src={MARK} alt="" /><span>QDS / SIGNAL GRID</span><i /></Link><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="topbar-subtitle">{subtitle}</p></div><div className="topbar-actions">{action}<div className="live-ping"><StatusDot /> <span>LIVE</span><strong>12ms</strong></div><button className="icon-button" onClick={onNotifications} aria-label="Notifications"><Bell size={17} /></button></div></header>;
+  const { unreadNotificationCount, toggleNotificationCenter, eveActive } = useSentinel();
+  const handleBellClick = onNotifications || toggleNotificationCenter;
+
+  return (
+    <header className="topbar">
+      <div className="topbar-heading">
+        <Link href="/home" className="topbar-identity" aria-label="QDS Sentinel home">
+          <img src={MARK} alt="" />
+          <span>QDS / SIGNAL GRID</span>
+          <i />
+        </Link>
+        <p className="eyebrow">{eyebrow}</p>
+        <h1>{title}</h1>
+        <p className="topbar-subtitle">{subtitle}</p>
+      </div>
+      <div className="topbar-actions">
+        {action}
+        <div className="live-ping">
+          <StatusDot /> <span>LIVE</span><strong>12ms</strong>
+        </div>
+        <button
+          className={cn("icon-button bell-btn", unreadNotificationCount > 0 && "has-notifications", eveActive && "bell-alert")}
+          onClick={handleBellClick}
+          aria-label={`Notifications (${unreadNotificationCount} unread)`}
+          title={unreadNotificationCount > 0 ? `${unreadNotificationCount} unread signal notifications` : "Notification Center"}
+          style={{ position: 'relative' }}
+        >
+          <Bell size={17} className={eveActive ? "bell-wobble text-[#b94a2f]" : ""} />
+          {unreadNotificationCount > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                minWidth: '16px',
+                height: '16px',
+                padding: '0 4px',
+                borderRadius: '999px',
+                background: eveActive ? 'var(--copper)' : '#2f6f85',
+                color: '#fff',
+                fontSize: '9px',
+                fontWeight: 'bold',
+                fontFamily: 'var(--mono)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 0 2px var(--paper)'
+              }}
+            >
+              {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+            </span>
+          )}
+        </button>
+      </div>
+    </header>
+  );
 }
 
 function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "copper" | "blue" | "good" | "dark" }) {

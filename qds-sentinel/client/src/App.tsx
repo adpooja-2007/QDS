@@ -1,4 +1,3 @@
-// Signal Atelier reminder: persistent operator rail, warm paper canvas, ink typography, copper signal accents, and evidence-first states.
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -7,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import ChatPage from "./pages/ChatPage";
+import NotificationCenterDrawer from "./components/NotificationCenterDrawer";
 
 import { SentinelProvider } from "./lib/SentinelContext";
 
@@ -46,6 +46,7 @@ export default function App() {
         <TooltipProvider>
           <SentinelProvider>
             <Toaster />
+            <NotificationCenterDrawer />
             <AppRouter />
           </SentinelProvider>
         </TooltipProvider>

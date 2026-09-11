@@ -71,6 +71,23 @@ export interface SessionStreamItem {
   tone: 'good' | 'copper' | 'blue';
 }
 
+export interface QuantumNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  timeAgo?: string;
+  severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'SUCCESS';
+  category: 'security' | 'telemetry' | 'protocol' | 'attestation' | 'system';
+  read: boolean;
+  qber?: string;
+  chsh?: string;
+  sourceNode?: string;
+  actionLabel?: string;
+  actionRoute?: string;
+  metadata?: Record<string, any>;
+}
+
 export interface SentinelContextType {
   eveActive: boolean;
   activeSessionId: string;
@@ -84,6 +101,17 @@ export interface SentinelContextType {
   threats: ThreatAnomalyItem[];
   sessions: SessionStreamItem[];
   activeAttack: string;
+  notifications: QuantumNotification[];
+  unreadNotificationCount: number;
+  isNotificationCenterOpen: boolean;
+  openNotificationCenter: () => void;
+  closeNotificationCenter: () => void;
+  toggleNotificationCenter: () => void;
+  markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
+  clearAllNotifications: () => void;
+  deleteNotification: (id: string) => void;
+  addNotification: (notif: Omit<QuantumNotification, 'id' | 'timestamp' | 'read'> & { id?: string; timestamp?: string; read?: boolean }) => void;
   toggleEve: () => Promise<void>;
   triggerAttack: (attackTitle: string, customQber?: number, customChsh?: number) => Promise<void>;
   executeProtocolRun: (documentName?: string, isEveActive?: boolean) => Promise<any>;
@@ -97,6 +125,47 @@ export interface SentinelContextType {
 }
 
 const SentinelContext = createContext<SentinelContextType | undefined>(undefined);
+
+const playQuantumChime = (severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'SUCCESS' = 'INFO') => {
+  try {
+    if (typeof window === 'undefined') return;
+    const isMuted = localStorage.getItem('qds_notif_sound') === 'false';
+    if (isMuted) return;
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (severity === 'CRITICAL') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.35);
+    } else if (severity === 'WARNING') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.09, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.25);
+    } else {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.07, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.22);
+    }
+  } catch {}
+};
 
 export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [eveActive, setEveActive] = useState<boolean>(() => {
@@ -135,6 +204,150 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch { }
     return 'Clean signature';
   });
+
+  const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
+
+  const [notifications, setNotifications] = useState<QuantumNotification[]>(() => {
+    try {
+      const stored = localStorage.getItem('qds_notifications');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    const now = Date.now();
+    const formatRelTime = (offsetMs: number) => {
+      const d = new Date(now - offsetMs);
+      const timeStr = d.toTimeString().split(' ')[0];
+      return timeStr;
+    };
+    return [
+      {
+        id: 'notif-init-1',
+        title: 'SPDC Entangled Photons Active',
+        message: 'Arbitrator SPDC crystal emitting correlated photon pairs at λ=1550nm. Bell non-locality calibrated at S = 2.78 ≥ 2.00.',
+        timestamp: formatRelTime(45000),
+        timeAgo: '1m ago',
+        severity: 'SUCCESS',
+        category: 'protocol',
+        sourceNode: 'ARB-CORE',
+        qber: '1.9%',
+        chsh: '2.78',
+        read: false,
+        actionLabel: 'View Protocol Simulator',
+        actionRoute: '/demonstration'
+      },
+      {
+        id: 'notif-init-2',
+        title: 'Joint Bell Measurement Authenticated',
+        message: 'Alice completed Joint Bell State Measurement on payload hash. Feed-forward bits (b1, b2) synced with Bob Pauli corrections.',
+        timestamp: formatRelTime(120000),
+        timeAgo: '2m ago',
+        severity: 'INFO',
+        category: 'attestation',
+        sourceNode: 'QN-ALICE',
+        qber: '1.9%',
+        chsh: '2.76',
+        read: false,
+        actionLabel: 'Inspect Telemetry',
+        actionRoute: '/monitoring'
+      },
+      {
+        id: 'notif-init-3',
+        title: 'Hoeffding Statistical Security Certified',
+        message: 'Quantum bit error rate strictly within Hoeffding bound τ = 5.0%. Eavesdropping detection certainty > 99.99999%.',
+        timestamp: formatRelTime(340000),
+        timeAgo: '6m ago',
+        severity: 'INFO',
+        category: 'telemetry',
+        sourceNode: 'HOEFFDING-GATE',
+        qber: '1.9%',
+        chsh: '2.78',
+        read: true,
+        actionLabel: 'Open Forensic Audit',
+        actionRoute: '/monitoring'
+      },
+      {
+        id: 'notif-init-4',
+        title: 'Toeplitz OTP Key Distillation Sealed',
+        message: 'Privacy amplification distilled unforgeable 256-bit quantum one-time-pad signature token.',
+        timestamp: formatRelTime(600000),
+        timeAgo: '10m ago',
+        severity: 'SUCCESS',
+        category: 'attestation',
+        sourceNode: 'PRIVACY_AMP',
+        read: true,
+        actionLabel: 'View Transfer Logs',
+        actionRoute: '/transfer'
+      }
+    ];
+  });
+
+  const unreadNotificationCount = useMemo(() => {
+    return notifications.filter((n) => !n.read).length;
+  }, [notifications]);
+
+  const openNotificationCenter = () => setIsNotificationCenterOpen(true);
+  const closeNotificationCenter = () => setIsNotificationCenterOpen(false);
+  const toggleNotificationCenter = () => setIsNotificationCenterOpen((prev) => !prev);
+
+  const addNotification = (notif: Omit<QuantumNotification, 'id' | 'timestamp' | 'read'> & { id?: string; timestamp?: string; read?: boolean }) => {
+    const newId = notif.id || `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const newTimestamp = notif.timestamp || new Date().toTimeString().split(' ')[0];
+    const newNotif: QuantumNotification = {
+      ...notif,
+      id: newId,
+      timestamp: newTimestamp,
+      timeAgo: 'Just now',
+      read: notif.read ?? false
+    };
+
+    setNotifications((prev) => {
+      const next = [newNotif, ...prev].slice(0, 50);
+      try {
+        localStorage.setItem('qds_notifications', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    playQuantumChime(notif.severity);
+  };
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications((prev) => {
+      const next = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+      try {
+        localStorage.setItem('qds_notifications', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications((prev) => {
+      const next = prev.map((n) => ({ ...n, read: true }));
+      try {
+        localStorage.setItem('qds_notifications', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    toast.success('All notifications marked as read');
+  };
+
+  const deleteNotification = (id: string) => {
+    setNotifications((prev) => {
+      const next = prev.filter((n) => n.id !== id);
+      try {
+        localStorage.setItem('qds_notifications', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    try {
+      localStorage.removeItem('qds_notifications');
+    } catch {}
+    toast.success('All notifications cleared');
+  };
 
   const [telemetryLogs, setTelemetryLogs] = useState<TelemetryItem[]>(() => {
     try {
@@ -501,6 +714,18 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 
       setSessions((prev) => prev.map((s, i) => i === 0 ? { ...s, state: 'DEGRADED', tone: 'copper', rate: '84.2', trace: 'rise' } : s));
 
+      addNotification({
+        title: 'CRITICAL: Quantum Channel Intrusion Detected (Eve MitM Tap)',
+        message: 'Photon intercept-resend attack active on quantum channel 01. QBER breached cutoff at 14.2% (threshold 5.5%), Bell CHSH collapsed to S=1.76.',
+        severity: 'CRITICAL',
+        category: 'security',
+        sourceNode: 'EVE-PROBE',
+        qber: '14.2%',
+        chsh: '1.76',
+        actionLabel: 'Inspect in SOC Console',
+        actionRoute: '/monitoring'
+      });
+
       toast.error("Global Threat Injected: Eve interception active across all quantum channels! QBER = 14.2%. SOC Dashboard updated!");
     } else {
       setActiveAttack('Clean signature');
@@ -518,6 +743,18 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       setTelemetryLogs((prev) => [newEvt, ...prev]);
 
       setSessions((prev) => prev.map((s, i) => i === 0 ? { ...s, state: 'STABLE', tone: 'good', rate: '245.8', trace: 'wave' } : s));
+
+      addNotification({
+        title: 'Quantum Channel Pristine · Eve Bypassed',
+        message: 'Adversary Eve isolated. SPDC entangled pair distribution operating at nominal QBER 1.9% with Bell non-locality S=2.76 ≥ 2.00.',
+        severity: 'SUCCESS',
+        category: 'protocol',
+        sourceNode: 'ARB-CORE',
+        qber: '1.9%',
+        chsh: '2.76',
+        actionLabel: 'View Protocol Visualizer',
+        actionRoute: '/demonstration'
+      });
 
       toast.success("Global Channel Restored: Eve bypassed. Quantum channel operating at nominal QBER = 1.9%.");
     }
@@ -564,6 +801,18 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         const ms = String(d.getMilliseconds()).padStart(3, '0');
         return `${timeStr}.${ms}`;
       };
+
+      addNotification({
+        title: `Adversarial Threat Injected: ${attackTitle}`,
+        message: `High-vigilance quantum anomaly detected. QBER ${qberFormatted} breached Hoeffding cutoff 5.50%. Bell non-locality collapsed to S=${chshFormatted}. Automated PQC handover initiated.`,
+        severity: 'CRITICAL',
+        category: 'security',
+        sourceNode: 'HOEFFDING-GATE',
+        qber: qberFormatted,
+        chsh: chshFormatted,
+        actionLabel: 'Open Sandbox Forensics',
+        actionRoute: '/attack-sandbox'
+      });
 
       setPqcMode(true);
       const newEvents: TelemetryItem[] = [
@@ -1068,6 +1317,30 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         targetNode: 'QN-BOB (receiver)'
       };
       setIncidents((prev) => [newInc, ...prev]);
+
+      addNotification({
+        title: `Protocol Interception Detected: "${documentName}"`,
+        message: `Live demonstration intercepted. QBER ${qberStr} breached Hoeffding cutoff, Bell score S=${chshStr} collapsed. PQC lattice backup engaged.`,
+        severity: 'CRITICAL',
+        category: 'protocol',
+        sourceNode: 'DEMO-RUNNER',
+        qber: qberStr,
+        chsh: chshStr,
+        actionLabel: 'View Demonstration',
+        actionRoute: '/demonstration'
+      });
+    } else {
+      addNotification({
+        title: `Protocol Verified & Attested: "${documentName}"`,
+        message: `Six-phase physical quantum digital signature completed with 100% fidelity. Bell score S=${chshStr} ≥ 2.00 sealed.`,
+        severity: 'SUCCESS',
+        category: 'protocol',
+        sourceNode: 'DEMO-RUNNER',
+        qber: qberStr,
+        chsh: chshStr,
+        actionLabel: 'View Demonstration',
+        actionRoute: '/demonstration'
+      });
     }
 
     return res;
@@ -1075,6 +1348,15 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 
   const resolveIncident = (id: string) => {
     setIncidents((prev) => prev.map(inc => inc.id === id ? { ...inc, status: 'RESOLVED' } : inc));
+    addNotification({
+      title: `Incident ${id} Resolved`,
+      message: `Security investigation completed. Channel parameter verified within acceptable confidence threshold.`,
+      severity: 'SUCCESS',
+      category: 'security',
+      sourceNode: 'SOC-ANALYST',
+      actionLabel: 'View Incidents',
+      actionRoute: '/monitoring'
+    });
     toast.success(`Incident ${id} marked as RESOLVED.`);
   };
 
@@ -1097,10 +1379,28 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       }
       return inc;
     }));
+    addNotification({
+      title: `Incident ${id} Escalated to L3 Forensic Team`,
+      message: `Priority handoff to Lead Cryptanalyst M. Ito for optical waveform containment.`,
+      severity: 'WARNING',
+      category: 'security',
+      sourceNode: 'SOC-ESCALATION',
+      actionLabel: 'Inspect Incident',
+      actionRoute: '/monitoring'
+    });
     toast.error(`Incident ${id} escalated to Level 3 Lead Security Team.`);
   };
 
   const quarantineNode = (nodeId: string) => {
+    addNotification({
+      title: `Node ${nodeId} Quarantined`,
+      message: `Optical switch dynamically isolated ${nodeId} from active quantum key distribution path.`,
+      severity: 'WARNING',
+      category: 'security',
+      sourceNode: 'SOC-ROUTER',
+      actionLabel: 'Inspect Topology',
+      actionRoute: '/monitoring'
+    });
     toast.error(`Containment protocol executed: ${nodeId} quarantined from optical routing.`);
   };
 
@@ -1114,6 +1414,17 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     setThreats((prev) => prev.filter(t => !t.id.startsWith('THR-LIVE')));
     setIncidents((prev) => prev.filter(i => i.id !== 'INC-2026-LIVE'));
     setSessions((prev) => prev.map((s, i) => i === 0 ? { ...s, state: 'STABLE', tone: 'good', rate: '245.8', trace: 'wave' } : s));
+    addNotification({
+      title: 'Global System Reset: Nominal Baseline Restored',
+      message: 'Global quantum channel telemetry re-initialized. QBER 1.9%, Bell score S=2.76, all nodes authenticated.',
+      severity: 'SUCCESS',
+      category: 'system',
+      sourceNode: 'ARB-CORE',
+      qber: '1.9%',
+      chsh: '2.76',
+      actionLabel: 'Open Switchboard',
+      actionRoute: '/home'
+    });
     toast.success("Global Quantum Channel reset to pristine nominal state.");
   };
 
@@ -1131,6 +1442,17 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       threats,
       sessions,
       activeAttack,
+      notifications,
+      unreadNotificationCount,
+      isNotificationCenterOpen,
+      openNotificationCenter,
+      closeNotificationCenter,
+      toggleNotificationCenter,
+      markNotificationAsRead,
+      markAllNotificationsAsRead,
+      clearAllNotifications,
+      deleteNotification,
+      addNotification,
       toggleEve,
       triggerAttack,
       executeProtocolRun,
@@ -1154,4 +1476,5 @@ export const useSentinel = () => {
   }
   return context;
 };
+
 
