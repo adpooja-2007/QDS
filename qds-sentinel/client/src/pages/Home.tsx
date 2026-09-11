@@ -53,6 +53,7 @@ import { DemonstrationDesk } from "./DemonstrationDesk";
 import { apiClient } from "@/lib/apiClient";
 import { generateAiRemediation, AiRemediationResponse } from "@/lib/groqAiService";
 import { SkeletonKpiGrid, SkeletonTableRows, SkeletonChartBox } from "@/components/ui/skeleton";
+import { downloadThreatPcap } from "@/lib/pcapGenerator";
 
 import MARK from "@/assets/qds-sentinel-mark_81058a94.png";
 import HERO from "@/assets/qds-sentinel-hero_77975680.png";
@@ -1178,29 +1179,19 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
   }, [item, isCritical, isHigh]);
 
   const handleExportThreatPcap = () => {
-    const payload = JSON.stringify({
-      threat_id: item?.id || "THR-104",
+    downloadThreatPcap({
+      id: item?.id || "THR-104",
       severity: item?.severity || "CRITICAL",
       type: item?.type || "Intercept-resend",
-      origin_node: item?.origin || "EVE",
+      origin: item?.origin || "EVE",
       time: item?.time || "23:41:16",
-      metrics: {
-        baseline_qber: baselineVal,
-        measured_qber: qberVal,
-        chsh_score: chshVal,
-        boundary: isCritical ? "HOEFFDING_BOUND_BREACHED (>5.5%)" : "NOMINAL_SIFT"
-      },
-      pqc_defense: isCritical ? "CRYSTALS-Dilithium3 / ML-DSA-65" : "None"
-    }, null, 2);
-
-    const blob = new Blob([payload], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `threat_pcap_${item?.id || "THR"}_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(`Exported forensic payload for ${item?.id || "threat"}`);
+      baselineQber: baselineVal,
+      measuredQber: qberVal,
+      chshScore: chshVal,
+      isCritical: isCritical,
+      pqcDefense: isCritical ? "CRYSTALS-Dilithium3 / ML-DSA-65" : "None"
+    });
+    toast.success(`Exported Wireshark packet capture (.pcap) for ${item?.id || "threat"}`);
   };
 
   return (
