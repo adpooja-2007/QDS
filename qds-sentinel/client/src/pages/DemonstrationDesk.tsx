@@ -41,7 +41,7 @@ function DeskModal({ title, eyebrow, children, onClose }: { title: string; eyebr
   return <div className="modal-backdrop" onClick={onClose}><section className="modal-card demo-desk-modal" role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}><header className="modal-head"><div><span className="eyebrow">{eyebrow}</span><h3>{title}</h3></div><button className="icon-button" aria-label={`Close ${title}`} onClick={onClose}><X size={15} /></button></header>{children}</section></div>;
 }
 
-export default function DemonstrationDesk() {
+export function DemonstrationDesk() {
   const { toggleNotificationCenter, unreadNotificationCount } = useSentinel();
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -75,6 +75,11 @@ export default function DemonstrationDesk() {
     }, Math.max(700, Math.round(2400 / speed)));
     return () => window.clearInterval(interval);
   }, [playing, speed]);
+
+  const beginDrag = (id: NodeId, event: React.PointerEvent<HTMLButtonElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragging(id);
+  };
 
   const updateDrag = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging || !stageRef.current) return;
@@ -198,7 +203,9 @@ export default function DemonstrationDesk() {
     <section className="demo-desk-matrix"><header><div><span>Quantum bitstream & Pauli alignment matrix</span><b>Pulse #{streamPulse}</b></div><button onClick={exportMatrix}><Download size={14} /> Export CSV</button></header><div className="demo-desk-table-wrap"><table><thead><tr><th>PLS</th><th>Alice basis</th><th>Alice bit</th><th>Bob basis</th><th>Bob bit</th><th>Bell state</th><th>Eve int.</th><th>Sift status</th></tr></thead><tbody>{matrixRows.map((row, index) => <tr key={row.pulse} className={index === activePulse ? "demo-desk-matrix-active" : ""}><td>{row.pulse}</td><td>{row.aliceBasis}</td><td>{row.aliceBit}</td><td>{row.bobBasis}</td><td>{row.bobBit}</td><td>{row.bell}</td><td>{eve ? (index % 3 === 0 ? "tap" : "—") : "—"}</td><td className={row.discarded ? "demo-desk-discarded" : "demo-desk-kept"}>{row.discarded ? "Discarded" : "Kept"}</td></tr>)}</tbody></table></div></section>
 
     {showNewSession && <DeskModal eyebrow="Provision / 01" title="New quantum session" onClose={() => setShowNewSession(false)}><p className="modal-copy">Provision a clean authenticated channel at the EPR preparation phase.</p><div className="demo-desk-form"><label>Document<input defaultValue="board-resolution.pdf" /></label><label>Protocol profile<select defaultValue="QDS / 1550nm"><option>QDS / 1550nm</option><option>QDS / test channel</option></select></label></div><button className="button button-copper modal-submit" onClick={() => { setShowNewSession(false); setStep(0); setPlaying(true); toast.success("Quantum session created and active"); }}><Play size={14} fill="currentColor" /> Create & start session</button></DeskModal>}
-    {showSettings && <DeskModal eyebrow="Control plane" title="Simulation settings" onClose={() => setShowSettings(false)}><div className="demo-desk-settings"><span>Playback speed</span><div>{[0.5, 1, 2, 4].map((speed) => <button className={speed === simSpeed ? "demo-desk-speed-active" : ""} key={speed} onClick={() => setSimSpeed(speed)}>{speed}×</button>)}</div></div><p className="modal-copy">Photon flow and phase progression remain synchronized at every speed.</p></DeskModal>}
+    {showSettings && <DeskModal eyebrow="Control plane" title="Simulation settings" onClose={() => setShowSettings(false)}><div className="demo-desk-settings"><span>Playback speed</span><div>{[0.5, 1, 2, 4].map((s) => <button className={s === speed ? "demo-desk-speed-active" : ""} key={s} onClick={() => setSpeed(s)}>{s}×</button>)}</div></div><p className="modal-copy">Photon flow and phase progression remain synchronized at every speed.</p></DeskModal>}
     {showNotifications && <aside className="notification-popover demo-desk-notification"><header><span className="eyebrow">Signal desk</span><button className="icon-button" onClick={() => setShowNotifications(false)} aria-label="Close notifications"><X size={14} /></button></header><strong>{eve ? "Quantum channel disturbance" : "No active alerts"}</strong><p>{eve ? "The intercept path has exceeded the Hoeffding threshold." : "The active optical path remains within nominal tolerance."}</p></aside>}
   </main>;
 }
+
+export default DemonstrationDesk;
