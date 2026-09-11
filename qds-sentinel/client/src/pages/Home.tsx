@@ -109,8 +109,8 @@ function SectionLabel({ index, eyebrow, title, action }: { index: string; eyebro
 }
 
 function Sidebar({ location, isCollapsed, onToggle }: { location: string; isCollapsed: boolean; onToggle: () => void }) {
-  const [monitorTab, setMonitorTab] = useState(() => { const requested = new URLSearchParams(window.location.search).get("section"); return ["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"; });
-  useEffect(() => { const onTab = (event: Event) => setMonitorTab((event as CustomEvent<string>).detail); const onPopState = () => { const requested = new URLSearchParams(window.location.search).get("section"); setMonitorTab(["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"); }; window.addEventListener("qds-monitor-tab", onTab); window.addEventListener("popstate", onPopState); return () => { window.removeEventListener("qds-monitor-tab", onTab); window.removeEventListener("popstate", onPopState); }; }, []);
+  const [monitorTab, setMonitorTab] = useState(() => { const requested = new URLSearchParams(window.location.search).get("section"); return ["overview", "threats", "incidents", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"; });
+  useEffect(() => { const onTab = (event: Event) => setMonitorTab((event as CustomEvent<string>).detail); const onPopState = () => { const requested = new URLSearchParams(window.location.search).get("section"); setMonitorTab(["overview", "threats", "incidents", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"); }; window.addEventListener("qds-monitor-tab", onTab); window.addEventListener("popstate", onPopState); return () => { window.removeEventListener("qds-monitor-tab", onTab); window.removeEventListener("popstate", onPopState); }; }, []);
   return (
     <aside className={cn("operator-rail", isCollapsed && "operator-rail-collapsed")}>
       <div className="rail-top">
@@ -129,7 +129,7 @@ function Sidebar({ location, isCollapsed, onToggle }: { location: string; isColl
       <div className="rail-context"><span className="rail-context-mark" />{location === "/monitoring" ? "SOC monitoring / internal directories" : "Choose an instrument from the home portal"}</div>
       {location === "/monitoring" && (
         <nav className="monitor-rail-nav" aria-label="SOC monitoring sections">
-          {["overview", "threats", "incidents", "sessions", "network", "pqc"].map((item, index) => (
+          {["overview", "threats", "incidents", "network", "pqc"].map((item, index) => (
             <button
               key={item}
               className={cn("monitor-rail-link", monitorTab === item && "monitor-rail-link-active")}
@@ -373,8 +373,21 @@ function BellChart({ threat = false, range = "15M" }: { threat?: boolean; range?
   );
 }
 
-function PhotonTrack({ id, from, to, tone, delay = "0s" }: { id: string; from: { x: number; y: number }; to: { x: number; y: number }; tone: "quantum" | "classical" | "threat"; delay?: string }) {
-  return <g className={cn("photon-track", `photon-track-${tone}`)}><path id={id} d={`M ${from.x} ${from.y} L ${to.x} ${to.y}`} /><g className="photon-particle"><path className="photon-tail" d="M -7 0 H -1" /><circle className="photon-ring" r="2.2" /><circle className="photon-core" r=".8" /><animateMotion dur="2.6s" repeatCount="indefinite" begin={delay} rotate="auto"><mpath href={`#${id}`} /></animateMotion></g></g>;
+function PhotonTrack({ id, from, to, tone, delay = "0s", speed = 1 }: { id: string; from: { x: number; y: number }; to: { x: number; y: number }; tone: "quantum" | "classical" | "threat"; delay?: string; speed?: number }) {
+  const duration = (2.6 / (speed || 1)).toFixed(2) + "s";
+  return (
+    <g className={cn("photon-track", `photon-track-${tone}`)}>
+      <path id={id} d={`M ${from.x} ${from.y} L ${to.x} ${to.y}`} />
+      <g className="photon-particle">
+        <path className="photon-tail" d="M -7 0 H -1" />
+        <circle className="photon-ring" r="2.2" />
+        <circle className="photon-core" r=".8" />
+        <animateMotion key={`${id}-${duration}`} dur={duration} repeatCount="indefinite" begin={delay} rotate="auto">
+          <mpath href={`#${id}`} />
+        </animateMotion>
+      </g>
+    </g>
+  );
 }
 
 function HomePortal() {
@@ -388,7 +401,7 @@ function MonitoringPage() {
   const { eveActive, toggleEve, qber, chsh, telemetryLogs, incidents, activeAttack } = useSentinel();
   const [tab, setTab] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get("section");
-    return ["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(requested ?? "") ? requested! : "overview";
+    return ["overview", "threats", "incidents", "network", "pqc"].includes(requested ?? "") ? requested! : "overview";
   });
   const threat = eveActive;
   const setThreat = toggleEve;
@@ -396,11 +409,10 @@ function MonitoringPage() {
   const [query, setQuery] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
   const [selectedIncident, setSelectedIncident] = useState<any>(null);
-  const [selectedSession, setSelectedSession] = useState<any>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [isolated, setIsolated] = useState<string[]>([]);
-  const selectTab = (nextTab: string) => { if (!["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(nextTab)) return; setTab(nextTab); const params = new URLSearchParams(window.location.search); params.set("section", nextTab); window.history.replaceState({}, "", window.location.pathname + "?" + params.toString()); };
-  useEffect(() => { const onTab = (event: Event) => selectTab((event as CustomEvent<string>).detail); const onPopState = () => { const requested = new URLSearchParams(window.location.search).get("section"); setTab(["overview", "threats", "incidents", "sessions", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"); }; window.addEventListener("qds-monitor-tab", onTab); window.addEventListener("popstate", onPopState); return () => { window.removeEventListener("qds-monitor-tab", onTab); window.removeEventListener("popstate", onPopState); }; }, []);
+  const selectTab = (nextTab: string) => { if (!["overview", "threats", "incidents", "network", "pqc"].includes(nextTab)) return; setTab(nextTab); const params = new URLSearchParams(window.location.search); params.set("section", nextTab); window.history.replaceState({}, "", window.location.pathname + "?" + params.toString()); };
+  useEffect(() => { const onTab = (event: Event) => selectTab((event as CustomEvent<string>).detail); const onPopState = () => { const requested = new URLSearchParams(window.location.search).get("section"); setTab(["overview", "threats", "incidents", "network", "pqc"].includes(requested ?? "") ? requested! : "overview"); }; window.addEventListener("qds-monitor-tab", onTab); window.addEventListener("popstate", onPopState); return () => { window.removeEventListener("qds-monitor-tab", onTab); window.removeEventListener("popstate", onPopState); }; }, []);
   
   const rows = telemetryLogs.map((item) => ({
     ...item,
@@ -429,7 +441,7 @@ function MonitoringPage() {
     </button>
   </span>
 </div>
-{tab === "overview" && <OverviewPanel threat={threat} setThreat={setThreat} range={range} setRange={setRange} filtered={filtered} copyJson={copyJson} exportTelemetry={exportTelemetry} />}{tab === "threats" && <ThreatsPanel threat={threat} onThreat={() => setThreat()} />}{tab === "incidents" && <IncidentsPanel selectedIncident={selectedIncident} setSelectedIncident={setSelectedIncident} />}{tab === "sessions" && <SessionsPanel selectedSession={selectedSession} setSelectedSession={setSelectedSession} />}{tab === "network" && <NetworkPanel selectedNode={selectedNode} setSelectedNode={setSelectedNode} isolatedNodes={isolated} setIsolatedNodes={setIsolated} />}{tab === "pqc" && <PQCDefensePanel threat={threat} onThreat={() => setThreat()} />}<aside className="monitor-inspector"><div className="inspector-head"><span className="eyebrow">{tab === "overview" ? "Live incident" : tab === "threats" ? "Threat inspector" : tab === "incidents" ? "Incident inspector" : tab === "sessions" ? "Session inspector" : tab === "pqc" ? "PQC defense" : "Node inventory"}</span></div>{tab === "overview" && <><div className="inspector-status"><AlertTriangle size={16} /><strong>{threat ? "Critical alarm" : "Recent anomaly"}</strong></div><h3>{threat ? `Active Attack: ${activeAttack}` : "Signature forgery review"}</h3><p>Live evidence and operator actions for the highest-priority boundary event.</p><div className="inspector-list"><div><span>origin node</span><strong>{threat ? "EVE / basis mismatch" : "NODE-104"}</strong></div><div><span>QBER</span><strong className={threat ? "text-copper" : "status-text-good"}>{(qber * 100).toFixed(1)}%</strong></div><div><span>CHSH</span><strong>{chsh.toFixed(2)}</strong></div></div><button className="button button-copper inspector-action" onClick={() => selectTab("incidents")}>Open incident log <ArrowUpRight size={14} /></button></>}{tab === "incidents" && <><div className="inspector-status"><ShieldAlert size={16} /><strong>Forensic queue ({incidents.length})</strong></div><h3>Click a record to inspect</h3><p>Incident evidence, audit timeline, and escalation actions appear here when a row is selected.</p><button className="button button-outline inspector-action" onClick={() => setSelectedIncident(incidents[0] || { id: "INC-104", time: "11:31:08", severity: "CRITICAL", title: "Intercept-resend disturbance", analyst: "A. Kovacs", detail: "QBER 14.2% crossed Hoeffding bound; CHSH collapsed to 1.86." })}>Inspect Latest Incident</button></>}{tab === "sessions" && <><div className="inspector-status good"><Activity size={16} /><strong>12 active streams</strong></div><h3>Session ledger</h3><p>Select a row to open raw JSON evidence and document hash details.</p><button className="button button-outline inspector-action" onClick={() => toast.success("Session ledger synced")}><RefreshCw size={14} /> Sync ledger</button></>}</aside></main></div>;
+{tab === "overview" && <OverviewPanel threat={threat} setThreat={setThreat} range={range} setRange={setRange} filtered={filtered} copyJson={copyJson} exportTelemetry={exportTelemetry} />}{tab === "threats" && <ThreatsPanel threat={threat} onThreat={() => setThreat()} />}{tab === "incidents" && <IncidentsPanel selectedIncident={selectedIncident} setSelectedIncident={setSelectedIncident} />}{tab === "network" && <NetworkPanel selectedNode={selectedNode} setSelectedNode={setSelectedNode} isolatedNodes={isolated} setIsolatedNodes={setIsolated} />}{tab === "pqc" && <PQCDefensePanel threat={threat} onThreat={() => setThreat()} />}<aside className="monitor-inspector"><div className="inspector-head"><span className="eyebrow">{tab === "overview" ? "Live incident" : tab === "threats" ? "Threat inspector" : tab === "incidents" ? "Incident inspector" : tab === "pqc" ? "PQC defense" : "Node inventory"}</span></div>{tab === "overview" && <><div className="inspector-status"><AlertTriangle size={16} /><strong>{threat ? "Critical alarm" : "Recent anomaly"}</strong></div><h3>{threat ? `Active Attack: ${activeAttack}` : "Signature forgery review"}</h3><p>Live evidence and operator actions for the highest-priority boundary event.</p><div className="inspector-list"><div><span>origin node</span><strong>{threat ? "EVE / basis mismatch" : "NODE-104"}</strong></div><div><span>QBER</span><strong className={threat ? "text-copper" : "status-text-good"}>{(qber * 100).toFixed(1)}%</strong></div><div><span>CHSH</span><strong>{chsh.toFixed(2)}</strong></div></div><button className="button button-copper inspector-action" onClick={() => selectTab("incidents")}>Open incident log <ArrowUpRight size={14} /></button></>}{tab === "incidents" && <><div className="inspector-status"><ShieldAlert size={16} /><strong>Forensic queue ({incidents.length})</strong></div><h3>Click a record to inspect</h3><p>Incident evidence, audit timeline, and escalation actions appear here when a row is selected.</p><button className="button button-outline inspector-action" onClick={() => setSelectedIncident(incidents[0] || { id: "INC-104", time: "11:31:08", severity: "CRITICAL", title: "Intercept-resend disturbance", analyst: "A. Kovacs", detail: "QBER 14.2% crossed Hoeffding bound; CHSH collapsed to 1.86." })}>Inspect Latest Incident</button></>}</aside></main></div>;
 
 
 }
@@ -886,17 +898,36 @@ function formatEventGist(rawText?: string, isAlert?: boolean, activeAttack?: str
   if (text.includes('TRANSFER INTERCEPT') || text.includes('Eavesdropping disturbance')) return 'Eavesdropping Tap Detected';
   if (text.includes('Arbitrator verified optical entropy') || text.includes('entropy witness')) return 'Optical Entropy Witness Verified';
   if (text.includes('Physical QDS teleportation signature') || text.includes('Physical QDS signature')) return 'Physical QDS Signature Verified';
-  if (text.includes('Dilithium3 PQC fallback') || text.includes('PQC Fallback')) return 'PQC Fallback Signature Sealed';
+  if (text.includes('Dilithium3 PQC fallback') || text.includes('PQC Fallback') || text.includes('ML-DSA-65')) return 'PQC Fallback Signature Sealed';
   
-  if (text.includes('FINAL VERDICT: ACCEPT') || text.includes('Unconditional signature verification accepted')) return 'Protocol Verified (ACCEPT)';
-  if (text.includes('FINAL VERDICT: REJECT') || text.includes('Non-locality breach')) return 'Protocol Rejected (REJECT)';
-  if (text.includes('SPDC Photon pair distribution') || text.includes('SPDC crystal core')) return 'SPDC Photon Pair Distribution';
-  if (text.includes('BSM') || text.includes('Bell-state measurement')) return 'Alice BSM Projection Executed';
-  if (text.includes('Pauli') || text.includes('σX/σZ') || text.includes('σ_x')) return 'Bob Pauli Frame Restored';
-  if (text.includes('Hoeffding') || text.includes('error test')) return 'Hoeffding Bound Evaluated';
-  if (text.includes('Toeplitz') || text.includes('Privacy amplification') || text.includes('PRIVACY_AMP')) return 'Privacy Amplification Distilled';
+  if (text.includes('FINAL VERDICT: ACCEPT') || text.includes('Unconditional signature verification accepted') || text.includes('[DECISION: ACCEPT]')) return 'Protocol Verified (ACCEPT)';
+  if (text.includes('FINAL VERDICT: REJECT') || text.includes('Non-locality breach') || text.includes('[DECISION: REJECT]')) return 'Protocol Rejected (PQC Fallback)';
+  
+  if (text.includes('SPDC') || text.includes('crystal') || text.includes('Phase 01')) return 'SPDC Photon Pair Emission';
+  if (text.includes('BSM') || text.includes('Bell-state measurement') || text.includes('Bell State Measurement') || text.includes('Phase 02')) return 'Alice Bell Measurement (BSM)';
+  
+  if (text.includes('Pauli') || text.includes('σX') || text.includes('σ_x') || text.includes('Phase 03')) {
+    if (isAlert || text.includes('INTERCEPT') || text.includes('Adversary') || text.includes('EVE')) {
+      return 'Adversarial Optical Tap (Eve)';
+    }
+    return 'Bob Pauli Frame Restored';
+  }
+  
+  if (text.includes('Hoeffding') || text.includes('error test') || text.includes('Phase 04')) {
+    if (isAlert || text.includes('BREACH') || text.includes('breached') || text.includes('0xFA') || text.includes('exceeded') || text.includes('threshold breached')) {
+      return 'Hoeffding Bound Breached';
+    }
+    return 'Hoeffding Bound Verified (Nominal)';
+  }
+  
+  if (text.includes('Toeplitz') || text.includes('Privacy amplification') || text.includes('PRIVACY_AMP') || text.includes('Phase 05')) {
+    if (isAlert || text.includes('aborted') || text.includes('Zeroizing')) {
+      return 'Privacy Amplification Aborted';
+    }
+    return 'Toeplitz Hash Distillation';
+  }
 
-  if (text.includes('CLEAN SIGNATURE')) return 'Clean Channel Restored';
+  if (text.includes('CLEAN SIGNATURE') || text.includes('Channel restored')) return 'Clean Channel Restored';
   if (text.includes('MITM ATTACK') || text.includes('EVE-PROBE')) return 'MitM Optical Probe Injected';
   if (text.includes('FORGERY ATTACK')) return 'Malformed Classical Feed-Forward';
   if (text.includes('REPLAY ATTACK')) return 'Captured Nonce Retransmit';
@@ -911,7 +942,7 @@ function formatEventGist(rawText?: string, isAlert?: boolean, activeAttack?: str
 }
 
 function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson, exportTelemetry }: any) {
-  const { eveActive, qber: globalQber, chsh: globalChsh, activeAttack, pqcMode, remediationReport } = useSentinel();
+  const { eveActive, qber: globalQber, chsh: globalChsh, activeAttack, pqcMode, remediationReport, clearTelemetryLogs } = useSentinel();
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const [activePacket, setActivePacket] = useState<any | null>(null);
 
@@ -1022,7 +1053,12 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
       <div className="overview-v3-ledger">
         <div className="overview-v3-ledger-head">
           <div><span className="eyebrow">Live telemetry stream</span><small>Select any row to inspect & copy packet evidence</small></div>
-          <button className="text-link ledger-export" onClick={exportTelemetry}><Download size={13} /> Export CSV</button>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <button className="text-link" style={{ color: "#94a3b8", fontSize: "12px", cursor: "pointer", background: "none", border: "none", display: "inline-flex", alignItems: "center", gap: "4px" }} onClick={clearTelemetryLogs} title="Clear telemetry table">
+              <RotateCcw size={12} /> Clear stream
+            </button>
+            <button className="text-link ledger-export" onClick={exportTelemetry}><Download size={13} /> Export CSV</button>
+          </div>
         </div>
         <div className="overview-v3-ledger-table" style={{ userSelect: "text", WebkitUserSelect: "text" }}>
           <div className="overview-v3-ledger-row overview-v3-ledger-row-head">
@@ -1045,7 +1081,7 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
                 role="row"
                 tabIndex={0}
               >
-                <span className="mono muted">{item.time}.{String(index + 45).padStart(3, "0")}</span>
+                <span className="mono muted">{item.time ? (item.time.includes('.') ? item.time : `${item.time}.${String(index + 45).padStart(3, "0")}`) : '--:--:--'}</span>
                 <span className={cn("mono", item.isPqc ? "text-blue font-semibold" : item.alert ? "text-copper font-semibold" : "")}>{item.source.replace("_", " ")}</span>
                 <strong style={{ userSelect: "text" }}>{item.event}</strong>
                 <span className={cn("overview-v3-verdict", item.isPqc ? "status-text-good font-semibold" : item.alert ? "overview-v3-verdict-alert" : "")}>{item.classifier}</span>
@@ -1288,11 +1324,12 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
 
 /* Incidents inspector — Signal Atelier pairs forensic precision with warm paper, dark ink, copper intervention, and blue audit detail. */
 function IncidentsPanel({ selectedIncident, setSelectedIncident }: any) {
-  const { incidents, resolveIncident, eveActive, activeAttack } = useSentinel();
+  const { incidents, resolveIncident, escalateIncident, eveActive, activeAttack } = useSentinel();
   const [aiRemediationMap, setAiRemediationMap] = useState<Record<string, AiRemediationResponse>>({});
   const [loadingAiId, setLoadingAiId] = useState<string | null>(null);
 
   const active = incidents.find((item) => item.id === selectedIncident?.id) ?? incidents[0];
+  const isEscalated = active?.status === "ESCALATED";
   const statusClass = (status: string) => status === "RESOLVED" ? "incident-status-resolved" : status === "ESCALATED" ? "incident-status-escalated" : "incident-status-investigating";
   const impactClass = (impact: string) => impact === "CRITICAL" ? "incident-impact-critical" : impact === "HIGH" ? "incident-impact-high" : impact === "MEDIUM" ? "incident-impact-med" : "incident-impact-low";
   const isCritical = active?.impact === "CRITICAL";
@@ -1333,6 +1370,64 @@ function IncidentsPanel({ selectedIncident, setSelectedIncident }: any) {
     } finally {
       setLoadingAiId(null);
     }
+  };
+
+  const handleExportIncidentReport = () => {
+    if (!active) return;
+    const now = new Date().toISOString();
+    const timelineFormatted = (active.events || [
+      ["10:48:16 UTC", "Threat detected", "CRITICAL: Intercept-resend attack detected."],
+      ["10:48:24 UTC", "Threshold exceeded", "QBER breached security cutoff."]
+    ]).map(([t, stage, desc]: any) => `  - [${t}] ${stage}: ${desc}`).join("\n");
+
+    const playbookText = currentPlaybook
+      ? `\n--- AUTOMATED AI REMEDIATION PLAN ---\nModel: ${currentPlaybook.model}\nRecommended Action: ${currentPlaybook.recommendedAction}\nAction Plan:\n${currentPlaybook.remediationPlan}\n\nCLI Commands:\n${currentPlaybook.cliCommands.map((c: string) => `$ ${c}`).join("\n")}\n`
+      : "";
+
+    const reportContent = `================================================================================
+  QDS SENTINEL — QUANTUM SECURITY FORENSIC INCIDENT REPORT
+================================================================================
+Report ID       : REP-${active.id}-${Date.now().toString().slice(-6)}
+Generated At    : ${now}
+System Version  : QDS Sentinel v1.0.0 (Distributed API Framework)
+Security Gate   : Level 5 / Top-Secret Quantum Cryptographic Assurance
+================================================================================
+
+[INCIDENT SUMMARY]
+  Incident ID     : ${active.id}
+  Title           : ${active.title || "Quantum Channel Disturbance"}
+  Status          : ${active.status}
+  Impact Severity : ${active.impact || "CRITICAL"}
+  Assigned Analyst: ${active.assigned}
+  Target Node     : ${active.targetNode || "QN-BOB"}
+  Description     : ${active.detail}
+
+[QUANTUM FORENSIC METRICS]
+  Observed QBER   : ${active.qber || "14.20%"} (Hoeffding Security Cutoff: 5.50%)
+  CHSH Bell Score : S = ${active.chsh || "1.76"} (Classical Limit: S < 2.00, Quantum Bound: S = 2.82)
+  Helstrom Bound  : ${active.helstrom || "P_e ≥ 0.0820"}
+  Trace Distance  : ${active.traceDistance || "D = 0.8360"}
+  Non-locality    : ${parseFloat(String(active.chsh || 1.76)) < 2.0 ? "VIOLATION BREACHED (Superposition Collapsed)" : "SECURE"}
+
+[AUDIT TRAIL & TIMELINE]
+${timelineFormatted}
+${playbookText}
+================================================================================
+  CRYPTOGRAPHIC INTEGRITY SEAL: SHA256-${Math.random().toString(36).substring(2, 15).toUpperCase()}
+  STATUS: VERIFIED BY QDS DISTRIBUTED ARBITRATOR NODE
+================================================================================
+`;
+
+    const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `QDS_Incident_Report_${active.id}_${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`Forensic incident report exported for ${active.id}`);
   };
 
   const currentPlaybook = active?.id ? aiRemediationMap[active.id] : null;
@@ -1475,23 +1570,38 @@ function IncidentsPanel({ selectedIncident, setSelectedIncident }: any) {
         </div>
         <div className="incident-timeline incident-timeline-compact">
           <div className="incident-timeline-title"><span className="eyebrow">Incident timeline</span><strong>{active?.events?.length || 2} stages</strong></div>
-          {(active?.events || [["10:48:16 UTC", "Threat detected", "CRITICAL: Intercept-resend attack detected."], ["10:48:24 UTC", "Threshold exceeded", "QBER breached security cutoff."]]).slice(0, 3).map(([time, title, copy], index) => (
-            <div className="incident-timeline-item" key={time + index}>
-              <i className={cn(index === 1 ? "timeline-marker-alert" : "")} />
-              <div>
-                <span>{time}</span>
-                <strong className={index === 1 ? "text-copper" : ""}>{title}</strong>
-                <p>{copy}</p>
+          {(active?.events || [["10:48:16 UTC", "Threat detected", "CRITICAL: Intercept-resend attack detected."], ["10:48:24 UTC", "Threshold exceeded", "QBER breached security cutoff."]]).map(([time, title, copy], index) => {
+            const isAlert = title.toLowerCase().includes("threat") || title.toLowerCase().includes("escalation") || title.toLowerCase().includes("breach") || index === 1;
+            return (
+              <div className="incident-timeline-item" key={time + index}>
+                <i className={cn(isAlert && "timeline-marker-alert", active?.status === "RESOLVED" && index === 0 && "timeline-marker-resolved")} />
+                <div>
+                  <span>{time}</span>
+                  <strong className={isAlert ? "text-copper" : ""}>{title}</strong>
+                  <p>{copy}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="incident-inspector-actions">
           <span>Set incident status & export report</span>
-          <button className="incident-escalate" onClick={() => toast.error("Escalation package prepared for L3 review")}><ShieldAlert size={15} /> Escalate to L3</button>
+          <button
+            className={cn("incident-escalate", isEscalated && "is-escalated")}
+            style={isEscalated ? { background: "#ad3c2c", borderColor: "#ad3c2c", color: "#ffffff", opacity: 0.95 } : {}}
+            disabled={isEscalated || active?.status === "RESOLVED"}
+            onClick={() => {
+              if (active?.id) {
+                escalateIncident(active.id);
+              }
+            }}
+          >
+            <ShieldAlert size={15} />
+            <span>{isEscalated ? "ESCALATED TO L3 (LEAD TRIAGE ACTIVE)" : "Escalate to L3"}</span>
+          </button>
           <div>
             <button disabled={active?.status === "RESOLVED"} onClick={() => { if (active?.id) resolveIncident(active.id); }}>Mark Resolved</button>
-            <button onClick={() => toast.success("Incident report exported")}><Download size={14} /> Export report</button>
+            <button onClick={handleExportIncidentReport}><Download size={14} /> Export report</button>
           </div>
         </div>
       </aside>
@@ -2018,7 +2128,7 @@ function LegacyDemonstrationPage() {
     setExecutingLive(true);
     try {
       const res = await executeProtocolRun('board-resolution.pdf', eve);
-      goToStep(5);
+      setStep(5);
       setPlaying(false);
       if (res?.verdict?.threat_detected || res?.status === 'REJECTED') {
         toast.error(`Workflow executed & Telemetry Streamed: REJECT (QBER: ${((res?.metrics?.qber ?? 0.142) * 100).toFixed(1)}%, CHSH S=${(res?.metrics?.chsh_score ?? 1.76).toFixed(2)})`);
@@ -2026,7 +2136,7 @@ function LegacyDemonstrationPage() {
         toast.success(`Workflow executed & Telemetry Streamed: ACCEPT (QBER: ${((res?.metrics?.qber ?? 0.016) * 100).toFixed(1)}%, CHSH S=${(res?.metrics?.chsh_score ?? 2.81).toFixed(2)})`);
       }
     } catch {
-      goToStep(5);
+      setStep(5);
       setPlaying(false);
       toast.success("Live signature verification completed & telemetry pushed");
     } finally {
@@ -2034,7 +2144,7 @@ function LegacyDemonstrationPage() {
     }
   };
   const stepCopy = ["The arbitrator pumps an SPDC crystal to produce Bell pairs |Φ⁺⟩ = 1/√2 (|00⟩ + |11⟩) at λ = 1550 nm.", "Alice performs a joint Bell measurement on |ψdoc⟩ and her entangled qubit, producing two classical feed-forward bits (b₁, b₂).", "Bob receives (b₁, b₂) and applies σxᵇ¹ · σzᵇ² to restore quantum-state fidelity.", "The arbitrator samples N test qubits and checks observed QBER against the Hoeffding threshold τ = 5.0%.", "A Toeplitz matrix distills an unforgeable 256-bit quantum one-time-pad signature token.", "The threat engine accepts when QBER ≤ 5.0% and CHSH S ≥ 2.00; otherwise it rejects."];
-  return <div className="page-content demo-page"><Topbar onNotifications={() => setShowNotifications(!showNotifications)} eyebrow="01 / Quantum protocol" title="Alice ↔ Bob" subtitle="Interactive protocol visualizer / session QKD-260827-91F4" action={<><button className="button button-quiet button-small" onClick={() => setShowCreateSession(true)}><Plus size={14} /> New session</button><button className="icon-button" onClick={() => setShowSettings(true)} aria-label="Simulation settings"><Settings2 size={16} /></button><Link href="/home" className="button button-quiet button-small"><ArrowLeft size={14} /> Home portal</Link><Link href="/monitoring" className="button button-outline button-small">SOC monitoring <ArrowUpRight size={14} /></Link></>} /><div className="demo-toolbar"><div className="demo-session"><span className="mini-label"><StatusDot /> active session</span><strong>QKD-260827-91F4</strong></div><div className="demo-controls"><button className={cn("button button-quiet button-small", playing && "button-active")} onClick={() => { const nextPlaying = !playing; setPlaying(nextPlaying); if (nextPlaying) logPhaseTelemetry(step); }}>{playing ? <Pause size={14} /> : <Play size={14} fill="currentColor" />} {playing ? "Pause" : "Play"}</button><button className="button button-outline button-small" onClick={() => goToStep(step >= 5 ? 0 : step + 1)}>Step forward <ChevronRight size={14} /></button><button className="icon-button" onClick={() => { goToStep(0); setPlaying(false); }} aria-label="Reset protocol"><RotateCcw size={15} /></button><button className="button button-copper button-small" disabled={executingLive} onClick={handleExecuteLive}>{executingLive ? <RefreshCw size={14} className="spin" /> : <Zap size={14} />} {executingLive ? "Executing…" : "Execute live protocol"}</button></div></div><div className="step-tracker"><div className="step-rail" aria-hidden="true"><span className="step-rail-fill" style={{ width: `${(step / (steps.length - 1)) * 100}%` }} /></div><span className="step-cursor" aria-hidden="true" style={{ "--step-index": step } as React.CSSProperties} />{steps.map((label, i) => <button key={label} className={cn("step-item", i === step && "step-current", i < step && "step-done")} onClick={() => goToStep(i)}><span className="step-num">{i < step ? <Check size={12} /> : `0${i + 1}`}</span><span>{label}</span></button>)}</div><section className="protocol-board"><div className="protocol-intro"><div><span className="eyebrow">Phase 0{step + 1} / 06 · {stepMeta[step]}</span><h2>{steps[step]}</h2><p>{stepCopy[step]}</p><div className="protocol-metrics"><span><b>QBER</b>{currentQber}</span><span><b>CHSH S</b>{currentChsh}</span><span><b>τ cutoff</b>5.0%</span></div></div><div className="protocol-readout"><span>decision</span><strong className={eve ? "text-copper" : "text-blue"}>{eve ? "REJECT" : step === 5 ? "ACCEPT" : "PENDING"}</strong><small>{eve ? "disturbance detected" : step === 5 ? "all gates clear" : "awaiting next phase"}</small></div></div><div key={step} ref={stageRef} className={cn("channel-stage", eve && "channel-stage-threat", playing && "flow-playing", `phase-${step}`)} onPointerMove={moveNode} onPointerUp={endNodeDrag} onPointerCancel={endNodeDrag}><div className="flow-progress" aria-label={`Protocol phase ${step + 1} of 6`}>{steps.map((label, i) => <span key={label} className={cn(i === step && "flow-progress-current", i < step && "flow-progress-done")} />)}</div><svg className="connection-map" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line className="connection-line connection-optical" x1={nodePositions.arb.x} y1={nodePositions.arb.y} x2={nodePositions.alice.x} y2={nodePositions.alice.y} /><line className="connection-line connection-optical" x1={nodePositions.arb.x} y1={nodePositions.arb.y} x2={(eve ? nodePositions.eve.x : nodePositions.bob.x)} y2={(eve ? nodePositions.eve.y : nodePositions.bob.y)} /><line className={cn("connection-line", eve ? "connection-threat-route" : "connection-classical")} x1={(eve ? nodePositions.eve.x : nodePositions.alice.x)} y1={(eve ? nodePositions.eve.y : nodePositions.alice.y)} x2={nodePositions.bob.x} y2={nodePositions.bob.y} /><circle className="connection-anchor" cx={nodePositions.arb.x} cy={nodePositions.arb.y} r="1.1" /><circle className="connection-anchor" cx={nodePositions.alice.x} cy={nodePositions.alice.y} r="1.1" /><circle className="connection-anchor" cx={nodePositions.bob.x} cy={nodePositions.bob.y} r="1.1" /></svg><svg className="photon-system" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><PhotonTrack id="route-arb-alice" from={nodePositions.arb} to={nodePositions.alice} tone={eve ? "threat" : "quantum"} delay="-.2s" />{eve ? <><PhotonTrack id="route-arb-eve" from={nodePositions.arb} to={nodePositions.eve} tone="threat" delay="-.8s" /><PhotonTrack id="route-eve-bob" from={nodePositions.eve} to={nodePositions.bob} tone="threat" delay="-1.4s" /></> : <PhotonTrack id="route-arb-bob" from={nodePositions.arb} to={nodePositions.bob} tone="quantum" delay="-.95s" />}</svg><div className="stage-label stage-label-top">Optical channel <span>authenticated / 1550nm</span></div><div className={cn("protocol-node", "node-alice", "movable-node", dragging === "alice" && "node-dragging", step === 1 && "node-active", "compact-node")} style={{ left: `${nodePositions.alice.x}%`, top: `${nodePositions.alice.y}%` }} onPointerDown={(event) => beginNodeDrag("alice", event)}><div className="protocol-node-icon"><FileKey2 size={20} /></div><strong>ALICE</strong><span>node A / signer</span><div className="node-readout"><span>document hash</span><b>af7c…e91b</b></div></div><div className={cn("protocol-node", "node-arb", "movable-node", dragging === "arb" && "node-dragging", step === 0 && "node-active", "compact-node")} style={{ left: `${nodePositions.arb.x}%`, top: `${nodePositions.arb.y}%` }} onPointerDown={(event) => beginNodeDrag("arb", event)}><div className="protocol-node-icon"><Sparkles size={20} /></div><strong>ARBITRATOR</strong><span>entangled source</span><div className="node-readout"><span>EPR pairs</span><b>100 / 100</b></div></div><div className={cn("protocol-node", "node-bob", "movable-node", dragging === "bob" && "node-dragging", step === 3 && "node-active", "compact-node")} style={{ left: `${nodePositions.bob.x}%`, top: `${nodePositions.bob.y}%` }} onPointerDown={(event) => beginNodeDrag("bob", event)}><div className="protocol-node-icon"><ShieldCheck size={20} /></div><strong>BOB</strong><span>node B / verifier</span><div className="node-readout"><span>Pauli frame</span><b>{step >= 3 ? "σXZ aligned" : "awaiting bits"}</b></div></div><div className={cn("protocol-node", "node-eve", "movable-node", dragging === "eve" && "node-dragging", eve && "node-active", "compact-node")} style={{ left: `${nodePositions.eve.x}%`, top: `${nodePositions.eve.y}%` }} onPointerDown={(event) => beginNodeDrag("eve", event)}><div className="protocol-node-icon"><AlertTriangle size={20} /></div><strong>EVE</strong><span>adversary / isolated</span><div className="node-readout"><span>intercept rate</span><b>{eve ? "35% active" : "0% idle"}</b></div></div><div className="stage-label stage-label-bottom"><span>classical channel / authenticated</span><span>γ photon stream / entangled pair</span></div></div><div className="protocol-controls"><div className="control-copy"><span className="eyebrow">Adversarial simulation</span><strong>Man-in-the-middle interception</strong><span>Toggle to observe a broken Bell correlation across all pages.</span></div><button className={cn("switch", eve && "switch-on")} onClick={() => toggleEve()} aria-pressed={eve}><span className="switch-thumb" /> <span>{eve ? "Eve active" : "Eve idle"}</span></button></div></section><section className="bitstream-section"><SectionLabel index="03" eyebrow="Evidence sample" title="Quantum bitstream & Pauli alignment" action={<div className="evidence-actions"><Pill tone="blue">{matrixRows.filter((row) => !row.discarded).length} kept / {matrixRows.filter((row) => row.discarded).length} dropped</Pill><button className="button button-quiet button-small" onClick={exportMatrix}><Download size={14} /> Export Matrix CSV</button></div>} /><div className="bitstream-table-wrap"><table className="data-table bitstream-table"><thead><tr><th>pulse</th><th>Alice basis</th><th>raw bit</th><th>Bell outcome</th><th>Bob basis</th><th>Pauli</th><th>sifting</th></tr></thead><tbody>{matrixRows.map((row) => <tr key={row.pulse}><td className="mono">{row.pulse}</td><td>{row.aliceBasis}</td><td className="mono">{row.aliceBit}</td><td className="mono">{row.bell}</td><td>{row.bobBasis}</td><td className="mono">{row.bobBit}</td><td><Pill tone={row.discarded || row.intercepted ? "copper" : "good"}>{row.discarded ? "DISCARDED" : row.intercepted ? "QBER ERROR" : "KEPT"}</Pill></td></tr>)}</tbody></table></div></section>{showCreateSession && <div className="modal-backdrop" onClick={() => setShowCreateSession(false)}><div className="modal-card" onClick={(event) => event.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">Provision / 01</span><h3>New quantum session</h3></div><button className="icon-button" onClick={() => setShowCreateSession(false)} aria-label="Close new session"><X size={15} /></button></div><p className="modal-copy">Create a clean handshake session and begin at the EPR preparation phase.</p><div className="form-grid"><label>Document<input defaultValue="board-resolution.pdf" /></label><label>Protocol profile<select defaultValue="QDS / 1550nm"><option>QDS / 1550nm</option><option>QDS / test channel</option></select></label></div><button className="button button-copper modal-submit" onClick={() => { setShowCreateSession(false); goToStep(0); setPlaying(true); toast.success("Quantum Session created & active"); }}><Play size={14} fill="currentColor" /> Create & start session</button></div></div>}{showSettings && <div className="modal-backdrop" onClick={() => setShowSettings(false)}><div className="modal-card modal-card-small" onClick={(event) => event.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">Control plane</span><h3>Simulation settings</h3></div><button className="icon-button" onClick={() => setShowSettings(false)} aria-label="Close settings"><X size={15} /></button></div><div className="settings-row"><span>Playback speed</span><div className="speed-pills">{[0.5, 1, 2, 4].map((speed) => <button key={speed} className={cn("speed-pill", simSpeed === speed && "speed-pill-active")} onClick={() => setSimSpeed(speed)}>{speed}x</button>)}</div></div><div className="settings-note"><Gauge size={14} /> Photon velocity and auto-advance interval update together.</div></div></div>}{showNotifications && <div className="notification-popover"><div className="modal-head"><div><span className="eyebrow">Signal desk</span><h3>Notifications</h3></div><button className="icon-button" onClick={() => setShowNotifications(false)} aria-label="Close notifications"><X size={14} /></button></div><div className="notification-item"><span className="notification-mark" /><div><strong>{eve ? "Quantum channel intrusion" : "No active alerts"}</strong><span>{eve ? "35% intercept tap is disturbing Bell correlation." : "The current session is within nominal tolerance."}</span></div></div>{eve && <button className="text-link notification-clear" onClick={() => { toggleEve(); setShowNotifications(false); }}>Clear active alert</button>}</div>}</div>;
+  return <div className="page-content demo-page"><Topbar onNotifications={() => setShowNotifications(!showNotifications)} eyebrow="01 / Quantum protocol" title="Alice ↔ Bob" subtitle="Interactive protocol visualizer / session QKD-260827-91F4" action={<><button className="button button-quiet button-small" onClick={() => setShowCreateSession(true)}><Plus size={14} /> New session</button><button className="icon-button" onClick={() => setShowSettings(true)} aria-label="Simulation settings" title="Simulation speed & settings"><Settings2 size={16} /></button><Link href="/home" className="button button-quiet button-small"><ArrowLeft size={14} /> Home portal</Link><Link href="/monitoring" className="button button-outline button-small">SOC monitoring <ArrowUpRight size={14} /></Link></>} /><div className="demo-toolbar"><div className="demo-session"><span className="mini-label"><StatusDot /> active session</span><strong>QKD-260827-91F4</strong></div><div className="demo-controls" style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}><button className={cn("button button-quiet button-small", playing && "button-active")} onClick={() => { const nextPlaying = !playing; setPlaying(nextPlaying); if (nextPlaying) logPhaseTelemetry(step); }}>{playing ? <Pause size={14} /> : <Play size={14} fill="currentColor" />} {playing ? "Pause" : "Play"}</button><button className="button button-outline button-small" onClick={() => goToStep(step >= 5 ? 0 : step + 1)}>Step forward <ChevronRight size={14} /></button><button className="icon-button" onClick={() => { goToStep(0); setPlaying(false); }} aria-label="Reset protocol" title="Reset protocol to step 1"><RotateCcw size={15} /></button><button className="button button-copper button-small" disabled={executingLive} onClick={handleExecuteLive}>{executingLive ? <RefreshCw size={14} className="spin" /> : <Zap size={14} />} {executingLive ? "Executing…" : "Execute live protocol"}</button></div></div><div className="step-tracker"><div className="step-rail" aria-hidden="true"><span className="step-rail-fill" style={{ width: `${(step / (steps.length - 1)) * 100}%` }} /></div><span className="step-cursor" aria-hidden="true" style={{ "--step-index": step } as React.CSSProperties} />{steps.map((label, i) => <button key={label} className={cn("step-item", i === step && "step-current", i < step && "step-done")} onClick={() => goToStep(i)}><span className="step-num">{i < step ? <Check size={12} /> : `0${i + 1}`}</span><span>{label}</span></button>)}</div><section className="protocol-board"><div className="protocol-intro"><div><span className="eyebrow">Phase 0{step + 1} / 06 · {stepMeta[step]}</span><h2>{steps[step]}</h2><p>{stepCopy[step]}</p><div className="protocol-metrics"><span><b>QBER</b>{currentQber}</span><span><b>CHSH S</b>{currentChsh}</span><span><b>τ cutoff</b>5.0%</span></div></div><div className="protocol-readout"><span>decision</span><strong className={eve ? "text-copper" : "text-blue"}>{eve ? "REJECT" : step === 5 ? "ACCEPT" : "PENDING"}</strong><small>{eve ? "disturbance detected" : step === 5 ? "all gates clear" : "awaiting next phase"}</small></div></div><div key={`stage-${step}-${simSpeed}`} ref={stageRef} style={{ "--sim-speed": simSpeed } as React.CSSProperties} className={cn("channel-stage", eve && "channel-stage-threat", playing && "flow-playing", `phase-${step}`)} onPointerMove={moveNode} onPointerUp={endNodeDrag} onPointerCancel={endNodeDrag}><div className="flow-progress" aria-label={`Protocol phase ${step + 1} of 6`}>{steps.map((label, i) => <span key={label} className={cn(i === step && "flow-progress-current", i < step && "flow-progress-done")} />)}</div><svg className="connection-map" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line className="connection-line connection-optical" x1={nodePositions.arb.x} y1={nodePositions.arb.y} x2={nodePositions.alice.x} y2={nodePositions.alice.y} /><line className="connection-line connection-optical" x1={nodePositions.arb.x} y1={nodePositions.arb.y} x2={(eve ? nodePositions.eve.x : nodePositions.bob.x)} y2={(eve ? nodePositions.eve.y : nodePositions.bob.y)} /><line className={cn("connection-line", eve ? "connection-threat-route" : "connection-classical")} x1={(eve ? nodePositions.eve.x : nodePositions.alice.x)} y1={(eve ? nodePositions.eve.y : nodePositions.alice.y)} x2={nodePositions.bob.x} y2={nodePositions.bob.y} /><circle className="connection-anchor" cx={nodePositions.arb.x} cy={nodePositions.arb.y} r="1.1" /><circle className="connection-anchor" cx={nodePositions.alice.x} cy={nodePositions.alice.y} r="1.1" /><circle className="connection-anchor" cx={nodePositions.bob.x} cy={nodePositions.bob.y} r="1.1" /></svg><svg key={`photon-svg-${simSpeed}`} className="photon-system" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><PhotonTrack key={`arb-alice-${simSpeed}`} id="route-arb-alice" from={nodePositions.arb} to={nodePositions.alice} tone={eve ? "threat" : "quantum"} delay="-.2s" speed={simSpeed} />{eve ? <><PhotonTrack key={`arb-eve-${simSpeed}`} id="route-arb-eve" from={nodePositions.arb} to={nodePositions.eve} tone="threat" delay="-.8s" speed={simSpeed} /><PhotonTrack key={`eve-bob-${simSpeed}`} id="route-eve-bob" from={nodePositions.eve} to={nodePositions.bob} tone="threat" delay="-1.4s" speed={simSpeed} /></> : <PhotonTrack key={`arb-bob-${simSpeed}`} id="route-arb-bob" from={nodePositions.arb} to={nodePositions.bob} tone="quantum" delay="-.95s" speed={simSpeed} />}</svg><div className="stage-label stage-label-top">Optical channel <span>authenticated / 1550nm</span></div><div className={cn("protocol-node", "node-alice", "movable-node", dragging === "alice" && "node-dragging", step === 1 && "node-active", "compact-node")} style={{ left: `${nodePositions.alice.x}%`, top: `${nodePositions.alice.y}%` }} onPointerDown={(event) => beginNodeDrag("alice", event)}><div className="protocol-node-icon"><FileKey2 size={20} /></div><strong>ALICE</strong><span>node A / signer</span><div className="node-readout"><span>document hash</span><b>af7c…e91b</b></div></div><div className={cn("protocol-node", "node-arb", "movable-node", dragging === "arb" && "node-dragging", step === 0 && "node-active", "compact-node")} style={{ left: `${nodePositions.arb.x}%`, top: `${nodePositions.arb.y}%` }} onPointerDown={(event) => beginNodeDrag("arb", event)}><div className="protocol-node-icon"><Sparkles size={20} /></div><strong>ARBITRATOR</strong><span>entangled source</span><div className="node-readout"><span>EPR pairs</span><b>100 / 100</b></div></div><div className={cn("protocol-node", "node-bob", "movable-node", dragging === "bob" && "node-dragging", step === 3 && "node-active", "compact-node")} style={{ left: `${nodePositions.bob.x}%`, top: `${nodePositions.bob.y}%` }} onPointerDown={(event) => beginNodeDrag("bob", event)}><div className="protocol-node-icon"><ShieldCheck size={20} /></div><strong>BOB</strong><span>node B / verifier</span><div className="node-readout"><span>Pauli frame</span><b>{step >= 3 ? "σXZ aligned" : "awaiting bits"}</b></div></div><div className={cn("protocol-node", "node-eve", "movable-node", dragging === "eve" && "node-dragging", eve && "node-active", "compact-node")} style={{ left: `${nodePositions.eve.x}%`, top: `${nodePositions.eve.y}%` }} onPointerDown={(event) => beginNodeDrag("eve", event)}><div className="protocol-node-icon"><AlertTriangle size={20} /></div><strong>EVE</strong><span>adversary / isolated</span><div className="node-readout"><span>intercept rate</span><b>{eve ? "35% active" : "0% idle"}</b></div></div><div className="stage-label stage-label-bottom"><span>classical channel / authenticated</span><span>γ photon stream / entangled pair</span></div></div><div className="protocol-controls"><div className="control-copy"><span className="eyebrow">Adversarial simulation</span><strong>Man-in-the-middle interception</strong><span>Toggle to observe a broken Bell correlation across all pages.</span></div><button className={cn("switch", eve && "switch-on")} onClick={() => toggleEve()} aria-pressed={eve}><span className="switch-thumb" /> <span>{eve ? "Eve active" : "Eve idle"}</span></button></div></section><section className="bitstream-section"><SectionLabel index="03" eyebrow="Evidence sample" title="Quantum bitstream & Pauli alignment" action={<div className="evidence-actions"><Pill tone="blue">{matrixRows.filter((row) => !row.discarded).length} kept / {matrixRows.filter((row) => row.discarded).length} dropped</Pill><button className="button button-quiet button-small" onClick={exportMatrix}><Download size={14} /> Export Matrix CSV</button></div>} /><div className="bitstream-table-wrap"><table className="data-table bitstream-table"><thead><tr><th>pulse</th><th>Alice basis</th><th>raw bit</th><th>Bell outcome</th><th>Bob basis</th><th>Pauli</th><th>sifting</th></tr></thead><tbody>{matrixRows.map((row) => <tr key={row.pulse}><td className="mono">{row.pulse}</td><td>{row.aliceBasis}</td><td className="mono">{row.aliceBit}</td><td className="mono">{row.bell}</td><td>{row.bobBasis}</td><td className="mono">{row.bobBit}</td><td><Pill tone={row.discarded || row.intercepted ? "copper" : "good"}>{row.discarded ? "DISCARDED" : row.intercepted ? "QBER ERROR" : "KEPT"}</Pill></td></tr>)}</tbody></table></div></section>{showCreateSession && <div className="modal-backdrop" onClick={() => setShowCreateSession(false)}><div className="modal-card" onClick={(event) => event.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">Provision / 01</span><h3>New quantum session</h3></div><button className="icon-button" onClick={() => setShowCreateSession(false)} aria-label="Close new session"><X size={15} /></button></div><p className="modal-copy">Create a clean handshake session and begin at the EPR preparation phase.</p><div className="form-grid"><label>Document<input defaultValue="board-resolution.pdf" /></label><label>Protocol profile<select defaultValue="QDS / 1550nm"><option>QDS / 1550nm</option><option>QDS / test channel</option></select></label></div><button className="button button-copper modal-submit" onClick={() => { setShowCreateSession(false); goToStep(0); setPlaying(true); toast.success("Quantum Session created & active"); }}><Play size={14} fill="currentColor" /> Create & start session</button></div></div>}{showSettings && <div className="modal-backdrop" onClick={() => setShowSettings(false)}><div className="modal-card modal-card-small" onClick={(event) => event.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">Control plane</span><h3>Simulation settings</h3></div><button className="icon-button" onClick={() => setShowSettings(false)} aria-label="Close settings"><X size={15} /></button></div><div className="settings-row"><span>Playback speed</span><div className="speed-pills">{[0.5, 1, 2, 4].map((speed) => <button key={speed} className={cn("speed-pill", simSpeed === speed && "speed-pill-active")} onClick={() => { setSimSpeed(speed); toast.info(`Playback speed set to ${speed}×`); }}>{speed}x</button>)}</div></div><div className="settings-note"><Gauge size={14} /> Photon velocity and auto-advance interval update together.</div></div></div>}{showNotifications && <div className="notification-popover"><div className="modal-head"><div><span className="eyebrow">Signal desk</span><h3>Notifications</h3></div><button className="icon-button" onClick={() => setShowNotifications(false)} aria-label="Close notifications"><X size={14} /></button></div><div className="notification-item"><span className="notification-mark" /><div><strong>{eve ? "Quantum channel intrusion" : "No active alerts"}</strong><span>{eve ? "35% intercept tap is disturbing Bell correlation." : "The current session is within nominal tolerance."}</span></div></div>{eve && <button className="text-link notification-clear" onClick={() => { toggleEve(); setShowNotifications(false); }}>Clear active alert</button>}</div>}</div>;
 }
 
 function DemonstrationPage() {

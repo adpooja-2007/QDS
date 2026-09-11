@@ -91,7 +91,9 @@ export interface SentinelContextType {
   sendTransmission: (payload: { mode: 'message' | 'document'; message?: string; file?: File | null; digest?: string | null }) => Promise<void>;
   resetChannel: () => void;
   resolveIncident: (id: string) => void;
+  escalateIncident: (id: string) => void;
   quarantineNode: (nodeId: string) => void;
+  clearTelemetryLogs: () => void;
 }
 
 const SentinelContext = createContext<SentinelContextType | undefined>(undefined);
@@ -115,12 +117,19 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const stored = localStorage.getItem('qds_telemetry_logs');
       if (stored) return JSON.parse(stored);
-    } catch {}
+    } catch { }
+    const now = Date.now();
+    const formatRelTime = (offsetMs: number) => {
+      const d = new Date(now - offsetMs);
+      const timeStr = d.toTimeString().split(' ')[0];
+      const ms = Math.floor(100 + Math.random() * 899);
+      return `${timeStr}.${ms}`;
+    };
     return [
-      { id: 'evt-0', time: '11:48:09.102', source: 'ARB-CORE', text: 'SPDC photon pair routed to Alice & Bob via Dark Fiber Link 1', ms: '12ms', code: '200 OK', qber: '1.9%', chsh: '2.78' },
-      { id: 'evt-1', time: '11:47:52.884', source: 'QN-ALICE', text: 'Joint Bell State Measurement completed for session QKD-260827-91F4', ms: '18ms', code: '200 OK', qber: '1.9%', chsh: '2.76' },
-      { id: 'evt-2', time: '11:46:12.441', source: 'EVE-PROBE', text: 'Hoeffding statistical bound audit passed · QBER <= 5.50%', ms: '20ms', code: '200 OK', qber: '1.9%', chsh: '2.78' },
-      { id: 'evt-3', time: '11:45:03.912', source: 'PRIVACY_AMP', text: 'Toeplitz hash distillation: 1024 raw bits -> 256 secure entropy bits', ms: '9ms', code: '200 OK', qber: '1.9%', chsh: '2.76' },
+      { id: 'evt-0', time: formatRelTime(1200), source: 'ARB-CORE', text: 'SPDC photon pair routed to Alice & Bob via Dark Fiber Link 1', ms: '12ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'qds_entropy.sig' },
+      { id: 'evt-1', time: formatRelTime(4800), source: 'QN-ALICE', text: 'Joint Bell State Measurement completed for session QKD-260827-91F4', ms: '18ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'board-resolution.pdf' },
+      { id: 'evt-2', time: formatRelTime(11500), source: 'HOEFFDING-GATE', text: 'Hoeffding statistical bound audit passed · QBER <= 5.50%', ms: '20ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'orbital-telemetry.pdf' },
+      { id: 'evt-3', time: formatRelTime(24000), source: 'PRIVACY_AMP', text: 'Toeplitz hash distillation: 1024 raw bits -> 256 secure entropy bits', ms: '9ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'DEFENSE-09' },
     ];
   });
 
@@ -133,14 +142,14 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           setActiveAttack(payload.attackTitle);
           const isAtk = payload.attackTitle !== 'Clean signature';
           setEveActive(isAtk);
-          try { localStorage.setItem('qds_eve_active', String(isAtk)); } catch {}
+          try { localStorage.setItem('qds_eve_active', String(isAtk)); } catch { }
         }
         if (payload?.qber) setQber(payload.qber);
         if (payload?.chsh) setChsh(payload.chsh);
         if (payload?.newEvents) {
           setTelemetryLogs(prev => {
             const next = [...payload.newEvents, ...prev].slice(0, 100);
-            try { localStorage.setItem('qds_telemetry_logs', JSON.stringify(next)); } catch {}
+            try { localStorage.setItem('qds_telemetry_logs', JSON.stringify(next)); } catch { }
             return next;
           });
         }
@@ -154,7 +163,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (payload?.newEvents) {
           setTelemetryLogs(prev => {
             const next = [...payload.newEvents, ...prev].slice(0, 100);
-            try { localStorage.setItem('qds_telemetry_logs', JSON.stringify(next)); } catch {}
+            try { localStorage.setItem('qds_telemetry_logs', JSON.stringify(next)); } catch { }
             return next;
           });
         }
@@ -167,13 +176,13 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } else if (msgType === 'CHANNEL_RESTORED') {
         setActiveAttack('Clean signature');
         setEveActive(false);
-        try { localStorage.setItem('qds_eve_active', 'false'); } catch {}
+        try { localStorage.setItem('qds_eve_active', 'false'); } catch { }
         setQber(0.019);
         setChsh(2.76);
         if (payload?.newEvents) {
           setTelemetryLogs(prev => {
             const next = [...payload.newEvents, ...prev].slice(0, 100);
-            try { localStorage.setItem('qds_telemetry_logs', JSON.stringify(next)); } catch {}
+            try { localStorage.setItem('qds_telemetry_logs', JSON.stringify(next)); } catch { }
             return next;
           });
         }
@@ -185,7 +194,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       bc.onmessage = (event) => {
         handlePayload(event.data?.type, event.data?.payload);
       };
-    } catch {}
+    } catch { }
 
     const handleCustomEvent = (e: any) => {
       if (e.detail) {
@@ -196,9 +205,17 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     return () => {
       window.removeEventListener('qds_quantum_telemetry', handleCustomEvent);
-      try { bc?.close(); } catch {}
+      try { bc?.close(); } catch { }
     };
   }, []);
+
+  const clearTelemetryLogs = () => {
+    setTelemetryLogs([]);
+    try {
+      localStorage.removeItem('qds_telemetry_logs');
+    } catch { }
+    toast.success("Telemetry logs cleared");
+  };
 
   const [incidents, setIncidents] = useState<IncidentItem[]>([
     {
@@ -484,35 +501,31 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       const qberFormatted = `${(targetQber * 100).toFixed(1)}%`;
       const chshFormatted = targetChsh.toFixed(2);
       const isNoise = attackTitle.includes("Noise");
+      const baseNow = Date.now();
+      const formatTimeWithOffset = (msOffset: number) => {
+        const d = new Date(baseNow + msOffset);
+        const timeStr = d.toTimeString().split(' ')[0];
+        const ms = String(d.getMilliseconds()).padStart(3, '0');
+        return `${timeStr}.${ms}`;
+      };
+
       setPqcMode(true);
       const newEvents: TelemetryItem[] = [
         {
-          id: `evt-${Date.now()}-1`,
-          time: nowStr,
-          source: 'EVE-PROBE',
-          text: `[ATTACK ACTIVE: ${attackTitle.toUpperCase()}] Adversarial optical disturbance injected · QBER elevated (${qberFormatted})`,
-          ms: '14ms',
-          code: '403 FORBIDDEN',
+          id: `evt-${Date.now()}-4`,
+          time: formatTimeWithOffset(145),
+          source: 'PQC-GATEWAY',
+          text: `[PQC FALLBACK SUCCESS] Channel hot-swapped to CRYSTALS-Dilithium3 (ML-DSA-65) + ML-KEM-768 · Communication 100% secured`,
+          ms: '4ms',
+          code: '200 OK',
           qber: qberFormatted,
           chsh: chshFormatted,
           payloadContent: 'board-resolution.pdf',
-          isThreat: true
-        },
-        {
-          id: `evt-${Date.now()}-2`,
-          time: nowStr,
-          source: 'HOEFFDING-AUDIT',
-          text: `Hoeffding bound breached: QBER ${qberFormatted} > 5.50% cutoff limit`,
-          ms: '8ms',
-          code: '0xFA BREACH',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: true
+          isThreat: false
         },
         {
           id: `evt-${Date.now()}-3`,
-          time: nowStr,
+          time: formatTimeWithOffset(95),
           source: 'BELL-WITNESS',
           text: `CHSH Bell test failed: S=${chshFormatted} collapsed to classical limit (S < 2.00)`,
           ms: '19ms',
@@ -523,16 +536,28 @@ AUTOMATED REMEDIATION PLAN EXECUTED
           isThreat: true
         },
         {
-          id: `evt-${Date.now()}-4`,
-          time: nowStr,
-          source: 'PQC-GATEWAY',
-          text: `[PQC FALLBACK SUCCESS] Channel hot-swapped to CRYSTALS-Dilithium3 (ML-DSA-65) + ML-KEM-768 · Communication 100% secured`,
-          ms: '4ms',
-          code: '200 OK',
+          id: `evt-${Date.now()}-2`,
+          time: formatTimeWithOffset(40),
+          source: 'HOEFFDING-AUDIT',
+          text: `Hoeffding bound breached: QBER ${qberFormatted} > 5.50% cutoff limit`,
+          ms: '8ms',
+          code: '0xFA BREACH',
           qber: qberFormatted,
           chsh: chshFormatted,
           payloadContent: 'board-resolution.pdf',
-          isThreat: false
+          isThreat: true
+        },
+        {
+          id: `evt-${Date.now()}-1`,
+          time: formatTimeWithOffset(0),
+          source: 'EVE-PROBE',
+          text: `[ATTACK ACTIVE: ${attackTitle.toUpperCase()}] Adversarial optical disturbance injected · QBER elevated (${qberFormatted})`,
+          ms: '14ms',
+          code: '403 FORBIDDEN',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: true
         }
       ];
       setTelemetryLogs((prev) => [...newEvents, ...prev]);
@@ -544,7 +569,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         origin: 'ATTACK SANDBOX / EVE',
         badge: 'ACTIVE ATTACK',
         type: `Live Injection: ${attackTitle}`,
-        time: nowStr.slice(0, 8),
+        time: formatTimeWithOffset(145).slice(0, 8),
         baseline: '1.9%',
         current: qberFormatted,
         detail: `Adversarial scenario "${attackTitle}" injected from sandbox. QBER=${qberFormatted}, CHSH S=${chshFormatted}. PQC fallback ready.`,
@@ -589,13 +614,13 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         const bc = new BroadcastChannel('qds_quantum_telemetry');
         bc.postMessage({ type: 'ATTACK_TRIGGERED', payload: { attackTitle, qber: targetQber, chsh: targetChsh, newEvents, newThreat, newInc } });
         bc.close();
-      } catch {}
+      } catch { }
 
       try {
         localStorage.setItem('qds_active_attack', attackTitle);
         localStorage.setItem('qds_qber', targetQber.toString());
         localStorage.setItem('qds_chsh', targetChsh.toString());
-      } catch {}
+      } catch { }
 
       toast.error(`[SOC DASHBOARD UPDATED] ${attackTitle} active! Metrics, Incidents, Threats & Live Telemetry synced.`);
     } else {
@@ -654,13 +679,13 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         const bc = new BroadcastChannel('qds_quantum_telemetry');
         bc.postMessage({ type: 'CHANNEL_RESTORED', payload: { attackTitle: 'Clean signature', qber: 0.019, chsh: 2.76, newEvents: cleanEvents } });
         bc.close();
-      } catch {}
+      } catch { }
 
       try {
         localStorage.setItem('qds_active_attack', 'Clean signature');
         localStorage.setItem('qds_qber', '0.019');
         localStorage.setItem('qds_chsh', '2.76');
-      } catch {}
+      } catch { }
 
       toast.success("[SOC DASHBOARD UPDATED] Clean channel & nominal telemetry restored.");
     }
@@ -731,7 +756,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         }
       });
       bc.close();
-    } catch {}
+    } catch { }
   };
 
   const sendTransmission = async (payload: { mode: 'message' | 'document'; message?: string; file?: File | null; digest?: string | null }) => {
@@ -871,34 +896,44 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     setChsh(runChsh);
     setPqcMode(isRejected);
 
+    const now = Date.now();
+    const timeWithOffset = (offsetMs: number) => {
+      const d = new Date(now + offsetMs);
+      return d.toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
+    };
+
     const newProtocolEvents: TelemetryItem[] = [
       {
-        id: `evt-${Date.now()}-1`,
-        time: nowStr,
-        source: 'ARB-CORE',
-        text: `[PROTOCOL DEMO] SPDC Photon pair distribution (1550nm) initialized for session ${res?.session_id || 'QKD-260827-91F4'}`,
-        ms: '12ms',
-        code: '200 OK',
+        id: `evt-${now}-5`,
+        time: timeWithOffset(120),
+        source: 'ARBITRATOR-VERDICT',
+        text: isRejected
+          ? `[DECISION: REJECT] Security threat confirmed · dynamic CRYSTALS-Dilithium3 PQC handover engaged`
+          : `[DECISION: ACCEPT] Quantum digital signature sealed and verified unforgeable`,
+        ms: '6ms',
+        code: isRejected ? 'REJECT_PQC' : 'ACCEPT_200',
         qber: qberStr,
         chsh: chshStr,
         payloadContent: documentName,
-        isThreat: false
+        isThreat: isRejected
       },
       {
-        id: `evt-${Date.now()}-2`,
-        time: nowStr,
-        source: 'QN-ALICE',
-        text: `Alice Bell-state measurement (BSM) executed on "${documentName}" · feed-forward bits generated`,
-        ms: '18ms',
-        code: '200 OK',
+        id: `evt-${now}-4`,
+        time: timeWithOffset(90),
+        source: 'HOEFFDING-GATE',
+        text: isRejected
+          ? `Phase 04: Hoeffding test threshold breached (QBER ${qberStr} > 5.50% cutoff) · CHSH S=${chshStr} < 2.0`
+          : `Phase 04: Hoeffding statistical bound test passed (QBER ${qberStr} <= 5.50% cutoff) · CHSH S=${chshStr} >= 2.0`,
+        ms: '14ms',
+        code: isRejected ? '0xFA BREACH' : '200 OK',
         qber: qberStr,
         chsh: chshStr,
         payloadContent: documentName,
-        isThreat: false
+        isThreat: isRejected
       },
       {
-        id: `evt-${Date.now()}-3`,
-        time: nowStr,
+        id: `evt-${now}-3`,
+        time: timeWithOffset(60),
         source: isThreat ? 'EVE-PROBE' : 'QN-BOB',
         text: isThreat
           ? `[EVE INTERCEPT DETECTED] Optical tap collapsed superposition state on fiber link 01`
@@ -911,30 +946,28 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         isThreat: isThreat
       },
       {
-        id: `evt-${Date.now()}-4`,
-        time: nowStr,
-        source: 'HOEFFDING-GATE',
-        text: `Hoeffding bound evaluation: QBER ${qberStr} ${isRejected ? '> 5.50% (BREACH)' : '<= 5.50% (PASS)'} · CHSH S=${chshStr}`,
-        ms: '14ms',
-        code: isRejected ? '0xFA BREACH' : '200 OK',
+        id: `evt-${now}-2`,
+        time: timeWithOffset(30),
+        source: 'QN-ALICE',
+        text: `Alice Bell-state measurement (BSM) executed on "${documentName}" · feed-forward bits generated`,
+        ms: '18ms',
+        code: '200 OK',
         qber: qberStr,
         chsh: chshStr,
         payloadContent: documentName,
-        isThreat: isRejected
+        isThreat: false
       },
       {
-        id: `evt-${Date.now()}-5`,
-        time: nowStr,
-        source: 'ARBITRATOR-VERDICT',
-        text: isRejected
-          ? `[DECISION: REJECT] Security threat confirmed · dynamic CRYSTALS-Dilithium3 PQC handover engaged`
-          : `[DECISION: ACCEPT] Quantum digital signature sealed and verified unforgeable`,
-        ms: '6ms',
-        code: isRejected ? 'REJECT_PQC' : 'ACCEPT_200',
+        id: `evt-${now}-1`,
+        time: timeWithOffset(0),
+        source: 'ARB-CORE',
+        text: `[PROTOCOL DEMO] SPDC Photon pair distribution (1550nm) initialized for session ${res?.session_id || 'QKD-260827-91F4'}`,
+        ms: '12ms',
+        code: '200 OK',
         qber: qberStr,
         chsh: chshStr,
         payloadContent: documentName,
-        isThreat: isRejected
+        isThreat: false
       }
     ];
 
@@ -989,6 +1022,28 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     toast.success(`Incident ${id} marked as RESOLVED.`);
   };
 
+  const escalateIncident = (id: string) => {
+    const timeStr = new Date().toLocaleTimeString('en-GB', { hour12: false }) + ' UTC';
+    setIncidents((prev) => prev.map(inc => {
+      if (inc.id === id) {
+        const newEvent: [string, string, string] = [
+          timeStr,
+          'L3 Escalation',
+          'Incident escalated to L3 Principal Quantum Cryptanalyst (M. Ito). Automated containment & forensic sandbox active.'
+        ];
+        return {
+          ...inc,
+          status: 'ESCALATED' as const,
+          assigned: 'M. Ito (L3 Lead)',
+          impact: 'CRITICAL' as const,
+          events: [newEvent, ...(inc.events || [])]
+        };
+      }
+      return inc;
+    }));
+    toast.error(`Incident ${id} escalated to Level 3 Lead Security Team.`);
+  };
+
   const quarantineNode = (nodeId: string) => {
     toast.error(`Containment protocol executed: ${nodeId} quarantined from optical routing.`);
   };
@@ -1027,7 +1082,9 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       sendTransmission,
       resetChannel,
       resolveIncident,
-      quarantineNode
+      escalateIncident,
+      quarantineNode,
+      clearTelemetryLogs
     }}>
       {children}
     </SentinelContext.Provider>

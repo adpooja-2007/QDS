@@ -1,0 +1,62 @@
+name: Deploy QDS Sentinel to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - working-prototype
+    paths:
+      - 'qds-sentinel/**'
+      - '.github/workflows/deploy-sentinel.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+
+      - name: Install Dependencies
+        working-directory: ./qds-sentinel
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Build Application
+        working-directory: ./qds-sentinel
+        run: |
+          pnpm run build
+          cp dist/public/index.html dist/public/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './qds-sentinel/dist/public'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

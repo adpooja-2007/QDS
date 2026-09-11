@@ -379,9 +379,9 @@ button:not(:disabled), a { cursor: pointer; }
 .connection-optical { stroke: #83aaa6; stroke-width: 1.25; stroke-dasharray: 1 7; opacity: .9; }
 .connection-classical { stroke: rgba(244,241,234,.58); stroke-width: 1; stroke-dasharray: 4 5; opacity: .7; }
 .connection-adversary { stroke: var(--copper); stroke-width: 1; stroke-dasharray: 2 7; opacity: .22; }
-.connection-adversary-on { opacity: .95; stroke-width: 1.7; animation: threatRoute 1.15s linear infinite; }
+.connection-adversary-on { opacity: .95; stroke-width: 1.7; animation: threatRoute calc(1.15s / var(--sim-speed, 1)) linear infinite; }
 .connection-anchor { fill: var(--copper); opacity: .9; vector-effect: non-scaling-stroke; transition: cx 120ms cubic-bezier(.23,1,.32,1), cy 120ms cubic-bezier(.23,1,.32,1); }
-.flow-playing .connection-optical { animation: opticalRoute 1.8s linear infinite; }
+.flow-playing .connection-optical { animation: opticalRoute calc(1.8s / var(--sim-speed, 1)) linear infinite; }
 @keyframes opticalRoute { to { stroke-dashoffset: -16; } }
 @keyframes threatRoute { to { stroke-dashoffset: -18; } }
 @media (prefers-reduced-motion: reduce) { .connection-line, .connection-anchor { transition: none; } }

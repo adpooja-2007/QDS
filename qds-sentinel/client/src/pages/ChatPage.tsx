@@ -257,7 +257,7 @@ export default function ChatPage() {
   // Load pinned & starred proofs
   const loadPinnedStarred = useCallback(async () => {
     if (!currentUser?.username) return;
-    const data = await fetchPinnedStarredMessages(currentUser.username, activeContactRef.current);
+    const data = await fetchPinnedStarredMessages(currentUser.username, activeContactRef.current || null);
     setPinnedData(data);
   }, [currentUser?.username]);
 

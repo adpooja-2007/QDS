@@ -229,6 +229,7 @@ export const deleteSingleChatMessage = async (messageId) => {
   return res.json();
 };
 
+/** @type {(username: string, contact?: string | null) => Promise<any>} */
 export const fetchPinnedStarredMessages = async (username, contact = null) => {
   try {
     const url = contact
