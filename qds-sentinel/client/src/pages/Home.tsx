@@ -1475,8 +1475,7 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
         </button>
 
         <div className="threats-v2-actions">
-          <button className="button button-outline button-small" onClick={() => toast.success(`Purged 100 key pairs for ${item?.id || 'threat'}`)}>Purge buffer</button>
-          <button className="button button-outline button-small" onClick={handleExportThreatPcap}>Export PCAP</button>
+          <button className="button button-outline button-small" style={{ width: "100%" }} onClick={handleExportThreatPcap}>Export PCAP</button>
         </div>
       </aside>
     </div>
