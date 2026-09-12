@@ -1030,7 +1030,7 @@ function formatEventGist(rawText?: string, isAlert?: boolean, activeAttack?: str
 }
 
 function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson, exportTelemetry }: any) {
-  const { eveActive, qber: globalQber, chsh: globalChsh, activeAttack, pqcMode, remediationReport, clearTelemetryLogs } = useSentinel();
+  const { eveActive, qber: globalQber, chsh: globalChsh, activeAttack, pqcMode, remediationReport, clearTelemetryLogs, thresholdProfile } = useSentinel();
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const [activePacket, setActivePacket] = useState<any | null>(null);
 
@@ -1044,19 +1044,37 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activePacket]);
 
-
   const qberStr = (globalQber * 100).toFixed(2) + "%";
   const chshStr = globalChsh.toFixed(2);
   const qber = qberStr;
   const chsh = chshStr;
 
+  const cutoffPct = thresholdProfile?.thresholdPercent || "5.50%";
+  const cutoffVal = thresholdProfile?.threshold || 0.055;
+  const isQberBreached = globalQber > cutoffVal;
+  const isChshCollapsed = globalChsh < 2.0;
+
   const cards = [
     { label: "Active sessions", value: "3", detail: "Stable", tone: "good" },
-    { label: "Verified signatures", value: threat ? "94.2%" : "99.9%", detail: threat ? "PQC Fallback" : "Nominal", tone: threat ? "copper" : "good" },
-    { label: "Security score", value: threat ? `Degraded (${activeAttack})` : "Secure", detail: threat ? "Review required" : "Secure", tone: threat ? "copper" : "good" },
+    { label: "Verified signatures", value: threat ? (isQberBreached ? "94.2%" : "98.5%") : "99.9%", detail: threat && isQberBreached ? "PQC Fallback" : "Nominal", tone: threat && isQberBreached ? "copper" : "good" },
+    { label: "Security score", value: threat ? (isQberBreached ? `Degraded (${activeAttack})` : `Protected (${activeAttack})`) : "Secure", detail: threat && isQberBreached ? "Review required" : "Secure", tone: threat && isQberBreached ? "copper" : "good" },
     { label: "Total pulses", value: "4.2e9", detail: "+12M/s", tone: "slate" },
-    { label: "QBER %", value: qberStr, detail: threat ? "Hoeffding breach (> 5.5%)" : "Nominal (< 5.5%)", tone: threat ? "alert" : "good" },
-    { label: "CHSH value", value: "S = " + chshStr, detail: threat ? "Classical bound (S<2.0)" : "S ≥ 2.0 (quantum)", tone: threat ? "copper" : "good" },
+    {
+      label: "QBER %",
+      value: qberStr,
+      detail: threat
+        ? (isQberBreached ? `Hoeffding breach (> ${cutoffPct})` : `Within bound (≤ ${cutoffPct})`)
+        : `Nominal (≤ ${cutoffPct})`,
+      tone: threat && isQberBreached ? "alert" : "good"
+    },
+    {
+      label: "CHSH value",
+      value: "S = " + chshStr,
+      detail: threat
+        ? (isChshCollapsed ? "Classical bound (S<2.0)" : "S ≥ 2.0 (quantum)")
+        : "S ≥ 2.0 (quantum)",
+      tone: threat && isChshCollapsed ? "copper" : "good"
+    },
   ];
 
   const nominalRows = filtered.slice(0, 10).map((item: any, index: number) => {
@@ -1109,7 +1127,7 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
       <div className={cn("overview-v3-alert", threat && "overview-v3-alert-active")}>
         <div>
           <span className="eyebrow">{threat ? `Critical alarm · Attack: ${activeAttack}` : "Verified nominal status"}</span>
-          <p>{threat ? `Channel disturbed by ${activeAttack} · QBER ${qberStr} breached 5.50% Hoeffding threshold (CHSH S=${chshStr}) · PQC Dilithium3 fallback active.` : "Privacy amplification nominal · Toeplitz hash distilled within entropy limits (QBER = 1.90%)."}</p>
+          <p>{threat ? `Channel disturbed by ${activeAttack} · QBER ${qberStr} ${isQberBreached ? 'breached' : 'within'} ${cutoffPct} dynamic Hoeffding threshold (CHSH S=${chshStr}) · PQC Dilithium3 fallback ${isQberBreached || isChshCollapsed ? 'active' : 'standby'}.` : `Privacy amplification nominal · Toeplitz hash distilled within operating cutoff (QBER = 1.90% ≤ ${cutoffPct}).`}</p>
         </div>
         {threat ? <button className="button button-copper button-small" onClick={() => setThreat()}>Restore nominal</button> : <button className="overview-v3-pass" onClick={() => setThreat()}>Pass</button>}
       </div>
@@ -1125,14 +1143,14 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
       <div className="overview-v3-charts">
         <div className="overview-v3-chart">
           <div className="overview-v3-chart-head">
-            <div><span className="eyebrow">QBER error rate</span><strong>{qber}</strong><em className={threat ? "text-copper" : "status-text-good"}>{threat ? "breach" : "nominal"}</em></div>
+            <div><span className="eyebrow">QBER error rate</span><strong>{qber}</strong><em className={threat && isQberBreached ? "text-copper" : "status-text-good"}>{threat && isQberBreached ? `breach (> ${cutoffPct})` : `nominal (≤ ${cutoffPct})`}</em></div>
             <div className="range-pills">{["1M", "5M", "15M", "ALL"].map((item) => <button key={item} className={cn("range-pill", range === item && "range-pill-active")} onClick={() => setRange(item)}>{item}</button>)}</div>
           </div>
           <div className="overview-v3-plot"><TelemetryChart threat={threat} range={range} /></div>
         </div>
         <div className="overview-v3-chart">
           <div className="overview-v3-chart-head">
-            <div><span className="eyebrow">CHSH Bell test (S-score)</span><strong>{chsh}</strong><em className={threat ? "text-copper" : "status-text-good"}>{threat ? "classical boundary" : "quantum"}</em></div>
+            <div><span className="eyebrow">CHSH Bell test (S-score)</span><strong>{chsh}</strong><em className={threat && isChshCollapsed ? "text-copper" : "status-text-good"}>{threat && isChshCollapsed ? "classical boundary (S<2.0)" : "quantum (S≥2.0)"}</em></div>
             <div className="range-pills">{["1M", "5M", "15M", "ALL"].map((item) => <button key={item} className={cn("range-pill", range === item && "range-pill-active")} onClick={() => setRange(item)}>{item}</button>)}</div>
           </div>
           <div className="overview-v3-plot"><BellChart threat={threat} range={range} /></div>
