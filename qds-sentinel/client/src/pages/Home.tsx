@@ -1176,10 +1176,10 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
     },
   ];
 
-  const nominalRows = filtered.slice(0, 10).map((item: any, index: number) => {
+  const nominalRows = filtered.slice(0, 18).map((item: any, index: number) => {
     const isPqc = item.source?.includes("PQC") || item.text?.includes("PQC") || item.text?.includes("Dilithium");
     const isClean = item.source?.includes("CLEAN") || item.text?.includes("CLEAN SIGNATURE");
-    const alert = !isPqc && !isClean && (item.isThreat || item.code?.includes("403") || item.code?.includes("REJECT") || item.code?.includes("0xFA") || (threat && (item.source.includes("EVE") || item.source.includes("HOEFFDING") || item.source.includes("BELL"))));
+    const alert = !isPqc && !isClean && (item.isThreat || item.code?.includes("403") || item.code?.includes("REJECT") || item.code?.includes("0xFA") || (threat && (item.source.includes("EVE") || item.source.includes("HOEFFDING") || item.source.includes("BELL") || item.source.includes("THREAT"))));
     
     let payload = item.payloadContent;
     if (!payload && item.text?.includes('"')) {
@@ -1257,7 +1257,33 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
       </div>
       <div className="overview-v3-ledger">
         <div className="overview-v3-ledger-head">
-          <div><span className="eyebrow">Live telemetry stream</span><small>Select any row to inspect & copy packet evidence</small></div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <span className="eyebrow">Live telemetry stream</span>
+            <span style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "2px 8px",
+              borderRadius: "999px",
+              background: threat ? "rgba(185, 74, 47, 0.12)" : "rgba(47, 111, 133, 0.12)",
+              color: threat ? "#b94a2f" : "#2f6f85",
+              fontSize: "10px",
+              fontFamily: "var(--mono)",
+              fontWeight: 700
+            }}>
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: threat ? "#b94a2f" : "#059669",
+                display: "inline-block",
+                boxShadow: threat ? "0 0 6px #b94a2f" : "0 0 6px #059669",
+                animation: "pulse 1.8s infinite"
+              }} />
+              {threat ? `THREAT STREAMING (${activeAttack.toUpperCase()})` : "LIVE OPTICAL STREAM ACTIVE"}
+            </span>
+            <small style={{ color: "var(--slate)", fontSize: "11px" }}>{telemetryLogs.length} frames logged · IST timestamped</small>
+          </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <button className="text-link" style={{ color: "#94a3b8", fontSize: "12px", cursor: "pointer", background: "none", border: "none", display: "inline-flex", alignItems: "center", gap: "4px" }} onClick={clearTelemetryLogs} title="Clear telemetry table">
               <RotateCcw size={12} /> Clear stream
@@ -1272,6 +1298,7 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
           {nominalRows.map((item: any, index: number) => {
             const rowKey = item.id ? String(item.id) : `row-${index}`;
             const isSelected = selectedRowKey ? selectedRowKey === rowKey : index === 0;
+            const isLatest = index === 0;
             return (
               <div
                 key={rowKey}
@@ -1282,16 +1309,25 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
                   isSelected && "overview-v3-ledger-selected"
                 )}
                 onClick={() => handleSelectRow(item, rowKey)}
-                style={{ cursor: "pointer", userSelect: "text", WebkitUserSelect: "text" }}
+                style={{
+                  cursor: "pointer",
+                  userSelect: "text",
+                  WebkitUserSelect: "text",
+                  transition: "background 0.3s ease",
+                  borderLeft: isLatest ? (item.alert ? "3px solid #b94a2f" : "3px solid #2f6f85") : undefined
+                }}
                 role="row"
                 tabIndex={0}
               >
-                <span className="mono muted">{formatIstTime(item.createdAt || item.time, true)}</span>
+                <span className="mono muted" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  {isLatest && <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: item.alert ? "#b94a2f" : "#059669", display: "inline-block" }} />}
+                  {formatIstTime(item.createdAt || item.time, true)}
+                </span>
                 <span className={cn("mono", item.isPqc ? "text-blue font-semibold" : item.alert ? "text-copper font-semibold" : "")}>{item.source.replace("_", " ")}</span>
                 <strong style={{ userSelect: "text" }}>{item.event}</strong>
                 <span className={cn("overview-v3-verdict", item.isPqc ? "status-text-good font-semibold" : item.alert ? "overview-v3-verdict-alert" : "")}>{item.classifier}</span>
                 <span className={cn("overview-v3-payload", item.isPqc ? "overview-v3-payload" : item.alert ? "overview-v3-payload-alert" : "")} style={{ userSelect: "text" }}>{item.payload}</span>
-                <span className="mono muted">{item.ms}ms</span>
+                <span className="mono muted">{item.ms}</span>
                 <span className={item.isPqc ? "status-text-good mono font-bold" : item.alert ? "overview-v3-status-alert" : "status-text-good mono"}>{item.isPqc ? "PQC_OK" : item.alert ? "0xFA" : "0x00"}</span>
               </div>
             );
