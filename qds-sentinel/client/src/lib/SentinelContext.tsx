@@ -639,62 +639,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => clearInterval(streamTimer);
   }, [eveActive]);
 
-  // Live real-time continuous quantum optical telemetry stream generator
-  useEffect(() => {
-    const nominalTelemetryEvents = [
-      { source: 'ARB-CORE', text: 'SPDC photon pair routed to Alice & Bob via Dark Fiber Link 1', payload: 'qds_entropy.sig', ms: () => `${11 + Math.floor(Math.random() * 8)}ms` },
-      { source: 'QN-ALICE', text: 'Joint Bell State Measurement completed for session QKD-260827-91F4', payload: 'board-resolution.pdf', ms: () => `${16 + Math.floor(Math.random() * 9)}ms` },
-      { source: 'QN-BOB', text: 'Pauli frame reconciliation complete · 1024/1024 pulse slots aligned', payload: 'verified_frame_0x4b', ms: () => `${18 + Math.floor(Math.random() * 8)}ms` },
-      { source: 'HOEFFDING-GATE', text: 'Hoeffding statistical bound audit passed · QBER <= 5.50%', payload: 'orbital-telemetry.pdf', ms: () => `${14 + Math.floor(Math.random() * 7)}ms` },
-      { source: 'PRIVACY_AMP', text: 'Toeplitz hash distillation: 1024 raw bits -> 256 secure entropy bits', payload: 'DEFENSE-09', ms: () => `${8 + Math.floor(Math.random() * 7)}ms` },
-      { source: 'ENTROPY_POOL', text: 'Von Neumann quantum randomness pool refreshed · min-entropy > 0.998', payload: 'entropy_pool.bin', ms: () => `${10 + Math.floor(Math.random() * 6)}ms` },
-      { source: 'POLARIZATION_CTRL', text: 'Dynamic optical polarization tracking locked · extinction ratio > 32dB', payload: 'polar_sync.dat', ms: () => `${13 + Math.floor(Math.random() * 7)}ms` },
-      { source: 'ARBITRATOR', text: 'Session nonce sealed and broadcast to distributed nodes', payload: 'qds_nonce_v1.sig', ms: () => `${12 + Math.floor(Math.random() * 6)}ms` },
-    ];
 
-    const threatTelemetryEvents = [
-      { source: 'THREAT_ENGINE', text: 'Adversarial state perturbation detected on quantum fiber channel', payload: 'adversarial_sniff.sig', ms: () => `${32 + Math.floor(Math.random() * 18)}ms`, isThreat: true, code: '403 FORBIDDEN' },
-      { source: 'HOEFFDING-GATE', text: 'Hoeffding statistical security limit exceeded · state confidence lost', payload: 'hoeffding_alert.dat', ms: () => `${28 + Math.floor(Math.random() * 15)}ms`, isThreat: true, code: '403 FORBIDDEN' },
-      { source: 'BELL_WITNESS', text: 'CHSH Bell inequality collapsed below classical boundary S < 2.00', payload: 'bell_collapse.sig', ms: () => `${35 + Math.floor(Math.random() * 14)}ms`, isThreat: true, code: '403 FORBIDDEN' },
-      { source: 'PQC_FALLBACK', text: 'Lattice post-quantum fallback active · ML-DSA-65 / Dilithium3 sealed', payload: 'pqc_dsa_handover.sig', ms: () => `${15 + Math.floor(Math.random() * 8)}ms`, isThreat: false, code: '200 OK' },
-      { source: 'QUARANTINE_CTRL', text: 'Adversarial node isolated · physical QDS key buffers zeroized', payload: 'quarantine_lock.bin', ms: () => `${22 + Math.floor(Math.random() * 10)}ms`, isThreat: true, code: '403 FORBIDDEN' },
-    ];
-
-    let telIndex = 0;
-    const intervalTime = 1800; // Continuous dynamic heartbeat every 1.8s
-
-    const ticker = setInterval(() => {
-      const now = Date.now();
-      const isThreat = eveActive || activeAttack !== 'Clean signature';
-      const eventsPool = isThreat ? threatTelemetryEvents : nominalTelemetryEvents;
-      const template = eventsPool[telIndex % eventsPool.length];
-      telIndex++;
-
-      const newLog: TelemetryItem = {
-        id: `tel-live-${now}-${Math.floor(Math.random() * 1000)}`,
-        createdAt: now,
-        time: formatIstTime(now, true),
-        source: template.source,
-        text: isThreat && template.source === 'HOEFFDING-GATE'
-          ? `Hoeffding boundary breached: QBER ${(qber * 100).toFixed(1)}% > ${(hoeffdingThreshold * 100).toFixed(2)}%`
-          : isThreat && template.source === 'BELL_WITNESS'
-          ? `CHSH Bell test collapsed: S = ${chsh.toFixed(2)} < 2.00 classical boundary`
-          : isThreat && template.source === 'THREAT_ENGINE'
-          ? `Adversarial disturbance flagged: ${activeAttack.toUpperCase()} vector active`
-          : template.text,
-        ms: template.ms(),
-        code: (template as any).code || (template.isThreat ? '403 FORBIDDEN' : '200 OK'),
-        qber: `${(qber * 100).toFixed(1)}%`,
-        chsh: chsh.toFixed(2),
-        payloadContent: template.payload,
-        isThreat: template.isThreat || false
-      };
-
-      setTelemetryLogs(prev => [newLog, ...prev.slice(0, 99)]);
-    }, intervalTime);
-
-    return () => clearInterval(ticker);
-  }, [eveActive, activeAttack, qber, chsh, hoeffdingThreshold]);
 
   const unreadNotificationCount = useMemo(() => {
     return notifications.filter((n) => !n.read).length;

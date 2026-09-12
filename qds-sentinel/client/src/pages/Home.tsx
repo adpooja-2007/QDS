@@ -2372,7 +2372,7 @@ function LegacyDemonstrationPage() {
 
   const logPhaseTelemetry = (phaseIndex: number) => {
     const p = phaseDescriptions[phaseIndex] || phaseDescriptions[0];
-    const nowStr = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
+    const nowStr = formatIstTime(Date.now(), true);
     const qberVal = eve ? 0.142 : 0.019;
     const chshVal = eve ? 1.76 : 2.76;
     const item = {
