@@ -241,66 +241,72 @@ function TelemetryChart({ threat = false, range = "15M" }: { threat?: boolean; r
   const effectiveThreshold = thresholdProfile?.threshold || hoeffdingThreshold || 0.055;
   const thresholdLabel = thresholdProfile?.thresholdPercent || "5.50%";
   const thresholdCode = thresholdProfile?.code || "CAL";
-  const isAttackBreached = threat || eveActive || currentQber > effectiveThreshold;
 
-  const count = range === "1M" ? 6 : range === "5M" ? 10 : range === "15M" ? 16 : 28;
+  const count = range === "1M" ? 8 : range === "5M" ? 12 : range === "15M" ? 16 : 24;
   const width = 700;
   const height = 190;
   const padTop = 20;
   const padBottom = 25;
   const maxQber = 0.22;
 
-  // Generate dynamic data points reflecting history + active state
-  const points = useMemo(() => {
-    const baseNow = Date.now();
-    const pts = [];
-    const recentLogs = [...telemetryLogs].slice(0, count).reverse();
-
-    for (let i = 0; i < count; i++) {
-      const x = (i / (count - 1)) * width;
-      const offsetMs = (count - 1 - i) * 60000;
-      const timeStr = formatIstTime(baseNow - offsetMs, false);
-
-      let val: number;
-      if (isAttackBreached) {
-        // If an attack is active, show the transition from baseline into the elevated attack QBER
-        if (i < Math.floor(count * 0.35)) {
-          // Historical baseline before injection
-          val = 0.018 + (Math.sin(i * 1.5) * 0.003);
-        } else if (i < Math.floor(count * 0.55)) {
-          // Sharp injection / ramp-up phase
-          const progress = (i - Math.floor(count * 0.35)) / (Math.floor(count * 0.55) - Math.floor(count * 0.35));
-          val = 0.02 + progress * (currentQber - 0.02);
-        } else {
-          // Active attack plateau with natural photon noise variance
-          const noise = ((Math.sin(i * 2.3) + Math.cos(i * 1.7)) * 0.004);
-          val = Math.max(effectiveThreshold + 0.008, currentQber + noise);
-        }
-      } else {
-        // Nominal clean channel operating safely below threshold
-        const noise = (Math.sin(i * 1.8) * 0.003) + (Math.cos(i * 0.9) * 0.002);
-        val = Math.max(0.012, Math.min(effectiveThreshold - 0.015, currentQber + noise));
+  // Chronological stream of actual telemetry events (oldest on left -> newest on right)
+  const chronologicalLogs = useMemo(() => {
+    const sorted = sortTelemetryDesc(telemetryLogs);
+    const recent = sorted.slice(0, count).reverse(); // Oldest first, newest last
+    
+    if (recent.length < count) {
+      const missing = count - recent.length;
+      const oldestTime = recent[0]?.createdAt || Date.now();
+      const pad: any[] = [];
+      for (let i = missing; i > 0; i--) {
+        const padTime = oldestTime - i * 3500;
+        pad.push({
+          id: `pad-init-${padTime}-${i}`,
+          createdAt: padTime,
+          time: formatIstTime(padTime, true),
+          source: 'ARB-CORE',
+          text: 'SPDC photon pair baseline calibration',
+          ms: '14ms',
+          code: '200 OK',
+          qber: '1.9%',
+          chsh: '2.78',
+          isThreat: false
+        });
       }
+      return [...pad, ...recent];
+    }
+    return recent;
+  }, [telemetryLogs, count]);
 
-      // Check if recent log provides a real recorded value
-      if (i === count - 1) {
-        val = currentQber;
+  // Map each individual real incoming log to ONE discrete dot on the chart
+  const points = useMemo(() => {
+    return chronologicalLogs.map((item, index) => {
+      const x = (index / (chronologicalLogs.length - 1 || 1)) * width;
+      
+      let val = 0.019;
+      if (item.qber) {
+        const parsed = parseFloat(String(item.qber).replace('%', ''));
+        if (!isNaN(parsed)) val = parsed / 100;
       }
 
       const clamped = Math.max(0, Math.min(maxQber, val));
       const y = (height - padBottom) - (clamped / maxQber) * (height - padTop - padBottom);
-      const isBreachedPt = val > effectiveThreshold;
+      const isBreachedPt = val > effectiveThreshold || Boolean(item.isThreat);
+      const timeDisplay = item.time ? (item.time.includes('.') ? item.time.split('.')[0] : item.time) : formatIstTime(item.createdAt, false);
 
-      pts.push({
+      return {
         x,
         y,
         val: (val * 100).toFixed(2),
-        time: timeStr,
-        isThreat: isBreachedPt
-      });
-    }
-    return pts;
-  }, [telemetryLogs, currentQber, effectiveThreshold, isAttackBreached, count, width, height]);
+        time: timeDisplay,
+        isThreat: isBreachedPt,
+        id: item.id
+      };
+    });
+  }, [chronologicalLogs, effectiveThreshold, width, height, maxQber, padTop, padBottom]);
+
+  const hasBreach = points.some(p => p.isThreat);
+  const isAttackBreached = threat || eveActive || hasBreach;
 
   const pathD = points.reduce((acc, pt, i) => {
     if (i === 0) return `M ${pt.x} ${pt.y}`;
@@ -314,7 +320,6 @@ function TelemetryChart({ threat = false, range = "15M" }: { threat?: boolean; r
 
   const areaD = `${pathD} L ${width} ${height - padBottom} L 0 ${height - padBottom} Z`;
   const hoeffdingY = (height - padBottom) - (effectiveThreshold / maxQber) * (height - padTop - padBottom);
-  const latestPt = points[points.length - 1] || { x: width, y: 140, val: '1.90', isThreat: isAttackBreached };
   const xLabels = points.filter((_, idx) => idx % Math.max(1, Math.floor(points.length / 5)) === 0 || idx === points.length - 1).slice(0, 5);
 
   return (
@@ -356,10 +361,10 @@ function TelemetryChart({ threat = false, range = "15M" }: { threat?: boolean; r
           </g>
         )}
 
-        <path className="chart-area" d={areaD} fill="url(#area-grad-dyn)" style={{ transition: 'd 0.4s ease' }} />
-        <path className={cn("signal-line", isAttackBreached && "signal-line-threat")} d={pathD} style={{ stroke: isAttackBreached ? "#B94A2F" : "#2F6F85", strokeWidth: "2.5", transition: 'd 0.4s ease' }} />
+        <path className="chart-area" d={areaD} fill="url(#area-grad-dyn)" style={{ transition: 'd 0.3s ease' }} />
+        <path className={cn("signal-line", isAttackBreached && "signal-line-threat")} d={pathD} style={{ stroke: isAttackBreached ? "#B94A2F" : "#2F6F85", strokeWidth: "2.5", transition: 'd 0.3s ease' }} />
         {points.map((pt, i) => (
-          <g key={i}>
+          <g key={pt.id || i}>
             <circle cx={pt.x} cy={pt.y} r={i === points.length - 1 ? "5.5" : "3.5"} fill={pt.isThreat ? "#B94A2F" : "#2F6F85"} stroke="#ffffff" strokeWidth="1.5" />
             {i === points.length - 1 && (
               <circle cx={pt.x} cy={pt.y} r="10" fill="none" stroke={pt.isThreat ? "#B94A2F" : "#2F6F85"} strokeWidth="1.8" opacity="0.7">
@@ -381,9 +386,8 @@ function TelemetryChart({ threat = false, range = "15M" }: { threat?: boolean; r
 
 function BellChart({ threat = false, range = "15M" }: { threat?: boolean; range?: string }) {
   const { telemetryLogs, chsh: currentChsh, eveActive, activeAttack } = useSentinel();
-  const isCollapsed = threat || eveActive || currentChsh < 2.0;
 
-  const count = range === "1M" ? 6 : range === "5M" ? 10 : range === "15M" ? 16 : 28;
+  const count = range === "1M" ? 8 : range === "5M" ? 12 : range === "15M" ? 16 : 24;
   const width = 700;
   const height = 190;
   const padTop = 20;
@@ -391,52 +395,66 @@ function BellChart({ threat = false, range = "15M" }: { threat?: boolean; range?
   const minChsh = 1.0;
   const maxChsh = 3.0;
 
-  // Generate dynamic CHSH Bell curve
-  const points = useMemo(() => {
-    const baseNow = Date.now();
-    const pts = [];
-
-    for (let i = 0; i < count; i++) {
-      const x = (i / (count - 1)) * width;
-      const offsetMs = (count - 1 - i) * 60000;
-      const timeStr = formatIstTime(baseNow - offsetMs, false);
-
-      let val: number;
-      if (isCollapsed) {
-        // Attack active: transition from Bell violation (S > 2.0) down into classical collapse (S < 2.0)
-        if (i < Math.floor(count * 0.35)) {
-          val = 2.76 + (Math.sin(i * 1.5) * 0.04);
-        } else if (i < Math.floor(count * 0.55)) {
-          const progress = (i - Math.floor(count * 0.35)) / (Math.floor(count * 0.55) - Math.floor(count * 0.35));
-          val = 2.76 - progress * (2.76 - currentChsh);
-        } else {
-          const noise = ((Math.sin(i * 2.1) + Math.cos(i * 1.4)) * 0.03);
-          val = Math.max(minChsh + 0.1, currentChsh + noise);
-        }
-      } else {
-        // Nominal quantum non-locality (S >= 2.0)
-        const noise = (Math.sin(i * 1.7) * 0.04) + (Math.cos(i * 0.8) * 0.02);
-        val = Math.max(2.10, Math.min(2.84, currentChsh + noise));
+  // Chronological stream of actual telemetry events (oldest on left -> newest on right)
+  const chronologicalLogs = useMemo(() => {
+    const sorted = sortTelemetryDesc(telemetryLogs);
+    const recent = sorted.slice(0, count).reverse(); // Oldest first, newest last
+    
+    if (recent.length < count) {
+      const missing = count - recent.length;
+      const oldestTime = recent[0]?.createdAt || Date.now();
+      const pad: any[] = [];
+      for (let i = missing; i > 0; i--) {
+        const padTime = oldestTime - i * 3500;
+        pad.push({
+          id: `pad-init-${padTime}-${i}`,
+          createdAt: padTime,
+          time: formatIstTime(padTime, true),
+          source: 'ARB-CORE',
+          text: 'SPDC photon pair baseline calibration',
+          ms: '14ms',
+          code: '200 OK',
+          qber: '1.9%',
+          chsh: '2.78',
+          isThreat: false
+        });
       }
+      return [...pad, ...recent];
+    }
+    return recent;
+  }, [telemetryLogs, count]);
 
-      if (i === count - 1) {
-        val = currentChsh;
+  // Map each individual real incoming log to ONE discrete dot on the chart
+  const points = useMemo(() => {
+    return chronologicalLogs.map((item, index) => {
+      const x = (index / (chronologicalLogs.length - 1 || 1)) * width;
+      
+      let val = 2.76;
+      if (item.chsh) {
+        const parsed = parseFloat(String(item.chsh));
+        if (!isNaN(parsed)) val = parsed;
       }
 
       const clamped = Math.max(minChsh, Math.min(maxChsh, val));
       const y = (height - padBottom) - ((clamped - minChsh) / (maxChsh - minChsh)) * (height - padTop - padBottom);
       const isViolation = val >= 2.0;
+      const isThreatPoint = val < 2.0 || Boolean(item.isThreat);
+      const timeDisplay = item.time ? (item.time.includes('.') ? item.time.split('.')[0] : item.time) : formatIstTime(item.createdAt, false);
 
-      pts.push({
+      return {
         x,
         y,
         val: val.toFixed(2),
-        time: timeStr,
-        isViolation
-      });
-    }
-    return pts;
-  }, [telemetryLogs, currentChsh, isCollapsed, count, width, height]);
+        time: timeDisplay,
+        isViolation,
+        isThreat: isThreatPoint,
+        id: item.id
+      };
+    });
+  }, [chronologicalLogs, width, height, minChsh, maxChsh, padTop, padBottom]);
+
+  const hasCollapse = points.some(p => p.isThreat || !p.isViolation);
+  const isCollapsed = threat || eveActive || hasCollapse;
 
   const pathD = points.reduce((acc, pt, i) => {
     if (i === 0) return `M ${pt.x} ${pt.y}`;
@@ -450,7 +468,6 @@ function BellChart({ threat = false, range = "15M" }: { threat?: boolean; range?
 
   const areaD = `${pathD} L ${width} ${height - padBottom} L 0 ${height - padBottom} Z`;
   const classicalY = (height - padBottom) - ((2.0 - minChsh) / (maxChsh - minChsh)) * (height - padTop - padBottom);
-  const latestPt = points[points.length - 1] || { x: width, y: 50, val: '2.76', isViolation: !isCollapsed };
   const xLabels = points.filter((_, idx) => idx % Math.max(1, Math.floor(points.length / 5)) === 0 || idx === points.length - 1).slice(0, 5);
 
   return (
@@ -492,10 +509,10 @@ function BellChart({ threat = false, range = "15M" }: { threat?: boolean; range?
           </g>
         )}
 
-        <path className="chart-area" d={areaD} fill="url(#bell-area-grad-dyn)" style={{ transition: 'd 0.4s ease' }} />
-        <path className={cn("signal-line", isCollapsed && "signal-line-threat")} d={pathD} style={{ stroke: isCollapsed ? "#B94A2F" : "#2F6F85", strokeWidth: "2.5", transition: 'd 0.4s ease' }} />
+        <path className="chart-area" d={areaD} fill="url(#bell-area-grad-dyn)" style={{ transition: 'd 0.3s ease' }} />
+        <path className={cn("signal-line", isCollapsed && "signal-line-threat")} d={pathD} style={{ stroke: isCollapsed ? "#B94A2F" : "#2F6F85", strokeWidth: "2.5", transition: 'd 0.3s ease' }} />
         {points.map((pt, i) => (
-          <g key={i}>
+          <g key={pt.id || i}>
             <circle cx={pt.x} cy={pt.y} r={i === points.length - 1 ? "5.5" : "3.5"} fill={!pt.isViolation ? "#B94A2F" : "#2F6F85"} stroke="#ffffff" strokeWidth="1.5" />
             {i === points.length - 1 && (
               <circle cx={pt.x} cy={pt.y} r="10" fill="none" stroke={!pt.isViolation ? "#B94A2F" : "#2F6F85"} strokeWidth="1.8" opacity="0.7">

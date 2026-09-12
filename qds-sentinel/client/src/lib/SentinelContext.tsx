@@ -1277,54 +1277,13 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       setPqcMode(true);
       const newEvents: TelemetryItem[] = [
         {
-          id: `evt-${Date.now()}-4`,
-          createdAt: baseNow + 145,
-          time: formatTimeWithOffset(145),
-          source: 'PQC-GATEWAY',
-          text: `[PQC FALLBACK SUCCESS] Channel hot-swapped to CRYSTALS-Dilithium3 (ML-DSA-65) + ML-KEM-768 · Communication 100% secured`,
-          ms: '4ms',
-          code: '200 OK',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: false
-        },
-        {
-          id: `evt-${Date.now()}-3`,
-          createdAt: baseNow + 95,
-          time: formatTimeWithOffset(95),
-          source: 'BELL-WITNESS',
-          text: `CHSH Bell test failed: S=${chshFormatted} collapsed to classical limit (S < 2.00)`,
-          ms: '19ms',
-          code: 'REJECT',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: true
-        },
-        {
-          id: `evt-${Date.now()}-2`,
-          createdAt: baseNow + 40,
-          time: formatTimeWithOffset(40),
-          source: 'HOEFFDING-GATE',
-          text: isAdversarialNoise
-            ? `[NOISE DISCRIMINATOR: ATTACK DETECTED] Statistical test failed: Artificial noise density (QBER ${qberFormatted} > limit ${profile.thresholdPercent})`
-            : `Hoeffding bound breach: QBER reached ${qberFormatted} (limit ${profile.thresholdPercent})`,
-          ms: '12ms',
-          code: '0xFA BREACH',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: true
-        },
-        {
           id: `evt-${Date.now()}-1`,
           createdAt: baseNow,
-          time: formatTimeWithOffset(0),
-          source: 'EVE-PROBE',
+          time: formatIstTime(baseNow, true),
+          source: isAdversarialNoise ? 'EVE-PROBE' : 'HOEFFDING-GATE',
           text: isAdversarialNoise
             ? `[ADVERSARIAL NOISE INJECTION] High-power incoherent jamming pulses injected by Eve · Optical channel blinded`
-            : `[ATTACK ACTIVE: ${attackTitle.toUpperCase()}] Adversarial optical disturbance injected · QBER elevated (${qberFormatted})`,
+            : `[ATTACK DETECTED: ${attackTitle.toUpperCase()}] QBER elevated to ${qberFormatted} (limit ${profile.thresholdPercent}) · Bell non-locality S=${chshFormatted}`,
           ms: '14ms',
           code: '403 FORBIDDEN',
           qber: qberFormatted,
@@ -1342,7 +1301,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         origin: 'ATTACK SANDBOX / EVE',
         badge: 'ACTIVE ATTACK',
         type: `Live Injection: ${attackTitle}`,
-        time: formatTimeWithOffset(145).slice(0, 8),
+        time: formatTimeWithOffset(0).slice(0, 8),
         baseline: '1.9%',
         current: qberFormatted,
         detail: `Adversarial scenario "${attackTitle}" injected from sandbox. QBER=${qberFormatted}, CHSH S=${chshFormatted}. PQC fallback ready.`,
@@ -1412,50 +1371,11 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 
       const newEvents: TelemetryItem[] = [
         {
-          id: `evt-${Date.now()}-4`,
-          createdAt: baseNow + 145,
-          time: formatTimeWithOffset(145),
-          source: 'ARB-CORE',
-          text: `[PHASE STABILIZATION] Dynamic polarization controller compensated optical jitter · QBER nominal at ${qberFormatted}`,
-          ms: '6ms',
-          code: '200 OK',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: false
-        },
-        {
-          id: `evt-${Date.now()}-3`,
-          createdAt: baseNow + 95,
-          time: formatTimeWithOffset(95),
-          source: 'BELL-WITNESS',
-          text: `CHSH Bell test passed: S=${chshFormatted} ≥ 2.00 (Quantum non-locality preserved under thermal noise)`,
-          ms: '14ms',
-          code: '200 OK',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: false
-        },
-        {
-          id: `evt-${Date.now()}-2`,
-          createdAt: baseNow + 40,
-          time: formatTimeWithOffset(40),
-          source: 'HOEFFDING-GATE',
-          text: `Hoeffding statistical bound verified: QBER ${qberFormatted} <= ${profile.thresholdPercent} noise cutoff`,
-          ms: '11ms',
-          code: '200 OK',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: false
-        },
-        {
           id: `evt-${Date.now()}-1`,
           createdAt: baseNow,
-          time: formatTimeWithOffset(0),
-          source: 'QN-ALICE',
-          text: `[CHANNEL NOISE STABILIZED] Environmental thermal drift within confidence envelope · Physical QDS attestation active`,
+          time: formatIstTime(baseNow, true),
+          source: 'HOEFFDING-GATE',
+          text: `[CHANNEL NOISE STABILIZED] Environmental thermal drift calibrated (QBER ${qberFormatted} <= ${profile.thresholdPercent}, S=${chshFormatted} ≥ 2.00) · Physical QDS attestation active`,
           ms: '12ms',
           code: '200 OK',
           qber: qberFormatted,
@@ -1490,8 +1410,9 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     } else {
       const cleanEvents: TelemetryItem[] = [
         {
-          id: `evt-${Date.now()}-1`,
-          time: nowStr,
+          id: `evt-${Date.now()}-clean`,
+          createdAt: baseNow,
+          time: formatIstTime(baseNow, true),
           source: 'ARBITRATOR',
           text: '[CLEAN SIGNATURE] Authenticated Bell-pair exchange restored · QBER 1.9% · CHSH S=2.76',
           ms: '12ms',
@@ -1500,33 +1421,9 @@ AUTOMATED REMEDIATION PLAN EXECUTED
           chsh: '2.76',
           payloadContent: 'board-resolution.pdf',
           isThreat: false
-        },
-        {
-          id: `evt-${Date.now()}-2`,
-          time: nowStr,
-          source: 'QN-ALICE',
-          text: 'BSM projection completed on "board-resolution.pdf" · zero eavesdropping detected',
-          ms: '16ms',
-          code: '200 OK',
-          qber: '1.9%',
-          chsh: '2.76',
-          payloadContent: 'board-resolution.pdf',
-          isThreat: false
-        },
-        {
-          id: `evt-${Date.now()}-3`,
-          time: nowStr,
-          source: 'PRIVACY_AMP',
-          text: 'Toeplitz matrix distilled unforgeable 256-bit quantum OTP token',
-          ms: '8ms',
-          code: '200 OK',
-          qber: '1.9%',
-          chsh: '2.76',
-          payloadContent: 'board-resolution.pdf',
-          isThreat: false
         }
       ];
-      setTelemetryLogs((prev) => [...cleanEvents, ...prev]);
+      setTelemetryLogs((prev) => sortTelemetryDesc([...cleanEvents, ...prev]).slice(0, 100));
 
       setThreats((prev) => prev.filter(t => !t.id.startsWith('THR-LIVE')));
       setIncidents((prev) => prev.filter(i => i.id !== 'INC-2026-LIVE'));
