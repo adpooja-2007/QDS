@@ -254,44 +254,24 @@ export function calculateQuantumThreshold(attackTitle: string, customSampleSize?
       rationale: "Multiphoton splitting probe; tolerable QBER bound lowered to 4.10% to account for channel loss."
     };
   }
-  if (attackTitle.includes("Noise injection") || attackTitle.includes("Jamming") || attackTitle.includes("Adversarial Noise")) {
+  if (attackTitle.includes("Noise") || attackTitle.includes("Jamming")) {
     const N = customSampleSize || 1024;
     const alpha = 1e-6;
-    const baseline = 0.035;
-    const threshold = 0.0680;
+    const baseline = 0.020;
+    const threshold = 0.0550;
     return {
-      attackTitle,
-      code: "JAMMING",
-      sampleSize: N,
-      alpha,
-      delta: 0.0330,
-      baselineQber: baseline,
-      threshold,
-      thresholdPercent: "6.80%",
-      chshBound: 2.00,
-      helstromPe: "P_e ≥ 0.0610",
-      lossDb: 2.8,
-      rationale: "Adversarial optical noise injection / jamming; QBER (10.80%) exceeds Hoeffding bound (6.80%) and CHSH (1.74 < 2.00) collapses non-locality."
-    };
-  }
-  if (attackTitle.includes("Noise")) {
-    const N = customSampleSize || 1024;
-    const alpha = 1e-6;
-    const baseline = 0.035;
-    const threshold = 0.0680;
-    return {
-      attackTitle,
+      attackTitle: "Channel noise attack",
       code: "NOISE",
       sampleSize: N,
       alpha,
-      delta: 0.0330,
+      delta: 0.0350,
       baselineQber: baseline,
       threshold,
-      thresholdPercent: "6.80%",
+      thresholdPercent: "5.50%",
       chshBound: 2.00,
-      helstromPe: "P_e ≥ 0.1420",
-      lossDb: 1.2,
-      rationale: "Natural thermal polarization drift; QBER (4.80%) within 6.80% cutoff and Bell non-locality (S=2.34 ≥ 2.00) preserved."
+      helstromPe: "P_e ≥ 0.0610",
+      lossDb: 2.8,
+      rationale: "Adversarial channel noise injection & optical jamming; QBER (10.80%) exceeds Hoeffding bound (5.50%) and Bell test S=1.74 (< 2.00) collapses non-locality."
     };
   }
   // Default Clean / Nominal
@@ -1075,11 +1055,11 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 1. Switched source to decoy-state protocol with randomized photon intensities.
 2. Re-routed active traffic to CRYSTALS-Dilithium3 post-quantum lattice channel.`;
     }
-    if (title.includes('Noise injection') || title.includes('Jamming') || title.includes('Adversarial Noise') || (title.includes('Noise') && (qberVal > 0.068 || chshVal < 2.0))) {
-      return `THREAT DIAGNOSIS [ADVERSARIAL NOISE INJECTION / EVE JAMMING ATTACK]
+    if (title.includes('Noise') || title.includes('Jamming')) {
+      return `THREAT DIAGNOSIS [ADVERSARIAL CHANNEL NOISE & OPTICAL JAMMING ATTACK]
 1. Malicious Optical Jamming: Eve actively injected incoherent photon bursts / laser noise to blind Single-Photon Avalanche Diodes (SPADs) and mask eavesdropping.
 2. Noise Discrimination Violation:
-   - Measured QBER: ${(qberVal * 100).toFixed(2)}% (Breached Hoeffding statistical bound cutoff of 6.80%).
+   - Measured QBER: ${(qberVal * 100).toFixed(2)}% (Breached Hoeffding statistical bound cutoff of 5.50%).
    - CHSH Bell Parameter: S=${chshVal.toFixed(2)} (< 2.00 classical boundary - Entanglement collapsed).
    - Trace Distance D(ρ,σ) = 0.8120 (Confirms intentional state disturbance, distinguishing from Gaussian thermal drift).
 
@@ -1087,18 +1067,6 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 1. Flagged Eve as active adversarial noise source; blacklisted compromised optical wavelength.
 2. Quantum link transmission aborted to prevent key compromise / QDoS.
 3. Post-Quantum Cryptographic Fallback engaged: Activated CRYSTALS-Dilithium3 / ML-DSA-65 signatures & ML-KEM-768 key exchange.`;
-    }
-    if (title.includes('Noise')) {
-      return `DIAGNOSIS [BENIGN ENVIRONMENTAL CHANNEL NOISE]
-1. Optical Jitter: Natural fiber thermal expansion and polarization mode dispersion on dark fiber link 01.
-2. Noise Discrimination Verification:
-   - Measured QBER: ${(qberVal * 100).toFixed(2)}% (Within 6.80% Hoeffding noise envelope).
-   - CHSH Bell Parameter: S=${chshVal.toFixed(2)} (≥ 2.00 Quantum non-locality strictly preserved).
-   - Statistical Distribution: Gaussian Poissonian drift, zero adversary correlation.
-
-AUTOMATED REMEDIATION PLAN EXECUTED
-1. Dynamic polarization controller recalibrated optical phase and polarization frame.
-2. Physical QDS quantum channel maintained with zero data leakage.`;
     }
     return `STATUS NOMINAL [QUANTUM SECURE]
 1. Physical QDS teleportation keys verified with zero eavesdropping.
@@ -1218,11 +1186,10 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     setActiveAttack(attackTitle);
     const profile = getQuantumThresholdProfile(attackTitle);
     const isClean = attackTitle === "Clean signature";
-    const isAdversarialNoise = attackTitle.includes("Noise injection") || attackTitle.includes("Jamming") || attackTitle.includes("Adversarial Noise");
-    const isBenignNoise = !isAdversarialNoise && attackTitle.includes("Noise");
+    const isAdversarialNoise = attackTitle.includes("Noise") || attackTitle.includes("Jamming");
 
-    const defaultQber = isClean ? 0.019 : isAdversarialNoise ? 0.108 : isBenignNoise ? 0.048 : 0.142;
-    const defaultChsh = isClean ? 2.76 : isAdversarialNoise ? 1.74 : isBenignNoise ? 2.34 : 1.76;
+    const defaultQber = isClean ? 0.019 : isAdversarialNoise ? 0.108 : 0.142;
+    const defaultChsh = isClean ? 2.76 : isAdversarialNoise ? 1.74 : 1.76;
 
     const targetQber = customQber ?? defaultQber;
     const targetChsh = customChsh ?? defaultChsh;
@@ -1230,7 +1197,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     setChsh(targetChsh);
 
     const isBreached = targetQber > profile.threshold || targetChsh < 2.0;
-    const isThreat = !isClean && (isAdversarialNoise || (!isBenignNoise && isBreached) || (isBenignNoise && isBreached));
+    const isThreat = !isClean;
     setEveActive(isThreat);
 
     const nowStr = formatIstTime(new Date(), true);
@@ -1422,85 +1389,6 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       } catch { }
 
       toast.error(`[SOC DASHBOARD UPDATED] ${attackTitle} active! Metrics, Incidents, Threats & Live Telemetry synced.`);
-    } else if (isNoise) {
-      // Benign Environmental Thermal Phase Drift (QBER <= 6.80%, S >= 2.00)
-      setPqcMode(false);
-      addNotification({
-        title: `Environmental Drift Calibrated: Channel Noise`,
-        message: `Optical thermal phase jitter observed (QBER ${qberFormatted} ≤ ${profile.thresholdPercent} cutoff). Bell non-locality sustained at S=${chshFormatted} ≥ 2.00. Dynamic phase compensator engaged · Physical QDS channel operational.`,
-        severity: 'INFO',
-        category: 'protocol',
-        sourceNode: 'HOEFFDING-GATE',
-        qber: qberFormatted,
-        chsh: chshFormatted,
-        actionLabel: 'View SOC Telemetry',
-        actionRoute: '/monitoring'
-      });
-
-      const newEvents: TelemetryItem[] = [
-        {
-          id: `evt-${Date.now()}-n3`,
-          createdAt: baseNow + 200,
-          time: formatIstTime(baseNow + 200, true),
-          source: 'HOEFFDING-GATE',
-          text: `[CHANNEL NOISE STABILIZED] Environmental thermal drift calibrated (QBER ${qberFormatted} <= ${profile.thresholdPercent}, S=${chshFormatted} ≥ 2.00) · Physical QDS attestation active`,
-          ms: '12ms',
-          code: '200 OK',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: false
-        },
-        {
-          id: `evt-${Date.now()}-n2`,
-          createdAt: baseNow + 100,
-          time: formatIstTime(baseNow + 100, true),
-          source: 'BELL-WITNESS',
-          text: `CHSH Bell test passed: S=${chshFormatted} ≥ 2.00 (Quantum non-locality preserved under thermal noise)`,
-          ms: '14ms',
-          code: '200 OK',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: false
-        },
-        {
-          id: `evt-${Date.now()}-n1`,
-          createdAt: baseNow,
-          time: formatIstTime(baseNow, true),
-          source: 'ARB-CORE',
-          text: `[PHASE STABILIZATION] Dynamic polarization controller compensated optical jitter · QBER nominal at ${qberFormatted}`,
-          ms: '6ms',
-          code: '200 OK',
-          qber: qberFormatted,
-          chsh: chshFormatted,
-          payloadContent: 'board-resolution.pdf',
-          isThreat: false
-        }
-      ];
-      setTelemetryLogs((prev) => sortTelemetryDesc([...newEvents, ...prev]).slice(0, 100));
-
-      setSessions((prev) => prev.map((s, i) => i === 0 ? {
-        ...s,
-        state: 'STABLE',
-        tone: 'blue',
-        rate: '194.2',
-        trace: 'wave-low'
-      } : s));
-
-      try {
-        const bc = new BroadcastChannel('qds_quantum_telemetry');
-        bc.postMessage({ type: 'NEW_TELEMETRY_ITEM', payload: { newEvents } });
-        bc.close();
-      } catch { }
-
-      try {
-        localStorage.setItem('qds_active_attack', attackTitle);
-        localStorage.setItem('qds_qber', targetQber.toString());
-        localStorage.setItem('qds_chsh', targetChsh.toString());
-      } catch { }
-
-      toast.info("Channel Noise Scenario: Thermal phase drift stabilized within 6.80% cutoff (S=2.34 ≥ 2.00). Physical channel operating normally.");
     } else {
       const cleanEvents: TelemetryItem[] = [
         {
