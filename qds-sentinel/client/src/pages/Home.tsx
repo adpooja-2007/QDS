@@ -1493,7 +1493,7 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
         severity: item?.severity || "CRITICAL",
         type: item?.type || "Intercept-resend",
         origin: item?.origin || "EVE",
-        time: item?.time || "23:41:16",
+        time: item?.time || formatIstTime(Date.now(), false),
         baselineQber: item?.baseline || "1.9%",
         measuredQber: item?.current || (item?.qber ? `${(item.qber * 100).toFixed(1)}%` : "14.2%"),
         chshScore: item?.chsh || (isCritical ? 1.76 : isHigh ? 1.95 : 2.45),

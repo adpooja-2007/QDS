@@ -32,40 +32,6 @@ export interface TelemetryItem {
 }
 
 export function formatIstTime(dateOrMsOrStr?: Date | number | string, includeMs = true): string {
-  let d: Date;
-  let explicitMs: string | null = null;
-
-  if (!dateOrMsOrStr) {
-    d = new Date();
-    explicitMs = String(d.getMilliseconds()).padStart(3, '0');
-  } else if (typeof dateOrMsOrStr === 'number') {
-    d = new Date(dateOrMsOrStr);
-    explicitMs = String(d.getMilliseconds()).padStart(3, '0');
-  } else if (dateOrMsOrStr instanceof Date) {
-    d = dateOrMsOrStr;
-    explicitMs = String(d.getMilliseconds()).padStart(3, '0');
-  } else if (typeof dateOrMsOrStr === 'string') {
-    const trimmed = dateOrMsOrStr.trim();
-    if (/^\d{2}:\d{2}:\d{2}(\.\d{1,3})?$/.test(trimmed)) {
-      const [timePart, msPart] = trimmed.split('.');
-      if (msPart) explicitMs = msPart.padEnd(3, '0').slice(0, 3);
-      const [hh, mm, ss] = timePart.split(':').map(Number);
-      const now = new Date();
-      now.setHours(hh, mm, ss);
-      d = now;
-    } else {
-      const parsed = Date.parse(trimmed);
-      if (!isNaN(parsed)) {
-        d = new Date(parsed);
-        explicitMs = String(d.getMilliseconds()).padStart(3, '0');
-      } else {
-        d = new Date();
-      }
-    }
-  } else {
-    d = new Date();
-  }
-
   const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Kolkata',
     hour: '2-digit',
@@ -73,9 +39,39 @@ export function formatIstTime(dateOrMsOrStr?: Date | number | string, includeMs 
     second: '2-digit',
     hour12: false
   });
+
+  if (!dateOrMsOrStr) {
+    const d = new Date();
+    const timeStr = formatter.format(d);
+    if (!includeMs) return timeStr;
+    const ms = String(d.getMilliseconds()).padStart(3, '0');
+    return `${timeStr}.${ms}`;
+  }
+
+  if (typeof dateOrMsOrStr === 'string') {
+    const trimmed = dateOrMsOrStr.trim();
+    // If ALREADY formatted as HH:mm:ss or HH:mm:ss.SSS, return as-is without re-applying timezone
+    if (/^\d{2}:\d{2}:\d{2}(\.\d{1,3})?$/.test(trimmed)) {
+      const [timePart, msPart] = trimmed.split('.');
+      if (!includeMs) return timePart;
+      const ms = (msPart || '000').padEnd(3, '0').slice(0, 3);
+      return `${timePart}.${ms}`;
+    }
+
+    const parsed = Date.parse(trimmed);
+    if (!isNaN(parsed)) {
+      const d = new Date(parsed);
+      const timeStr = formatter.format(d);
+      if (!includeMs) return timeStr;
+      const ms = String(d.getMilliseconds()).padStart(3, '0');
+      return `${timeStr}.${ms}`;
+    }
+  }
+
+  const d = typeof dateOrMsOrStr === 'number' ? new Date(dateOrMsOrStr) : dateOrMsOrStr instanceof Date ? dateOrMsOrStr : new Date();
   const timeStr = formatter.format(d);
   if (!includeMs) return timeStr;
-  const ms = explicitMs || String(d.getMilliseconds()).padStart(3, '0');
+  const ms = String(d.getMilliseconds()).padStart(3, '0');
   return `${timeStr}.${ms}`;
 }
 
@@ -964,14 +960,16 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const stored = localStorage.getItem('qds_threats');
       if (stored) return JSON.parse(stored);
     } catch { }
+    const now = Date.now();
+    const relIst = (offsetSec: number) => formatIstTime(now - offsetSec * 1000, false);
     return [
-      { id: 'THR-104', severity: 'CRITICAL', origin: 'THREAT ENGINE', badge: 'QUARANTINED', type: 'Signature aborted (intercept-resend eavesdropping)', time: '23:41:16', baseline: '1.2%', current: '14.2%', detail: 'Intercept-resend disturbance triggered the confidence boundary and halted the signature stream.', qber: 0.142, chsh: 1.76 },
-      { id: 'THR-103', severity: 'CRITICAL', origin: 'NODE-EVE-01', badge: '', type: 'Quantum channel intercept-resend', time: '23:40:57', baseline: '1.5%', current: '12.7%', detail: 'Unauthorized basis observation was inferred from the observed QBER uplift.', qber: 0.127, chsh: 1.82 },
-      { id: 'THR-102', severity: 'CRITICAL', origin: 'NONCE-CACHE-01', badge: '', type: 'Stale nonce and payload replay', time: '23:40:50', baseline: '0.8%', current: '9.1%', detail: 'Replay candidate reappeared outside the permitted one-time-pad window.', qber: 0.091, chsh: 1.91 },
-      { id: 'THR-101', severity: 'CRITICAL', origin: 'ARB-CORE-01', badge: '', type: 'One-time pad signature forgery', time: '23:40:43', baseline: '1.0%', current: '8.4%', detail: 'Signature mismatch appeared after the classical correction frame closed.', qber: 0.084, chsh: 1.95 },
-      { id: 'THR-100', severity: 'HIGH', origin: '192.168.1.104', badge: '', type: 'Sift mismatch breach', time: '23:39:08', baseline: '1.9%', current: '7.7%', detail: 'Sifting disagreement exceeded the nominal data-reconciliation threshold.', qber: 0.077, chsh: 2.05 },
-      { id: 'THR-099', severity: 'HIGH', origin: 'QKD-NODE-07', badge: '', type: 'Pauli frame mismatch', time: '23:35:56', baseline: '2.1%', current: '5.7%', detail: 'A correction frame checksum failed verification.', qber: 0.057, chsh: 2.22 },
-      { id: 'THR-098', severity: 'MEDIUM', origin: 'FIBER-22', badge: '', type: 'Optical noise envelope', time: '22:20:56', baseline: '1.4%', current: '3.9%', detail: 'Attenuation drift is observable but remains below the intervention threshold.', qber: 0.039, chsh: 2.45 }
+      { id: 'THR-104', severity: 'CRITICAL', origin: 'THREAT ENGINE', badge: 'QUARANTINED', type: 'Signature aborted (intercept-resend eavesdropping)', time: relIst(60), baseline: '1.2%', current: '14.2%', detail: 'Intercept-resend disturbance triggered the confidence boundary and halted the signature stream.', qber: 0.142, chsh: 1.76 },
+      { id: 'THR-103', severity: 'CRITICAL', origin: 'NODE-EVE-01', badge: '', type: 'Quantum channel intercept-resend', time: relIst(120), baseline: '1.5%', current: '12.7%', detail: 'Unauthorized basis observation was inferred from the observed QBER uplift.', qber: 0.127, chsh: 1.82 },
+      { id: 'THR-102', severity: 'CRITICAL', origin: 'NONCE-CACHE-01', badge: '', type: 'Stale nonce and payload replay', time: relIst(240), baseline: '0.8%', current: '9.1%', detail: 'Replay candidate reappeared outside the permitted one-time-pad window.', qber: 0.091, chsh: 1.91 },
+      { id: 'THR-101', severity: 'CRITICAL', origin: 'ARB-CORE-01', badge: '', type: 'One-time pad signature forgery', time: relIst(360), baseline: '1.0%', current: '8.4%', detail: 'Signature mismatch appeared after the classical correction frame closed.', qber: 0.084, chsh: 1.95 },
+      { id: 'THR-100', severity: 'HIGH', origin: '192.168.1.104', badge: '', type: 'Sift mismatch breach', time: relIst(480), baseline: '1.9%', current: '7.7%', detail: 'Sifting disagreement exceeded the nominal data-reconciliation threshold.', qber: 0.077, chsh: 2.05 },
+      { id: 'THR-099', severity: 'HIGH', origin: 'QKD-NODE-07', badge: '', type: 'Pauli frame mismatch', time: relIst(600), baseline: '2.1%', current: '5.7%', detail: 'A correction frame checksum failed verification.', qber: 0.057, chsh: 2.22 },
+      { id: 'THR-098', severity: 'MEDIUM', origin: 'FIBER-22', badge: '', type: 'Optical noise envelope', time: relIst(900), baseline: '1.4%', current: '3.9%', detail: 'Attenuation drift is observable but remains below the intervention threshold.', qber: 0.039, chsh: 2.45 }
     ];
   });
 
