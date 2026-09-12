@@ -1074,12 +1074,18 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 
   const triggerAttack = async (attackTitle: string, customQber?: number, customChsh?: number) => {
     setActiveAttack(attackTitle);
-    const isThreat = attackTitle !== "Clean signature";
-    setEveActive(isThreat);
-    const targetQber = customQber ?? (isThreat ? 0.142 : 0.019);
-    const targetChsh = customChsh ?? (isThreat ? 1.76 : 2.76);
+    const profile = getQuantumThresholdProfile(attackTitle);
+    const isClean = attackTitle === "Clean signature";
+    const isNoise = attackTitle.includes("Noise");
+
+    const targetQber = customQber ?? (isClean ? 0.019 : isNoise ? 0.048 : 0.142);
+    const targetChsh = customChsh ?? (isClean ? 2.76 : isNoise ? 2.34 : 1.76);
     setQber(targetQber);
     setChsh(targetChsh);
+
+    const isBreached = targetQber > profile.threshold || targetChsh < 2.0;
+    const isThreat = !isClean && !isNoise && isBreached;
+    setEveActive(isThreat);
 
     const nowStr = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
     const diagReport = getAttackDiagnostics(attackTitle, targetQber, targetChsh);
@@ -1102,21 +1108,21 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       setRemediationReport(diagReport);
     }
 
-    if (isThreat) {
-      const qberFormatted = `${(targetQber * 100).toFixed(1)}%`;
-      const chshFormatted = targetChsh.toFixed(2);
-      const isNoise = attackTitle.includes("Noise");
-      const baseNow = Date.now();
-      const formatTimeWithOffset = (msOffset: number) => {
-        const d = new Date(baseNow + msOffset);
-        const timeStr = d.toTimeString().split(' ')[0];
-        const ms = String(d.getMilliseconds()).padStart(3, '0');
-        return `${timeStr}.${ms}`;
-      };
+    const qberFormatted = `${(targetQber * 100).toFixed(1)}%`;
+    const chshFormatted = targetChsh.toFixed(2);
+    const baseNow = Date.now();
+    const formatTimeWithOffset = (msOffset: number) => {
+      const d = new Date(baseNow + msOffset);
+      const timeStr = d.toTimeString().split(' ')[0];
+      const ms = String(d.getMilliseconds()).padStart(3, '0');
+      return `${timeStr}.${ms}`;
+    };
 
+    if (isThreat) {
+      // Adversarial breach (MitM, Forgery, Replay, PNS)
       addNotification({
         title: `Adversarial Threat Injected: ${attackTitle}`,
-        message: `High-vigilance quantum anomaly detected. QBER ${qberFormatted} breached Hoeffding cutoff 5.50%. Bell non-locality collapsed to S=${chshFormatted}. Automated PQC handover initiated.`,
+        message: `High-vigilance quantum anomaly detected. QBER ${qberFormatted} breached Hoeffding cutoff ${profile.thresholdPercent}. Bell non-locality collapsed to S=${chshFormatted} (< 2.00). Automated PQC handover initiated.`,
         severity: 'CRITICAL',
         category: 'security',
         sourceNode: 'HOEFFDING-GATE',
@@ -1130,6 +1136,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       const newEvents: TelemetryItem[] = [
         {
           id: `evt-${Date.now()}-4`,
+          createdAt: baseNow + 145,
           time: formatTimeWithOffset(145),
           source: 'PQC-GATEWAY',
           text: `[PQC FALLBACK SUCCESS] Channel hot-swapped to CRYSTALS-Dilithium3 (ML-DSA-65) + ML-KEM-768 · Communication 100% secured`,
@@ -1142,6 +1149,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         },
         {
           id: `evt-${Date.now()}-3`,
+          createdAt: baseNow + 95,
           time: formatTimeWithOffset(95),
           source: 'BELL-WITNESS',
           text: `CHSH Bell test failed: S=${chshFormatted} collapsed to classical limit (S < 2.00)`,
@@ -1154,9 +1162,10 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         },
         {
           id: `evt-${Date.now()}-2`,
+          createdAt: baseNow + 40,
           time: formatTimeWithOffset(40),
           source: 'HOEFFDING-AUDIT',
-          text: `Hoeffding bound breached: QBER ${qberFormatted} > 5.50% cutoff limit`,
+          text: `Hoeffding bound breached: QBER ${qberFormatted} > ${profile.thresholdPercent} cutoff limit`,
           ms: '8ms',
           code: '0xFA BREACH',
           qber: qberFormatted,
@@ -1166,6 +1175,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         },
         {
           id: `evt-${Date.now()}-1`,
+          createdAt: baseNow,
           time: formatTimeWithOffset(0),
           source: 'EVE-PROBE',
           text: `[ATTACK ACTIVE: ${attackTitle.toUpperCase()}] Adversarial optical disturbance injected · QBER elevated (${qberFormatted})`,
@@ -1177,12 +1187,12 @@ AUTOMATED REMEDIATION PLAN EXECUTED
           isThreat: true
         }
       ];
-      setTelemetryLogs((prev) => [...newEvents, ...prev]);
+      setTelemetryLogs((prev) => sortTelemetryDesc([...newEvents, ...prev]).slice(0, 100));
 
       const uniqueSuffix = Date.now().toString().slice(-4) + '-' + Math.floor(Math.random() * 900 + 100);
       const newThreat: ThreatAnomalyItem = {
         id: `THR-LIVE-${uniqueSuffix}`,
-        severity: isNoise ? 'MEDIUM' : 'CRITICAL',
+        severity: 'CRITICAL',
         origin: 'ATTACK SANDBOX / EVE',
         badge: 'ACTIVE ATTACK',
         type: `Live Injection: ${attackTitle}`,
@@ -1198,18 +1208,18 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       const newInc: IncidentItem = {
         id: `INC-LIVE-${uniqueSuffix}`,
         title: `Simulated Breach: ${attackTitle}`,
-        severity: isNoise ? 'MEDIUM' : 'CRITICAL',
+        severity: 'CRITICAL',
         status: 'INVESTIGATING',
         assigned: 'Anisha S (L2)',
-        impact: isNoise ? 'MEDIUM' : 'CRITICAL',
+        impact: 'CRITICAL',
         qber: qberFormatted,
         chsh: chshFormatted,
         timestamp: nowStr.slice(0, 8),
         analyst: 'Anisha S',
-        detail: `QBER ${qberFormatted} reached Hoeffding threshold cutoff (5.5%). CHSH Bell violation collapsed (S=${chshFormatted} < 2.0). Attack vector: ${attackTitle}.`,
+        detail: `QBER ${qberFormatted} reached Hoeffding threshold cutoff (${profile.thresholdPercent}). CHSH Bell violation collapsed (S=${chshFormatted} < 2.0). Attack vector: ${attackTitle}.`,
         events: [
           [`${nowStr.slice(0, 8)} UTC`, `Attack Staged: ${attackTitle}`, `Adversarial injection initiated via Red-Team Sandbox.`],
-          [`${nowStr.slice(0, 8)} UTC`, 'Hoeffding Bound Breach', `Statistical error rate reached ${qberFormatted} (limit 5.50%).`],
+          [`${nowStr.slice(0, 8)} UTC`, 'Hoeffding Bound Breach', `Statistical error rate reached ${qberFormatted} (limit ${profile.thresholdPercent}).`],
           [`${nowStr.slice(0, 8)} UTC`, 'Automated PQC Handover', 'Engaged CRYSTALS-Dilithium3 / ML-DSA-65 post-quantum lattice signature.']
         ],
         helstrom: targetQber > 0.1 ? 'P_e ≥ 0.0820' : 'P_e ≥ 0.1240',
@@ -1222,11 +1232,10 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         ...s,
         state: 'DEGRADED',
         tone: 'copper',
-        rate: isNoise ? '184.2' : '82.5',
+        rate: '82.5',
         trace: 'rise'
       } : s));
 
-      // Broadcast and persist for multi-tab synchronization
       try {
         const bc = new BroadcastChannel('qds_quantum_telemetry');
         bc.postMessage({ type: 'ATTACK_TRIGGERED', payload: { attackTitle, qber: targetQber, chsh: targetChsh, newEvents, newThreat, newInc } });
@@ -1240,6 +1249,98 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       } catch { }
 
       toast.error(`[SOC DASHBOARD UPDATED] ${attackTitle} active! Metrics, Incidents, Threats & Live Telemetry synced.`);
+    } else if (isNoise) {
+      // Benign Environmental Thermal Phase Drift (QBER <= 6.80%, S >= 2.00)
+      setPqcMode(false);
+      addNotification({
+        title: `Environmental Drift Calibrated: Channel Noise`,
+        message: `Optical thermal phase jitter observed (QBER ${qberFormatted} ≤ ${profile.thresholdPercent} cutoff). Bell non-locality sustained at S=${chshFormatted} ≥ 2.00. Dynamic phase compensator engaged · Physical QDS channel operational.`,
+        severity: 'INFO',
+        category: 'protocol',
+        sourceNode: 'HOEFFDING-GATE',
+        qber: qberFormatted,
+        chsh: chshFormatted,
+        actionLabel: 'View SOC Telemetry',
+        actionRoute: '/monitoring'
+      });
+
+      const newEvents: TelemetryItem[] = [
+        {
+          id: `evt-${Date.now()}-4`,
+          createdAt: baseNow + 145,
+          time: formatTimeWithOffset(145),
+          source: 'ARB-CORE',
+          text: `[PHASE STABILIZATION] Dynamic polarization controller compensated optical jitter · QBER nominal at ${qberFormatted}`,
+          ms: '6ms',
+          code: '200 OK',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        },
+        {
+          id: `evt-${Date.now()}-3`,
+          createdAt: baseNow + 95,
+          time: formatTimeWithOffset(95),
+          source: 'BELL-WITNESS',
+          text: `CHSH Bell test passed: S=${chshFormatted} ≥ 2.00 (Quantum non-locality preserved under thermal noise)`,
+          ms: '14ms',
+          code: '200 OK',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        },
+        {
+          id: `evt-${Date.now()}-2`,
+          createdAt: baseNow + 40,
+          time: formatTimeWithOffset(40),
+          source: 'HOEFFDING-GATE',
+          text: `Hoeffding statistical bound verified: QBER ${qberFormatted} <= ${profile.thresholdPercent} noise cutoff`,
+          ms: '11ms',
+          code: '200 OK',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        },
+        {
+          id: `evt-${Date.now()}-1`,
+          createdAt: baseNow,
+          time: formatTimeWithOffset(0),
+          source: 'QN-ALICE',
+          text: `[CHANNEL NOISE STABILIZED] Environmental thermal drift within confidence envelope · Physical QDS attestation active`,
+          ms: '12ms',
+          code: '200 OK',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        }
+      ];
+      setTelemetryLogs((prev) => sortTelemetryDesc([...newEvents, ...prev]).slice(0, 100));
+
+      setSessions((prev) => prev.map((s, i) => i === 0 ? {
+        ...s,
+        state: 'STABLE',
+        tone: 'blue',
+        rate: '194.2',
+        trace: 'wave-low'
+      } : s));
+
+      try {
+        const bc = new BroadcastChannel('qds_quantum_telemetry');
+        bc.postMessage({ type: 'NEW_TELEMETRY_ITEM', payload: { newEvents } });
+        bc.close();
+      } catch { }
+
+      try {
+        localStorage.setItem('qds_active_attack', attackTitle);
+        localStorage.setItem('qds_qber', targetQber.toString());
+        localStorage.setItem('qds_chsh', targetChsh.toString());
+      } catch { }
+
+      toast.info("Channel Noise Scenario: Thermal phase drift stabilized within 6.80% cutoff (S=2.34 ≥ 2.00). Physical channel operating normally.");
     } else {
       const cleanEvents: TelemetryItem[] = [
         {
