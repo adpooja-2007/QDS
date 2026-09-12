@@ -295,6 +295,8 @@ export function calculateQuantumThreshold(attackTitle: string, customSampleSize?
   };
 }
 
+export const getQuantumThresholdProfile = calculateQuantumThreshold;
+
 export interface SentinelContextType {
   eveActive: boolean;
   activeSessionId: string;

@@ -392,18 +392,6 @@ class SOCTelemetryService {
     this.activeThreat = !this.activeThreat;
     this.saveState();
   }
-
-  public subscribe(listener: () => void) {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-
-  private notify() {
-    this.listeners.forEach((l) => l());
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('qds-soc-telemetry-changed'));
-    }
-  }
 }
 
-export const socTelemetry = new SOCTelemetryService();
+export const socTelemetry = SOCTelemetryService.getInstance();

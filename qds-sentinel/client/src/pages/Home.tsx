@@ -16,6 +16,7 @@ import {
   Copy,
   Database,
   Download,
+  FileCode,
   FileKey2,
   Gauge,
   GitBranch,
