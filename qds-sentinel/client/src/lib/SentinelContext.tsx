@@ -28,6 +28,30 @@ export interface TelemetryItem {
   chsh: string;
   payloadContent?: string;
   isThreat?: boolean;
+  createdAt?: number;
+}
+
+export function parseTimeToSeconds(timeStr: string): number {
+  if (!timeStr) return 0;
+  const clean = timeStr.replace(/[^0-9:\.]/g, '').trim();
+  const parts = clean.split(':');
+  if (parts.length < 3) return 0;
+  const hours = parseFloat(parts[0]) || 0;
+  const minutes = parseFloat(parts[1]) || 0;
+  const seconds = parseFloat(parts[2]) || 0;
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
+export function sortTelemetryDesc(items: TelemetryItem[]): TelemetryItem[] {
+  return [...items].sort((a, b) => {
+    if (a.createdAt && b.createdAt && a.createdAt !== b.createdAt) {
+      return b.createdAt - a.createdAt;
+    }
+    const tA = parseTimeToSeconds(a.time);
+    const tB = parseTimeToSeconds(b.time);
+    if (tA !== tB) return tB - tA;
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  });
 }
 
 export interface IncidentItem {
@@ -639,7 +663,12 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [telemetryLogs, setTelemetryLogs] = useState<TelemetryItem[]>(() => {
     try {
       const stored = localStorage.getItem('qds_telemetry_logs');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return sortTelemetryDesc(parsed);
+        }
+      }
     } catch { }
     const now = Date.now();
     const formatRelTime = (offsetMs: number) => {
@@ -649,12 +678,18 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return `${timeStr}.${ms}`;
     };
     return [
-      { id: 'evt-0', time: formatRelTime(1200), source: 'ARB-CORE', text: 'SPDC photon pair routed to Alice & Bob via Dark Fiber Link 1', ms: '12ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'qds_entropy.sig' },
-      { id: 'evt-1', time: formatRelTime(4800), source: 'QN-ALICE', text: 'Joint Bell State Measurement completed for session QKD-260827-91F4', ms: '18ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'board-resolution.pdf' },
-      { id: 'evt-2', time: formatRelTime(11500), source: 'HOEFFDING-GATE', text: 'Hoeffding statistical bound audit passed · QBER <= 5.50%', ms: '20ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'orbital-telemetry.pdf' },
-      { id: 'evt-3', time: formatRelTime(24000), source: 'PRIVACY_AMP', text: 'Toeplitz hash distillation: 1024 raw bits -> 256 secure entropy bits', ms: '9ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'DEFENSE-09' },
+      { id: 'evt-0', createdAt: now - 1200, time: formatRelTime(1200), source: 'ARB-CORE', text: 'SPDC photon pair routed to Alice & Bob via Dark Fiber Link 1', ms: '12ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'qds_entropy.sig' },
+      { id: 'evt-1', createdAt: now - 4800, time: formatRelTime(4800), source: 'QN-ALICE', text: 'Joint Bell State Measurement completed for session QKD-260827-91F4', ms: '18ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'board-resolution.pdf' },
+      { id: 'evt-2', createdAt: now - 11500, time: formatRelTime(11500), source: 'HOEFFDING-GATE', text: 'Hoeffding statistical bound audit passed · QBER <= 5.50%', ms: '20ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'orbital-telemetry.pdf' },
+      { id: 'evt-3', createdAt: now - 24000, time: formatRelTime(24000), source: 'PRIVACY_AMP', text: 'Toeplitz hash distillation: 1024 raw bits -> 256 secure entropy bits', ms: '9ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'DEFENSE-09' },
     ];
   });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('qds_telemetry_logs', JSON.stringify(telemetryLogs));
+    } catch { }
+  }, [telemetryLogs]);
 
   useEffect(() => {
     let bc: BroadcastChannel | null = null;
@@ -670,11 +705,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (payload?.qber) setQber(payload.qber);
         if (payload?.chsh) setChsh(payload.chsh);
         if (payload?.newEvents) {
-          setTelemetryLogs(prev => {
-            const next = [...payload.newEvents, ...prev].slice(0, 100);
-            try { localStorage.setItem('qds_telemetry_logs', JSON.stringify(next)); } catch { }
-            return next;
-          });
+          setTelemetryLogs(prev => sortTelemetryDesc([...payload.newEvents, ...prev]).slice(0, 100));
         }
         if (payload?.newThreat) {
           setThreats(prev => [payload.newThreat, ...prev.filter(t => t.id !== payload.newThreat.id)]);
@@ -684,11 +715,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       } else if (msgType === 'NEW_TELEMETRY_ITEM') {
         if (payload?.newEvents) {
-          setTelemetryLogs(prev => {
-            const next = [...payload.newEvents, ...prev].slice(0, 100);
-            try { localStorage.setItem('qds_telemetry_logs', JSON.stringify(next)); } catch { }
-            return next;
-          });
+          setTelemetryLogs(prev => sortTelemetryDesc([...payload.newEvents, ...prev]).slice(0, 100));
         }
         if (payload?.newThreat) {
           setThreats(prev => [payload.newThreat, ...prev.filter(t => t.id !== payload.newThreat.id)]);
@@ -703,11 +730,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setQber(0.019);
         setChsh(2.76);
         if (payload?.newEvents) {
-          setTelemetryLogs(prev => {
-            const next = [...payload.newEvents, ...prev].slice(0, 100);
-            try { localStorage.setItem('qds_telemetry_logs', JSON.stringify(next)); } catch { }
-            return next;
-          });
+          setTelemetryLogs(prev => sortTelemetryDesc([...payload.newEvents, ...prev]).slice(0, 100));
         }
       }
     };
@@ -1286,7 +1309,8 @@ AUTOMATED REMEDIATION PLAN EXECUTED
   };
 
   const pushTelemetryLogs = (items: TelemetryItem[]) => {
-    setTelemetryLogs((prev) => [...items, ...prev]);
+    const stamped = items.map(it => ({ ...it, createdAt: it.createdAt || Date.now() }));
+    setTelemetryLogs((prev) => sortTelemetryDesc([...stamped, ...prev]).slice(0, 100));
 
     const threatItems = items.filter(i => i.isThreat || i.code.includes('403') || i.code.includes('0xFA') || i.code.includes('REJECT') || i.code.includes('503') || i.source.includes('EVE'));
 

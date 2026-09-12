@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useSentinel } from "../lib/SentinelContext";
+import { useSentinel, sortTelemetryDesc } from "../lib/SentinelContext";
 import {
   Activity,
   AlertTriangle,
@@ -506,7 +506,7 @@ function MonitoringPage() {
     };
   }, []);
   
-  const rows = telemetryLogs.map((item) => ({
+  const rows = sortTelemetryDesc(telemetryLogs).map((item) => ({
     ...item,
     qber: item.qber || `${(qber * 100).toFixed(1)}%`,
     chsh: item.chsh || chsh.toFixed(2),
