@@ -31,6 +31,54 @@ export interface TelemetryItem {
   createdAt?: number;
 }
 
+export function formatIstTime(dateOrMsOrStr?: Date | number | string, includeMs = true): string {
+  let d: Date;
+  let explicitMs: string | null = null;
+
+  if (!dateOrMsOrStr) {
+    d = new Date();
+    explicitMs = String(d.getMilliseconds()).padStart(3, '0');
+  } else if (typeof dateOrMsOrStr === 'number') {
+    d = new Date(dateOrMsOrStr);
+    explicitMs = String(d.getMilliseconds()).padStart(3, '0');
+  } else if (dateOrMsOrStr instanceof Date) {
+    d = dateOrMsOrStr;
+    explicitMs = String(d.getMilliseconds()).padStart(3, '0');
+  } else if (typeof dateOrMsOrStr === 'string') {
+    const trimmed = dateOrMsOrStr.trim();
+    if (/^\d{2}:\d{2}:\d{2}(\.\d{1,3})?$/.test(trimmed)) {
+      const [timePart, msPart] = trimmed.split('.');
+      if (msPart) explicitMs = msPart.padEnd(3, '0').slice(0, 3);
+      const [hh, mm, ss] = timePart.split(':').map(Number);
+      const now = new Date();
+      now.setHours(hh, mm, ss);
+      d = now;
+    } else {
+      const parsed = Date.parse(trimmed);
+      if (!isNaN(parsed)) {
+        d = new Date(parsed);
+        explicitMs = String(d.getMilliseconds()).padStart(3, '0');
+      } else {
+        d = new Date();
+      }
+    }
+  } else {
+    d = new Date();
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  const timeStr = formatter.format(d);
+  if (!includeMs) return timeStr;
+  const ms = explicitMs || String(d.getMilliseconds()).padStart(3, '0');
+  return `${timeStr}.${ms}`;
+}
+
 export function parseTimeToSeconds(timeStr: string): number {
   if (!timeStr) return 0;
   const clean = timeStr.replace(/[^0-9:\.]/g, '').trim();
@@ -607,7 +655,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         pulseIndex++;
         addNotification({
           ...item,
-          timestamp: new Date().toTimeString().split(' ')[0]
+          timestamp: formatIstTime(new Date(), false)
         });
       }
     }, 45000);
@@ -626,7 +674,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const addNotification = (notif: Omit<QuantumNotification, 'id' | 'timestamp' | 'read'> & { id?: string; timestamp?: string; read?: boolean; createdAt?: number }) => {
     const createdAt = notif.createdAt || Date.now();
     const newId = notif.id || `notif-${createdAt}-${Math.floor(Math.random() * 1000)}`;
-    const newTimestamp = notif.timestamp || new Date().toTimeString().split(' ')[0];
+    const newTimestamp = notif.timestamp || formatIstTime(createdAt, false);
     const newNotif: QuantumNotification = {
       ...notif,
       id: newId,
@@ -686,17 +734,16 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return sortTelemetryDesc(parsed);
+          const remapped = parsed.map((item: TelemetryItem) => ({
+            ...item,
+            time: item.createdAt ? formatIstTime(item.createdAt, true) : formatIstTime(item.time, true)
+          }));
+          return sortTelemetryDesc(remapped);
         }
       }
     } catch { }
     const now = Date.now();
-    const formatRelTime = (offsetMs: number) => {
-      const d = new Date(now - offsetMs);
-      const timeStr = d.toTimeString().split(' ')[0];
-      const ms = Math.floor(100 + Math.random() * 899);
-      return `${timeStr}.${ms}`;
-    };
+    const formatRelTime = (offsetMs: number) => formatIstTime(now - offsetMs, true);
     return [
       { id: 'evt-0', createdAt: now - 1200, time: formatRelTime(1200), source: 'ARB-CORE', text: 'SPDC photon pair routed to Alice & Bob via Dark Fiber Link 1', ms: '12ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'qds_entropy.sig' },
       { id: 'evt-1', createdAt: now - 4800, time: formatRelTime(4800), source: 'QN-ALICE', text: 'Joint Bell State Measurement completed for session QKD-260827-91F4', ms: '18ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'board-resolution.pdf' },
@@ -1008,7 +1055,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     setQber(newQber);
     setChsh(newChsh);
 
-    const nowStr = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
+    const nowStr = formatIstTime(new Date(), true);
 
     try {
       if (nextEve) {
@@ -1033,7 +1080,8 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         code: '403 FORBIDDEN',
         qber: '14.2%',
         chsh: '1.76',
-        isThreat: true
+        isThreat: true,
+        createdAt: Date.now()
       };
       setTelemetryLogs((prev) => [newEvt, ...prev]);
 
@@ -1050,9 +1098,9 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         analyst: 'A. Kovacs',
         detail: 'QBER 14.2% crossed Hoeffding threshold cutoff (5.5%). Bell correlation collapsed (S=1.76 < 2.0).',
         events: [
-          [`${nowStr.slice(0, 8)} UTC`, 'Eavesdropping Intercept', 'Eve tapped fiber channel 01; state collapse identified.'],
-          [`${nowStr.slice(0, 8)} UTC`, 'Hoeffding Breach', 'QBER breached 5.50% statistical confidence bound.'],
-          [`${nowStr.slice(0, 8)} UTC`, 'PQC Fallback', 'CRYSTALS-Dilithium3 post-quantum handover engaged.']
+          [`${nowStr.slice(0, 8)} IST`, 'Eavesdropping Intercept', 'Eve tapped fiber channel 01; state collapse identified.'],
+          [`${nowStr.slice(0, 8)} IST`, 'Hoeffding Breach', 'QBER breached 5.50% statistical confidence bound.'],
+          [`${nowStr.slice(0, 8)} IST`, 'PQC Fallback', 'CRYSTALS-Dilithium3 post-quantum handover engaged.']
         ],
         helstrom: 'P_e ≥ 0.0820',
         traceDistance: 'D = 0.8360',
@@ -1127,7 +1175,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     const isThreat = !isClean && (isAdversarialNoise || (!isBenignNoise && isBreached) || (isBenignNoise && isBreached));
     setEveActive(isThreat);
 
-    const nowStr = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
+    const nowStr = formatIstTime(new Date(), true);
     const diagReport = getAttackDiagnostics(attackTitle, targetQber, targetChsh);
 
     try {
@@ -1151,12 +1199,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     const qberFormatted = `${(targetQber * 100).toFixed(1)}%`;
     const chshFormatted = targetChsh.toFixed(2);
     const baseNow = Date.now();
-    const formatTimeWithOffset = (msOffset: number) => {
-      const d = new Date(baseNow + msOffset);
-      const timeStr = d.toTimeString().split(' ')[0];
-      const ms = String(d.getMilliseconds()).padStart(3, '0');
-      return `${timeStr}.${ms}`;
-    };
+    const formatTimeWithOffset = (msOffset: number) => formatIstTime(baseNow + msOffset, true);
 
     if (isThreat) {
       // Adversarial breach (MitM, Forgery, Replay, PNS, Adversarial Noise Injection)
@@ -1264,9 +1307,9 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         analyst: 'Anisha S',
         detail: `QBER ${qberFormatted} reached Hoeffding threshold cutoff (${profile.thresholdPercent}). CHSH Bell violation collapsed (S=${chshFormatted} < 2.0). Attack vector: ${attackTitle}.`,
         events: [
-          [`${nowStr.slice(0, 8)} UTC`, `Attack Staged: ${attackTitle}`, `Adversarial injection initiated via Red-Team Sandbox.`],
-          [`${nowStr.slice(0, 8)} UTC`, 'Hoeffding Bound Breach', `Statistical error rate reached ${qberFormatted} (limit ${profile.thresholdPercent}).`],
-          [`${nowStr.slice(0, 8)} UTC`, 'Automated PQC Handover', 'Engaged CRYSTALS-Dilithium3 / ML-DSA-65 post-quantum lattice signature.']
+          [`${nowStr.slice(0, 8)} IST`, `Attack Staged: ${attackTitle}`, `Adversarial injection initiated via Red-Team Sandbox.`],
+          [`${nowStr.slice(0, 8)} IST`, 'Hoeffding Bound Breach', `Statistical error rate reached ${qberFormatted} (limit ${profile.thresholdPercent}).`],
+          [`${nowStr.slice(0, 8)} IST`, 'Automated PQC Handover', 'Engaged CRYSTALS-Dilithium3 / ML-DSA-65 post-quantum lattice signature.']
         ],
         helstrom: targetQber > 0.1 ? 'P_e ≥ 0.0820' : 'P_e ≥ 0.1240',
         traceDistance: targetQber > 0.1 ? 'D = 0.8360' : 'D = 0.4420',
@@ -1466,7 +1509,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 
     if (threatItems.length > 0) {
       const top = threatItems[0];
-      const nowTime = top.time.split('.')[0] || new Date().toTimeString().split(' ')[0];
+      const nowTime = top.time ? top.time.split('.')[0] : formatIstTime(new Date(), false);
       const qberNum = parseFloat(top.qber?.replace('%', '') || '14.2') / 100;
       const chshNum = parseFloat(top.chsh || '1.76');
 
@@ -1497,9 +1540,9 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         analyst: 'Automated SOC Probe',
         detail: `[FORENSIC EVIDENCE CAPTURED] ${top.text} · Source: ${top.source} · Code: ${top.code}`,
         events: [
-          [`${nowTime} UTC`, 'Anomaly raised in live stream', top.text],
-          [`${nowTime} UTC`, 'Hoeffding limit breach', `Observed QBER ${top.qber} breached security threshold. Bell score S=${top.chsh}.`],
-          [`${nowTime} UTC`, 'Containment protocol active', 'L3 Forensic evidence isolated. Dilithium3 PQC fallback armed.']
+          [`${nowTime} IST`, 'Anomaly raised in live stream', top.text],
+          [`${nowTime} IST`, 'Hoeffding limit breach', `Observed QBER ${top.qber} breached security threshold. Bell score S=${top.chsh}.`],
+          [`${nowTime} IST`, 'Containment protocol active', 'L3 Forensic evidence isolated. Dilithium3 PQC fallback armed.']
         ],
         helstrom: 'P_e ≥ 0.0820',
         traceDistance: 'D = 0.8360',
@@ -1526,7 +1569,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 
   const sendTransmission = async (payload: { mode: 'message' | 'document'; message?: string; file?: File | null; digest?: string | null }) => {
     const txId = "TX-" + Math.floor(1000 + Math.random() * 8999);
-    const nowTime = new Date().toTimeString().split(' ')[0] + "." + Math.floor(100 + Math.random() * 899).toString();
+    const nowTime = formatIstTime(new Date(), true);
     const isDoc = payload.mode === "document" && Boolean(payload.file);
     const payloadTitle = isDoc && payload.file ? payload.file.name : (payload.message?.slice(0, 32) || "quantum signed message");
     
@@ -1651,7 +1694,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 
   const executeProtocolRun = async (documentName: string = 'board-resolution.pdf', isEveActive?: boolean) => {
     const isThreat = isEveActive ?? eveActive;
-    const nowStr = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
+    const nowStr = formatIstTime(new Date(), true);
 
     let res: any = null;
     try {
@@ -1689,10 +1732,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     setPqcMode(isRejected);
 
     const now = Date.now();
-    const timeWithOffset = (offsetMs: number) => {
-      const d = new Date(now + offsetMs);
-      return d.toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
-    };
+    const timeWithOffset = (offsetMs: number) => formatIstTime(now + offsetMs, true);
 
     const newProtocolEvents: TelemetryItem[] = [
       {
@@ -1795,9 +1835,9 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         analyst: 'Anisha S',
         detail: `QBER ${qberStr} breached Hoeffding threshold during protocol demonstration run on "${documentName}".`,
         events: [
-          [`${nowStr.slice(0, 8)} UTC`, `Protocol Demonstration Run: ${documentName}`, `Adversarial probe active on transmission.`],
-          [`${nowStr.slice(0, 8)} UTC`, 'Hoeffding Bound Breach', `Statistical error rate reached ${qberStr}.`],
-          [`${nowStr.slice(0, 8)} UTC`, 'Automated PQC Handover', 'Engaged CRYSTALS-Dilithium3 / ML-DSA-65 post-quantum lattice signature.']
+          [`${nowStr.slice(0, 8)} IST`, `Protocol Demonstration Run: ${documentName}`, `Adversarial probe active on transmission.`],
+          [`${nowStr.slice(0, 8)} IST`, 'Hoeffding Bound Breach', `Statistical error rate reached ${qberStr}.`],
+          [`${nowStr.slice(0, 8)} IST`, 'Automated PQC Handover', 'Engaged CRYSTALS-Dilithium3 / ML-DSA-65 post-quantum lattice signature.']
         ],
         helstrom: 'P_e ≥ 0.0820',
         traceDistance: 'D = 0.8360',
@@ -1848,7 +1888,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
   };
 
   const escalateIncident = (id: string) => {
-    const timeStr = new Date().toLocaleTimeString('en-GB', { hour12: false }) + ' UTC';
+    const timeStr = formatIstTime(new Date(), false) + ' IST';
     setIncidents((prev) => prev.map(inc => {
       if (inc.id === id) {
         const newEvent: [string, string, string] = [
@@ -1867,15 +1907,15 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       return inc;
     }));
     addNotification({
-      title: `Incident ${id} Escalated to L3 Forensic Team`,
-      message: `Priority handoff to Lead Cryptanalyst M. Ito for optical waveform containment.`,
-      severity: 'WARNING',
+      title: `CRITICAL Incident ${id} Escalated`,
+      message: `Incident escalated to L3 lead. Post-quantum cryptographic handover confirmed.`,
+      severity: 'CRITICAL',
       category: 'security',
       sourceNode: 'SOC-ESCALATION',
-      actionLabel: 'Inspect Incident',
+      actionLabel: 'View Incidents',
       actionRoute: '/monitoring'
     });
-    toast.error(`Incident ${id} escalated to Level 3 Lead Security Team.`);
+    toast.error(`Incident ${id} escalated to L3 Lead (M. Ito).`);
   };
 
   const quarantineNode = (nodeId: string) => {

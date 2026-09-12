@@ -1,3 +1,5 @@
+import { formatIstTime } from './SentinelContext';
+
 /**
  * QDS Sentinel — Unified SOC Telemetry & Event Bridge
  * Synchronizes live data between:
@@ -63,70 +65,79 @@ export interface SessionRecord {
   time?: string;
 }
 
-const STORAGE_KEY = 'qds_soc_telemetry_state_v1';
-
 class SOCTelemetryService {
-  private activeThreat: boolean = false;
-  private attackScenario: string | null = null;
-  private attackRunning: boolean = false;
+  private static instance: SOCTelemetryService;
   private telemetryRows: TelemetryRow[] = [];
   private threats: ThreatRecord[] = [];
   private incidents: IncidentRecord[] = [];
   private sessions: SessionRecord[] = [];
-  private listeners: Set<() => void> = new Set();
+  private listeners: Array<() => void> = [];
+  private activeThreat: boolean = false;
+  private attackScenario: string = 'Clean signature';
+  private attackRunning: boolean = false;
+  private isPolling: boolean = false;
 
-  constructor() {
-    this.loadInitialState();
+  private constructor() {
+    this.loadState();
+    if (this.telemetryRows.length === 0) {
+      this.initDefaultRecords();
+    }
     this.startBackendSync();
   }
 
-  private loadInitialState() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        this.activeThreat = Boolean(parsed.activeThreat);
-        this.attackScenario = parsed.attackScenario || null;
-        this.attackRunning = Boolean(parsed.attackRunning);
-        if (Array.isArray(parsed.telemetryRows)) this.telemetryRows = parsed.telemetryRows;
-        if (Array.isArray(parsed.threats)) this.threats = parsed.threats;
-        if (Array.isArray(parsed.incidents)) this.incidents = parsed.incidents;
-        if (Array.isArray(parsed.sessions)) this.sessions = parsed.sessions;
-      }
-    } catch (e) {
-      console.warn('Could not load SOC telemetry from localStorage', e);
+  public static getInstance(): SOCTelemetryService {
+    if (!SOCTelemetryService.instance) {
+      SOCTelemetryService.instance = new SOCTelemetryService();
     }
+    return SOCTelemetryService.instance;
+  }
 
-    if (this.telemetryRows.length === 0) {
-      this.initDefaultRecords();
+  private loadState() {
+    try {
+      const storedTel = localStorage.getItem('qds_soc_telemetry');
+      if (storedTel) this.telemetryRows = JSON.parse(storedTel);
+
+      const storedThr = localStorage.getItem('qds_soc_threats');
+      if (storedThr) this.threats = JSON.parse(storedThr);
+
+      const storedInc = localStorage.getItem('qds_soc_incidents');
+      if (storedInc) this.incidents = JSON.parse(storedInc);
+
+      const storedSess = localStorage.getItem('qds_soc_sessions');
+      if (storedSess) this.sessions = JSON.parse(storedSess);
+    } catch {
+      // Fallback to in-memory
     }
   }
 
   private saveState() {
     try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          activeThreat: this.activeThreat,
-          attackScenario: this.attackScenario,
-          attackRunning: this.attackRunning,
-          telemetryRows: this.telemetryRows.slice(0, 100),
-          threats: this.threats.slice(0, 30),
-          incidents: this.incidents.slice(0, 20),
-          sessions: this.sessions.slice(0, 20),
-        })
-      );
-    } catch (e) {
+      localStorage.setItem('qds_soc_telemetry', JSON.stringify(this.telemetryRows.slice(0, 100)));
+      localStorage.setItem('qds_soc_threats', JSON.stringify(this.threats.slice(0, 30)));
+      localStorage.setItem('qds_soc_incidents', JSON.stringify(this.incidents.slice(0, 30)));
+      localStorage.setItem('qds_soc_sessions', JSON.stringify(this.sessions.slice(0, 20)));
+    } catch {
       // Ignore storage write errors
     }
     this.notify();
+  }
+
+  private notify() {
+    this.listeners.forEach((listener) => listener());
+  }
+
+  public subscribe(listener: () => void) {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter((l) => l !== listener);
+    };
   }
 
   private initDefaultRecords() {
     const now = new Date();
     const timeStr = (offsetSec = 0) => {
       const d = new Date(now.getTime() - offsetSec * 1000);
-      return d.toLocaleTimeString('en-GB', { hour12: false });
+      return formatIstTime(d, false);
     };
 
     this.telemetryRows = [
@@ -145,9 +156,9 @@ class SOCTelemetryService {
     ];
 
     this.incidents = [
-      { id: 'INC-9482-A', status: 'INVESTIGATING', assigned: 'Anisha S (L2)', impact: 'HIGH', title: 'Quantum correlation breach', detail: 'A QBER divergence on the authenticated channel is under active forensic review.', events: [[timeStr(30) + ' UTC', 'Threat detected', 'QBER moved above the nominal confidence envelope.'], [timeStr(25) + ' UTC', 'Threshold exceeded', 'Photon-pair records sealed after the Hoeffding confidence boundary was crossed.'], [timeStr(10) + ' UTC', 'Operator assignment', 'Incident assigned to the optical assurance queue.']], qber: '7.42%', chsh: '2.12' },
-      { id: 'INC-9481-B', status: 'INVESTIGATING', assigned: 'M. Ito (L3)', impact: 'CRITICAL', title: 'Quantum channel intercept-resend', detail: '[CLASSIFIED: INTERCEPT_RESEND] Eavesdropper Eve intercepted and measured photons on the quantum channel, collapsing quantum superposition.', events: [[timeStr(120) + ' UTC', 'Threat detected', 'CRITICAL: Intercept-resend attack detected. QBER (14.2%) breached Hoeffding cutoff (5.5%). Bell correlation collapsed (S=1.76 < 2.00).'], [timeStr(110) + ' UTC', 'Threshold exceeded', 'QBER 14.20% breached security cutoff (5.0%). Non-locality collapsed (S=1.94).'], [timeStr(90) + ' UTC', 'Escalation', 'Channel held for signature acceptance review and L3 forensic handoff.']], qber: '14.20%', chsh: '1.76' },
-      { id: 'INC-9479-X', status: 'RESOLVED', assigned: 'SYSTEM AUTO', impact: 'LOW', title: 'Channel lockout mitigation', detail: 'An automated channel lock was applied after repeated authentication failures on the secure transport boundary.', events: [[timeStr(600) + ' UTC', 'Threat detected', 'Anomaly detected in the authenticated command sequence from 192.168.1.55.'], [timeStr(590) + ' UTC', 'Threshold exceeded', 'Five failed authentication attempts occurred inside the ten-second observation window.'], [timeStr(580) + ' UTC', 'Auto-resolution', 'A temporary perimeter quarantine was applied and the node was removed from active routing.']], qber: '4.88%', chsh: '2.68' },
+      { id: 'INC-9482-A', status: 'INVESTIGATING', assigned: 'Anisha S (L2)', impact: 'HIGH', title: 'Quantum correlation breach', detail: 'A QBER divergence on the authenticated channel is under active forensic review.', events: [[timeStr(30) + ' IST', 'Threat detected', 'QBER moved above the nominal confidence envelope.'], [timeStr(25) + ' IST', 'Threshold exceeded', 'Photon-pair records sealed after the Hoeffding confidence boundary was crossed.'], [timeStr(10) + ' IST', 'Operator assignment', 'Incident assigned to the optical assurance queue.']], qber: '7.42%', chsh: '2.12' },
+      { id: 'INC-9481-B', status: 'INVESTIGATING', assigned: 'M. Ito (L3)', impact: 'CRITICAL', title: 'Quantum channel intercept-resend', detail: '[CLASSIFIED: INTERCEPT_RESEND] Eavesdropper Eve intercepted and measured photons on the quantum channel, collapsing quantum superposition.', events: [[timeStr(120) + ' IST', 'Threat detected', 'CRITICAL: Intercept-resend attack detected. QBER (14.2%) breached Hoeffding cutoff (5.5%). Bell correlation collapsed (S=1.76 < 2.00).'], [timeStr(110) + ' IST', 'Threshold exceeded', 'QBER 14.20% breached security cutoff (5.0%). Non-locality collapsed (S=1.94).'], [timeStr(90) + ' IST', 'Escalation', 'Channel held for signature acceptance review and L3 forensic handoff.']], qber: '14.20%', chsh: '1.76' },
+      { id: 'INC-9479-X', status: 'RESOLVED', assigned: 'SYSTEM AUTO', impact: 'LOW', title: 'Channel lockout mitigation', detail: 'An automated channel lock was applied after repeated authentication failures on the secure transport boundary.', events: [[timeStr(600) + ' IST', 'Threat detected', 'Anomaly detected in the authenticated command sequence from 192.168.1.55.'], [timeStr(590) + ' IST', 'Threshold exceeded', 'Five failed authentication attempts occurred inside the ten-second observation window.'], [timeStr(580) + ' IST', 'Auto-resolution', 'A temporary perimeter quarantine was applied and the node was removed from active routing.']], qber: '4.88%', chsh: '2.68' },
     ];
 
     this.sessions = [
@@ -182,7 +193,7 @@ class SOCTelemetryService {
                 qber: s.qber ? `${(s.qber * 100).toFixed(1)}%` : '1.9%',
                 chsh: s.chsh_score ? s.chsh_score.toFixed(2) : '2.78',
                 verdict: s.threat_detected ? 'REJECT' : 'ACCEPT',
-                time: new Date().toLocaleTimeString('en-GB', { hour12: false }),
+                time: formatIstTime(new Date(), false),
               };
               if (existingIdx >= 0) {
                 this.sessions[existingIdx] = { ...this.sessions[existingIdx], ...sessionItem };
@@ -204,7 +215,7 @@ class SOCTelemetryService {
               if (!this.telemetryRows.some((r) => r.id === msgId)) {
                 this.telemetryRows.unshift({
                   id: msgId,
-                  time: msg.created_at ? new Date(msg.created_at).toLocaleTimeString('en-GB', { hour12: false }) : new Date().toLocaleTimeString('en-GB', { hour12: false }),
+                  time: msg.created_at ? formatIstTime(msg.created_at, false) : formatIstTime(new Date(), false),
                   source: (msg.sender || 'ALICE').toUpperCase(),
                   text: msg.file_name ? `Document: ${msg.file_name}` : (msg.text || 'Quantum message signed'),
                   tone: isThreat ? 'copper' : 'good',
@@ -267,7 +278,7 @@ class SOCTelemetryService {
   // ── Real-time Triggers from Chat & Sandbox ──
   public recordChatMessage(msg: { sender: string; recipient: string; text?: string; file_name?: string; qber?: number; chsh_score?: number; mitm_detected?: boolean }) {
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('en-GB', { hour12: false });
+    const timeStr = formatIstTime(now, false);
     const isThreat = Boolean(msg.mitm_detected || (msg.qber && msg.qber > 0.055) || msg.recipient === 'eve');
 
     const qberStr = msg.qber ? `${(msg.qber * 100).toFixed(1)}%` : isThreat ? '14.2%' : '1.9%';
@@ -315,8 +326,8 @@ class SOCTelemetryService {
         title: 'Quantum chat channel MitM disturbance',
         detail: `[CRITICAL ALERT] Active intercept on ${msg.sender} ↔ ${msg.recipient}. Superposition collapsed by adversary.`,
         events: [
-          [`${timeStr} UTC`, 'Threat detected', `Intercept-resend attack in chat: QBER ${qberStr} > 5.5% cutoff.`],
-          [`${timeStr} UTC`, 'Threshold exceeded', `Bell score collapsed to S=${chshStr}. Signature rejected.`],
+          [`${timeStr} IST`, 'Threat detected', `Intercept-resend attack in chat: QBER ${qberStr} > 5.5% cutoff.`],
+          [`${timeStr} IST`, 'Threshold exceeded', `Bell score collapsed to S=${chshStr}. Signature rejected.`],
         ],
         qber: qberStr,
         chsh: chshStr,
@@ -334,7 +345,7 @@ class SOCTelemetryService {
     if (isRunning && isHarmful) {
       this.activeThreat = true;
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-GB', { hour12: false });
+      const timeStr = formatIstTime(now, false);
       const thrId = `THR-${Math.floor(100 + Math.random() * 900)}`;
 
       this.threats.unshift({

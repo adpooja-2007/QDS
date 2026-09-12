@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useSentinel, sortTelemetryDesc } from "../lib/SentinelContext";
+import { useSentinel, sortTelemetryDesc, formatIstTime } from "../lib/SentinelContext";
 import {
   Activity,
   AlertTriangle,
@@ -1185,7 +1185,7 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
         </div>
         <div className="overview-v3-ledger-table" style={{ userSelect: "text", WebkitUserSelect: "text" }}>
           <div className="overview-v3-ledger-row overview-v3-ledger-row-head">
-            <span>Timestamp</span><span>Subsystem</span><span>Event</span><span>Classifier verdict</span><span>Transferred text / message content</span><span>Latency</span><span>Status</span>
+            <span>Timestamp (IST)</span><span>Subsystem</span><span>Event</span><span>Classifier verdict</span><span>Transferred text / message content</span><span>Latency</span><span>Status</span>
           </div>
           {nominalRows.map((item: any, index: number) => {
             const rowKey = item.id ? String(item.id) : `row-${index}`;
@@ -1204,7 +1204,7 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
                 role="row"
                 tabIndex={0}
               >
-                <span className="mono muted">{item.time ? (item.time.includes('.') ? item.time : `${item.time}.${String(index + 45).padStart(3, "0")}`) : '--:--:--'}</span>
+                <span className="mono muted">{formatIstTime(item.createdAt || item.time, true)}</span>
                 <span className={cn("mono", item.isPqc ? "text-blue font-semibold" : item.alert ? "text-copper font-semibold" : "")}>{item.source.replace("_", " ")}</span>
                 <strong style={{ userSelect: "text" }}>{item.event}</strong>
                 <span className={cn("overview-v3-verdict", item.isPqc ? "status-text-good font-semibold" : item.alert ? "overview-v3-verdict-alert" : "")}>{item.classifier}</span>
