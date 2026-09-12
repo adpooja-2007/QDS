@@ -1239,6 +1239,12 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
     return 0;
   });
 
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [pulseCount, setPulseCount] = useState(0);
+
+  const isContained = threat || eveActive;
+
   const handleFilterChange = (nextFilter: string) => {
     setFilter(nextFilter);
     setSelected(0);
@@ -1253,6 +1259,23 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
     try {
       localStorage.setItem("qds_threats_selected", String(idx));
     } catch { }
+  };
+
+  const handleContainmentAction = () => {
+    if (isExecuting) return;
+    setIsExecuting(true);
+    setIsScanning(true);
+    setPulseCount(p => p + 1);
+
+    // Smooth execution feedback
+    window.setTimeout(() => {
+      onThreat();
+      setIsExecuting(false);
+    }, 600);
+
+    window.setTimeout(() => {
+      setIsScanning(false);
+    }, 1300);
   };
 
   const visible = filter === "ALL" ? threats : threats.filter((item) => item.severity === filter);
@@ -1335,7 +1358,13 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
               <span className={cn("severity-cell", row.severity === "CRITICAL" ? "severity-critical" : row.severity === "HIGH" ? "severity-high" : "severity-medium")}>
                 <i />{row.severity}
               </span>
-              <span className="threat-origin"><b>{row.origin}</b>{row.badge && <em>{row.badge}</em>}</span>
+              <span className="threat-origin">
+                <b>{row.origin}</b>
+                {row.badge && <em>{row.badge}</em>}
+                {isContained && row.origin.includes("EVE") && (
+                  <em style={{ marginLeft: "4px", background: "rgba(185, 74, 47, 0.15)", color: "#b94a2f", borderColor: "rgba(185, 74, 47, 0.3)" }}>QUARANTINED</em>
+                )}
+              </span>
               <strong>{row.type}</strong>
               <span className="mono muted">{row.time}</span>
             </button>
@@ -1355,17 +1384,26 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
         </div>
 
         <h3>{item?.type || "No Threat Selected"}</h3>
+
+        {isContained && (
+          <div className="threat-quarantine-badge">
+            <span className="quarantine-pulse-dot" />
+            <span>Optical Port Isolated · Dilithium3 Active</span>
+          </div>
+        )}
+
         <div className="threat-inspector-rule" />
 
         <span className="eyebrow">Telemetry data</span>
-        <div className="threat-telemetry-block">
+        <div className={cn("threat-telemetry-block", pulseCount > 0 && "pill-pulsing")} key={`telemetry-${pulseCount}`}>
           <div><span>node</span><strong>{item?.origin || "EVE"}</strong></div>
           <div><span>baseline QBER</span><strong>{baselineVal}</strong></div>
           <div><span>current QBER</span><strong className={isCritical ? "text-copper" : isHigh ? "status-text-threat" : "status-text-good"}>{qberVal}</strong></div>
         </div>
 
         <span className="eyebrow">Risk visualization & Quantum Spectrum</span>
-        <div className="threat-spectrum-box">
+        <div className={cn("threat-spectrum-box", isContained && "is-contained")}>
+          {isScanning && <div className="containment-scanner-beam" />}
           <svg className="threat-spectrum-svg" viewBox="0 0 300 90" preserveAspectRatio="none">
             <defs>
               <linearGradient id="spectrumGradient" x1="0" y1="0" x2="0" y2="1">
@@ -1401,25 +1439,39 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
               />
             ))}
 
-
             {/* Threshold Line */}
             <line x1="0" y1="35" x2="300" y2="35" stroke="#b94a2f" strokeWidth="1.5" strokeDasharray="4 4" />
           </svg>
         </div>
 
         <div className="threat-detail-pills">
-          <div className="threat-pill-item">
+          <div className={cn("threat-pill-item", pulseCount > 0 && "pill-pulsing")} key={`pill-chsh-${pulseCount}`}>
             <span>CHSH BELL SCORE</span>
             <strong className={isCritical ? "text-copper" : "status-text-good"}>S = {chshVal}</strong>
           </div>
-          <div className="threat-pill-item">
+          <div className={cn("threat-pill-item", pulseCount > 0 && "pill-pulsing")} key={`pill-verdict-${pulseCount}`}>
             <span>VERDICT</span>
             <strong className={isCritical ? "text-copper" : "status-text-good"}>{isCritical ? "BREACHED" : "NOMINAL"}</strong>
           </div>
         </div>
 
-        <button className="button button-copper inspector-action" style={{ marginTop: "12px" }} onClick={onThreat}>
-          <ShieldCheck size={14} /> {threat || eveActive ? "Restore node from quarantine" : "Run containment protocol"}
+        <button
+          className="button button-copper inspector-action"
+          style={{ marginTop: "12px" }}
+          onClick={handleContainmentAction}
+          disabled={isExecuting}
+        >
+          {isExecuting ? (
+            <>
+              <RefreshCw size={14} className="containment-spin" />
+              {isContained ? "Restoring channel baseline..." : "Isolating optical channel..."}
+            </>
+          ) : (
+            <>
+              <ShieldCheck size={14} />
+              {isContained ? "Restore node from quarantine" : "Run containment protocol"}
+            </>
+          )}
         </button>
 
         <div className="threats-v2-actions">
