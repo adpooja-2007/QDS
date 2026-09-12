@@ -1146,7 +1146,7 @@ function formatEventGist(rawText?: string, isAlert?: boolean, activeAttack?: str
 }
 
 function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson, exportTelemetry }: any) {
-  const { eveActive, qber: globalQber, chsh: globalChsh, activeAttack, pqcMode, remediationReport, clearTelemetryLogs, thresholdProfile } = useSentinel();
+  const { eveActive, qber: globalQber, chsh: globalChsh, activeAttack, pqcMode, remediationReport, clearTelemetryLogs, thresholdProfile, telemetryLogs } = useSentinel();
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const [activePacket, setActivePacket] = useState<any | null>(null);
 
