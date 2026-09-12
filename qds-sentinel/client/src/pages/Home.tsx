@@ -2937,9 +2937,79 @@ function DatabasePage() {
   const [activeTable, setActiveTable] = useState<'quantum_sessions' | 'attack_records' | 'node_metrics' | 'telemetry_logs' | 'pqc_handovers'>('quantum_sessions');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [dbRows, setDbRows] = useState(sessionRows);
-  const [selectedRecord, setSelectedRecord] = useState<any>(sessionRows[0]);
+  const [sortField, setSortField] = useState<string>('time');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string>(() => formatIstTime(Date.now(), true));
+
+  const [dbRows, setDbRows] = useState([
+    {
+      id: "QKD-260827-91F4",
+      doc: "board-resolution.pdf",
+      digest: "0x6692d35f98fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      pqcMode: "Standby",
+      qber: "1.2%",
+      hoeffding: "5.50%",
+      chsh: "2.77",
+      verdict: "ACCEPT",
+      status: "Verified",
+      bellState: "|Φ⁺⟩",
+      time: formatIstTime(Date.now() - 45000, true)
+    },
+    {
+      id: "QKD-260827-91C1",
+      doc: "release-manifest.json",
+      digest: "0x12fa9084ccba1198ee554109ab723419bb652490cc1245890fae4189acbb7712",
+      pqcMode: "Standby",
+      qber: "0.8%",
+      hoeffding: "5.50%",
+      chsh: "2.81",
+      verdict: "ACCEPT",
+      status: "Verified",
+      bellState: "|Ψ⁺⟩",
+      time: formatIstTime(Date.now() - 180000, true)
+    },
+    {
+      id: "QKD-260827-8FD2",
+      doc: "legal-brief-v4.pdf",
+      digest: "0x89ab114ef9012354aa7890bcdee41527389146ab",
+      pqcMode: "ML-KEM-768 Active",
+      qber: "14.2%",
+      hoeffding: "5.50%",
+      chsh: "1.86",
+      verdict: "REJECT",
+      status: "Quarantined",
+      bellState: "|Ψ⁻⟩ (Tampered)",
+      time: formatIstTime(Date.now() - 420000, true)
+    },
+    {
+      id: "QKD-260827-8EE9",
+      doc: "firmware-checksum.txt",
+      digest: "0x3344556677889900aabbccddeeff001122334455",
+      pqcMode: "Standby",
+      qber: "2.1%",
+      hoeffding: "5.50%",
+      chsh: "2.68",
+      verdict: "ACCEPT",
+      status: "Verified",
+      bellState: "|Φ⁻⟩",
+      time: formatIstTime(Date.now() - 900000, true)
+    },
+    {
+      id: "QKD-260827-7AA1",
+      doc: "treasury-settlement.sig",
+      digest: "0x98f411ba2468acde00998877665544332211ffeeddccbbaa",
+      pqcMode: "ML-DSA-65 Active",
+      qber: "10.8%",
+      hoeffding: "5.50%",
+      chsh: "1.74",
+      verdict: "REJECT",
+      status: "Quarantined",
+      bellState: "|Φ⁺⟩ (Degraded)",
+      time: formatIstTime(Date.now() - 1450000, true)
+    }
+  ]);
 
   const fetchLiveDatabase = async () => {
     setIsLoading(true);
@@ -2949,15 +3019,19 @@ function DatabasePage() {
         const mapped = res.sessions.map((s: any, idx: number) => ({
           id: s.session_id || `QKD-20260828-${String(idx + 1).padStart(4, '0')}`,
           doc: s.document_name || 'board-resolution.pdf',
+          digest: s.digest || `0x${Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+          pqcMode: s.status === 'REJECTED' || s.threat_detected ? 'ML-DSA-65 Active' : 'Standby',
           status: s.status === 'REJECTED' || s.threat_detected ? 'Quarantined' : 'Verified',
           qber: `${((s.metrics?.qber ?? 0.019) * 100).toFixed(1)}%`,
           chsh: (s.metrics?.chsh_score ?? 2.76).toFixed(2),
           hoeffding: '5.50%',
           verdict: s.status === 'REJECTED' || s.threat_detected ? 'REJECT' : 'ACCEPT',
+          bellState: s.status === 'REJECTED' ? '|Ψ⁻⟩ (Tampered)' : '|Φ⁺⟩',
           time: formatIstTime(Date.now() - idx * 180000, true)
         }));
         setDbRows(mapped);
       }
+      setLastSyncTime(formatIstTime(Date.now(), true));
     } catch {
       // Fallback
     } finally {
@@ -2972,103 +3046,239 @@ function DatabasePage() {
   const pqcHandovers = useMemo(() => [
     {
       id: "PQC-DSA-0981",
-      session: "QKD-260827-91F4",
+      trigger: "QBER Breach > 5.50% (Channel Jamming)",
       doc: "board-resolution.pdf",
-      algorithm: "CRYSTALS-Dilithium3 (ML-DSA-65)",
       digest: "0x6692d35f98fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      scheme: "CRYSTALS-Dilithium3 (ML-DSA-65)",
+      nistLevel: "NIST Level 3 (AES-192 equiv)",
+      latency: "3.8 ms",
       status: "PQC Fallback Active",
       qber: `${(qber * 100).toFixed(1)}%`,
       chsh: chsh.toFixed(2),
       verdict: "ACCEPT_PQC",
-      latency: "4ms",
       time: formatIstTime(Date.now() - 60000, true)
     },
     {
       id: "PQC-KEM-0412",
-      session: "QKD-260827-8FD2",
+      trigger: "CHSH Bell Violation S < 2.00 (Eavesdropping)",
       doc: "legal-brief-v4.pdf",
-      algorithm: "CRYSTALS-Kyber768 (ML-KEM-768)",
       digest: "0x89ab114ef9012354aa7890bcdee41527389146ab",
+      scheme: "CRYSTALS-Kyber768 (ML-KEM-768)",
+      nistLevel: "NIST Level 3 (IND-CCA2)",
+      latency: "5.4 ms",
       status: "PQC Sealed",
       qber: "14.2%",
       chsh: "1.76",
       verdict: "ACCEPT_PQC",
-      latency: "6ms",
       time: formatIstTime(Date.now() - 360000, true)
+    },
+    {
+      id: "PQC-DSA-0774",
+      trigger: "Photon Number Splitting Tap Detected",
+      doc: "treasury-settlement.sig",
+      digest: "0x98f411ba2468acde00998877665544332211ffeeddccbbaa",
+      scheme: "CRYSTALS-Dilithium5 (ML-DSA-87)",
+      nistLevel: "NIST Level 5 (AES-256 equiv)",
+      latency: "6.2 ms",
+      status: "PQC Sealed",
+      qber: "18.5%",
+      chsh: "1.62",
+      verdict: "ACCEPT_PQC",
+      time: formatIstTime(Date.now() - 1100000, true)
     }
   ], [qber, chsh]);
 
+  const attackRows = useMemo(() => {
+    if (threats.length > 0) {
+      return threats.map((t, idx) => ({
+        id: t.id || `ATK-20260828-${String(idx + 1).padStart(4, '0')}`,
+        vector: t.type || "Adversarial Channel Tap",
+        severity: t.severity || "CRITICAL",
+        qber: t.current || `${((t.qber ?? 0.142) * 100).toFixed(1)}%`,
+        chsh: (t.chsh ?? 1.76).toFixed(2),
+        action: "PQC Fallback Activated & Fiber Channel Isolated",
+        verdict: "REJECT",
+        status: "Quarantined",
+        time: t.time || formatIstTime(Date.now(), true)
+      }));
+    }
+    return [
+      {
+        id: "ATK-20260828-9821",
+        vector: "Adversarial Channel Noise Jamming",
+        severity: "CRITICAL",
+        qber: "10.8%",
+        chsh: "1.74",
+        action: "ML-DSA-65 Fallback Activated",
+        verdict: "REJECT",
+        status: "Quarantined",
+        time: formatIstTime(Date.now() - 120000, true)
+      },
+      {
+        id: "ATK-20260828-7712",
+        vector: "Intercept-Resend Eavesdropping",
+        severity: "CRITICAL",
+        qber: "24.8%",
+        chsh: "1.42",
+        action: "Optical Switch Shunted to Quench Eve Tap",
+        verdict: "REJECT",
+        status: "Quarantined",
+        time: formatIstTime(Date.now() - 840000, true)
+      },
+      {
+        id: "ATK-20260828-4490",
+        vector: "Photon Number Splitting (PNS)",
+        severity: "HIGH",
+        qber: "18.2%",
+        chsh: "1.65",
+        action: "Decoy State Verification Triggered",
+        verdict: "REJECT",
+        status: "Quarantined",
+        time: formatIstTime(Date.now() - 1600000, true)
+      }
+    ];
+  }, [threats]);
+
+  const nodeRows = useMemo(() => [
+    {
+      id: "QN-ALICE",
+      role: "Alice Node · CW Laser Source & BSM Signer",
+      state: "ONLINE [OPTICAL LOCK]",
+      purity: "99.4%",
+      darkCount: "< 18 Hz",
+      loss: "0.18 dB/km",
+      fidelity: "99.2%",
+      status: "Verified",
+      verdict: "ACCEPT",
+      time: formatIstTime(Date.now() - 4000, true)
+    },
+    {
+      id: "ARB-CORE",
+      role: "Arbitrator Hub · SPDC Entangled Pair Source (810nm)",
+      state: "ONLINE [SPDC COINCIDENCE]",
+      purity: "99.8%",
+      darkCount: "< 12 Hz",
+      loss: "0.16 dB/km",
+      fidelity: "99.6%",
+      status: "Verified",
+      verdict: "ACCEPT",
+      time: formatIstTime(Date.now() - 8000, true)
+    },
+    {
+      id: "QN-BOB",
+      role: "Bob Node · Single-Photon Avalanche Diode Array",
+      state: qber > 0.055 ? "DEGRADED [NOISE DETECTED]" : "ONLINE [PAULI RECONCILED]",
+      purity: qber > 0.055 ? "86.4%" : "98.9%",
+      darkCount: qber > 0.055 ? "68 Hz" : "< 22 Hz",
+      loss: qber > 0.055 ? "0.85 dB/km" : "0.21 dB/km",
+      fidelity: qber > 0.055 ? "81.2%" : "98.5%",
+      status: qber > 0.055 ? "Degraded" : "Verified",
+      verdict: qber > 0.055 ? "REJECT" : "ACCEPT",
+      time: formatIstTime(Date.now() - 2000, true)
+    },
+    {
+      id: "QN-EVE",
+      role: "Eve Probe · Adversarial Channel Tap & Sniffer",
+      state: "QUARANTINED [BEAM SPLITTER TAP]",
+      purity: "58.2%",
+      darkCount: "192 Hz",
+      loss: "2.40 dB/km",
+      fidelity: "52.0%",
+      status: "Quarantined",
+      verdict: "REJECT",
+      time: formatIstTime(Date.now(), true)
+    }
+  ], [qber]);
+
+  const telemetryRows = useMemo(() => {
+    if (telemetryLogs.length > 0) {
+      return telemetryLogs.map(l => ({
+        id: l.id,
+        level: l.isThreat ? "CRITICAL" : "AUDIT",
+        stage: l.isThreat ? "Eve Optical Tap" : "BSM Engine",
+        text: l.text,
+        metric: l.qber ? `QBER ${l.qber}` : "QBER 1.9%",
+        gate: l.isThreat ? `BREACH (S=${l.chsh || '1.74'} < 2.00)` : `PASS (S=${l.chsh || '2.76'} > 2.00)`,
+        status: l.isThreat ? "Quarantined" : "Verified",
+        verdict: l.isThreat ? "REJECT" : "ACCEPT",
+        time: l.time || formatIstTime(l.createdAt || Date.now(), true)
+      }));
+    }
+    return [
+      { id: "TLM-8921", level: "AUDIT", stage: "Arbitrator Hub", text: "SPDC photon pair emission synchronized at 810nm", metric: "QBER 1.2%", gate: "PASS (S=2.77 > 2.00)", status: "Verified", verdict: "ACCEPT", time: formatIstTime(Date.now() - 15000, true) },
+      { id: "TLM-8920", level: "AUDIT", stage: "Alice BSM Core", text: "Bell state measurement coincidence verified: |Φ⁺⟩ registered", metric: "QBER 1.2%", gate: "PASS (S=2.77 > 2.00)", status: "Verified", verdict: "ACCEPT", time: formatIstTime(Date.now() - 28000, true) },
+      { id: "TLM-8919", level: "AUDIT", stage: "Bob Reconciler", text: "Pauli frame reconciliation completed with 0 parity errors", metric: "QBER 0.8%", gate: "PASS (S=2.81 > 2.00)", status: "Verified", verdict: "ACCEPT", time: formatIstTime(Date.now() - 42000, true) },
+      { id: "TLM-8918", level: "WARN", stage: "Channel Tap", text: "Hoeffding bound variance evaluated against 5.50% threshold", metric: "QBER 5.1%", gate: "PASS (S=2.12 > 2.00)", status: "Verified", verdict: "ACCEPT", time: formatIstTime(Date.now() - 95000, true) },
+    ];
+  }, [telemetryLogs]);
+
   const tables = [
     { id: 'quantum_sessions', name: 'quantum_sessions', count: String(dbRows.length), icon: Radio },
-    { id: 'attack_records', name: 'attack_records', count: String(threats.length), icon: AlertTriangle },
-    { id: 'node_metrics', name: 'node_metrics', count: '04', icon: Network },
-    { id: 'telemetry_logs', name: 'telemetry_logs', count: String(telemetryLogs.length), icon: Activity },
+    { id: 'attack_records', name: 'attack_records', count: String(attackRows.length), icon: AlertTriangle },
+    { id: 'node_metrics', name: 'node_metrics', count: String(nodeRows.length), icon: Network },
+    { id: 'telemetry_logs', name: 'telemetry_logs', count: String(telemetryRows.length), icon: Activity },
     { id: 'pqc_handovers', name: 'pqc_handovers', count: String(pqcHandovers.length), icon: ShieldCheck }
   ];
 
   const currentRecords = useMemo(() => {
-    if (activeTable === 'attack_records') {
-      return threats.map(t => ({
-        id: t.id,
-        doc: t.type,
-        status: t.severity === 'CRITICAL' ? 'Quarantined' : 'Degraded',
-        qber: t.current || `${((t.qber ?? 0.142) * 100).toFixed(1)}%`,
-        chsh: (t.chsh ?? 1.76).toFixed(2),
-        hoeffding: '5.50%',
-        verdict: 'REJECT',
-        time: t.time || formatIstTime(Date.now(), true)
-      }));
+    switch (activeTable) {
+      case 'attack_records':
+        return attackRows;
+      case 'node_metrics':
+        return nodeRows;
+      case 'telemetry_logs':
+        return telemetryRows;
+      case 'pqc_handovers':
+        return pqcHandovers;
+      case 'quantum_sessions':
+      default:
+        return dbRows;
     }
-    if (activeTable === 'node_metrics') {
-      return [
-        { id: 'QN-ALICE', doc: 'Alice Node · Laser Source & BSM Signer', status: 'Verified', qber: '0.0%', hoeffding: '5.50%', chsh: '2.76', verdict: 'ACCEPT', time: formatIstTime(Date.now() - 4000, true) },
-        { id: 'ARB-CORE', doc: 'Arbitrator Hub · SPDC Entangled Pair Source', status: 'Verified', qber: '0.0%', hoeffding: '5.50%', chsh: '2.78', verdict: 'ACCEPT', time: formatIstTime(Date.now() - 8000, true) },
-        { id: 'QN-BOB', doc: 'Bob Node · Detector Array & Pauli Reconciliation', status: qber > 0.055 ? 'Degraded' : 'Verified', qber: `${(qber * 100).toFixed(1)}%`, hoeffding: '5.50%', chsh: chsh.toFixed(2), verdict: qber > 0.055 ? 'REJECT' : 'ACCEPT', time: formatIstTime(Date.now() - 2000, true) },
-        { id: 'QN-EVE', doc: 'Eve Probe · Adversarial Channel Tap & Sniffer', status: 'Quarantined', qber: '14.2%', hoeffding: '5.50%', chsh: '1.76', verdict: 'REJECT', time: formatIstTime(Date.now(), true) },
-      ];
-    }
-    if (activeTable === 'telemetry_logs') {
-      return telemetryLogs.map(l => ({
-        id: l.id,
-        doc: l.text,
-        status: l.isThreat ? 'Quarantined' : 'Verified',
-        qber: l.qber || '1.9%',
-        hoeffding: '5.50%',
-        chsh: l.chsh || '2.76',
-        verdict: l.isThreat ? 'REJECT' : 'ACCEPT',
-        time: l.time || formatIstTime(l.createdAt || Date.now(), true)
-      }));
-    }
-    if (activeTable === 'pqc_handovers') {
-      return pqcHandovers;
-    }
-    return dbRows;
-  }, [activeTable, dbRows, threats, telemetryLogs, pqcHandovers, qber, chsh]);
+  }, [activeTable, dbRows, attackRows, nodeRows, telemetryRows, pqcHandovers]);
 
   const filteredRecords = useMemo(() => {
-    return currentRecords.filter(row => {
-      const rowText = (row.id + ' ' + row.doc + ' ' + (row.status || '') + ' ' + (row.verdict || '') + ' ' + (row.algorithm || '')).toLowerCase();
-      const matchesSearch = rowText.includes(searchQuery.toLowerCase());
+    return currentRecords.filter((row: any) => {
+      const searchStr = Object.values(row).join(' ').toLowerCase();
+      const matchesSearch = searchStr.includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'ALL'
         ? true
         : statusFilter === 'VERIFIED'
         ? row.status === 'Verified' || row.verdict === 'ACCEPT'
         : statusFilter === 'QUARANTINED'
         ? row.status === 'Quarantined' || row.status === 'Degraded' || row.verdict === 'REJECT'
-        : row.status?.includes('PQC') || row.verdict?.includes('PQC');
+        : row.status?.includes('PQC') || row.verdict?.includes('PQC') || row.pqcMode?.includes('Active');
       return matchesSearch && matchesStatus;
     });
   }, [currentRecords, searchQuery, statusFilter]);
 
-  const selected = selectedRecord || filteredRecords[0] || dbRows[0];
+  const sortedRecords = useMemo(() => {
+    return [...filteredRecords].sort((a: any, b: any) => {
+      const valA = a[sortField] ?? '';
+      const valB = b[sortField] ?? '';
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredRecords, sortField, sortDirection]);
+
+  const selected = selectedRecord || sortedRecords[0] || currentRecords[0];
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   const exportTableCsv = () => {
-    if (filteredRecords.length === 0) {
+    if (sortedRecords.length === 0) {
       toast.error("No records available to export");
       return;
     }
-    const headers = Object.keys(filteredRecords[0]).join(',');
-    const rows = filteredRecords.map(r => Object.values(r).map(val => `"${val}"`).join(','));
+    const headers = Object.keys(sortedRecords[0]).join(',');
+    const rows = sortedRecords.map(r => Object.values(r).map(val => `"${val}"`).join(','));
     const csvContent = [headers, ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -3077,22 +3287,22 @@ function DatabasePage() {
     link.setAttribute('download', `${activeTable}_export_${Date.now()}.csv`);
     link.click();
     URL.revokeObjectURL(url);
-    toast.success(`Exported ${filteredRecords.length} records to CSV`);
+    toast.success(`Exported ${sortedRecords.length} records to CSV`);
   };
 
   const exportTableJson = () => {
-    if (filteredRecords.length === 0) {
+    if (sortedRecords.length === 0) {
       toast.error("No records available to export");
       return;
     }
-    const blob = new Blob([JSON.stringify(filteredRecords, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(sortedRecords, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', `${activeTable}_export_${Date.now()}.json`);
     link.click();
     URL.revokeObjectURL(url);
-    toast.success(`Exported ${filteredRecords.length} records to JSON`);
+    toast.success(`Exported ${sortedRecords.length} records to JSON`);
   };
 
   return (
@@ -3106,7 +3316,10 @@ function DatabasePage() {
             <button className="button button-quiet button-small" onClick={exportTableCsv} title="Export current table to CSV">
               <Download size={13} /> Export CSV
             </button>
-            <button className="button button-copper button-small" onClick={() => { fetchLiveDatabase(); toast.success("Live PostgreSQL sync active"); }}>
+            <button className="button button-quiet button-small" onClick={exportTableJson} title="Export current table to JSON">
+              <FileCode size={13} /> Export JSON
+            </button>
+            <button className="button button-copper button-small" onClick={() => { fetchLiveDatabase(); toast.success("Live PostgreSQL sync refreshed"); }}>
               <Database size={14} /> Synced with Backend
             </button>
           </div>
@@ -3117,7 +3330,7 @@ function DatabasePage() {
       <div className="db-kpis-strip">
         <div className="db-kpi-card">
           <span className="eyebrow">Database records</span>
-          <strong>{dbRows.length + threats.length + telemetryLogs.length + pqcHandovers.length} Total</strong>
+          <strong>{dbRows.length + attackRows.length + nodeRows.length + telemetryRows.length + pqcHandovers.length} Total</strong>
           <small><StatusDot tone="ok" /> 5 Ledger Tables Active</small>
         </div>
         <div className="db-kpi-card">
@@ -3149,6 +3362,8 @@ function DatabasePage() {
                 onClick={() => {
                   setActiveTable(table.id as any);
                   setSelectedRecord(null);
+                  setSearchQuery('');
+                  setSortField('time');
                 }}
               >
                 <Icon size={15} />
@@ -3159,6 +3374,7 @@ function DatabasePage() {
           })}
           <div className="db-sidebar-foot">
             <StatusDot tone="ok" /> FastAPI + SQLite / PG Sync
+            <span className="mono muted" style={{ fontSize: "8.5px", marginLeft: "auto" }}>{lastSyncTime}</span>
           </div>
         </aside>
 
@@ -3173,17 +3389,30 @@ function DatabasePage() {
               <div className="search-box">
                 <Search size={14} />
                 <input
-                  placeholder="Search records..."
+                  placeholder={`Search in ${activeTable}...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0 }}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
-              <button
-                className="filter-button"
-                onClick={() => setStatusFilter(prev => prev === 'ALL' ? 'VERIFIED' : prev === 'VERIFIED' ? 'QUARANTINED' : prev === 'QUARANTINED' ? 'PQC' : 'ALL')}
-              >
-                <SlidersHorizontal size={14} /> Filter: {statusFilter}
-              </button>
+              <div className="filter-chips">
+                {(['ALL', 'VERIFIED', 'QUARANTINED', 'PQC'] as const).map(flt => (
+                  <button
+                    key={flt}
+                    className={cn("filter-chip", statusFilter === flt && "filter-chip-active")}
+                    onClick={() => setStatusFilter(flt)}
+                  >
+                    {flt}
+                  </button>
+                ))}
+              </div>
               <button
                 className="icon-button"
                 onClick={() => {
@@ -3203,34 +3432,47 @@ function DatabasePage() {
               <div style={{ padding: "16px" }}>
                 <SkeletonTableRows rows={6} />
               </div>
-            ) : filteredRecords.length === 0 ? (
-              <div style={{ padding: "32px", textAlign: "center", color: "var(--slate)", fontFamily: "var(--mono)", fontSize: "12px" }}>
-                No records matching query "{searchQuery}"
+            ) : sortedRecords.length === 0 ? (
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--slate)", fontFamily: "var(--mono)", fontSize: "12px" }}>
+                <AlertTriangle size={24} style={{ margin: "0 auto 10px", color: "var(--copper)", opacity: 0.6 }} />
+                <div>No records matching query "{searchQuery}" in {activeTable}</div>
+                <button
+                  className="button button-quiet button-small"
+                  onClick={() => { setSearchQuery(''); setStatusFilter('ALL'); }}
+                  style={{ marginTop: "12px" }}
+                >
+                  Reset filters
+                </button>
               </div>
-            ) : (
+            ) : activeTable === 'quantum_sessions' ? (
+              /* Quantum Sessions Table */
               <table className="data-table db-table">
                 <thead>
                   <tr>
-                    <th>Record ID</th>
-                    <th>Payload / Description</th>
+                    <th onClick={() => handleSort('id')} className="cursor-pointer">Session ID {sortField === 'id' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
+                    <th onClick={() => handleSort('doc')} className="cursor-pointer">Protected Payload {sortField === 'doc' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                     <th>Status</th>
-                    <th>QBER</th>
+                    <th onClick={() => handleSort('qber')} className="cursor-pointer">QBER {sortField === 'qber' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                     <th>Hoeffding (τ)</th>
-                    <th>CHSH (S)</th>
+                    <th onClick={() => handleSort('chsh')} className="cursor-pointer">CHSH (S) {sortField === 'chsh' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
+                    <th>PQC Fallback</th>
                     <th>Verdict</th>
-                    <th>Timestamp (IST)</th>
+                    <th onClick={() => handleSort('time')} className="cursor-pointer">Recorded (IST) {sortField === 'time' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRecords.map((row: any) => (
+                  {sortedRecords.map((row: any) => (
                     <tr
                       onClick={() => setSelectedRecord(row)}
                       className={selected?.id === row.id ? "row-selected" : ""}
                       key={row.id}
                     >
                       <td className="mono strong-cell">{row.id}</td>
-                      <td style={{ maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {row.doc || row.algorithm || "quantum-payload.sig"}
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <strong style={{ fontSize: '11px' }}>{row.doc}</strong>
+                          <span className="mono muted" style={{ fontSize: '9px' }}>{row.digest ? `${row.digest.slice(0, 16)}...` : '0x6692d35f...'}</span>
+                        </div>
                       </td>
                       <td>
                         <span className={cn("row-status", (row.status === "Quarantined" || row.status === "Degraded" || row.verdict === "REJECT") && "row-status-bad")}>
@@ -3238,15 +3480,187 @@ function DatabasePage() {
                           {row.status}
                         </span>
                       </td>
-                      <td className="mono">{row.qber || "1.9%"}</td>
+                      <td className={cn("mono", parseFloat(row.qber) > 5.5 ? "text-copper font-bold" : "text-[#2F6F85]")}>
+                        {row.qber}
+                      </td>
                       <td className="mono muted">{row.hoeffding || "5.50%"}</td>
-                      <td className="mono">{row.chsh ? `S=${row.chsh}` : "S=2.76"}</td>
+                      <td className={cn("mono", parseFloat(row.chsh) < 2.0 ? "text-copper font-bold" : "text-[#2F6F85]")}>
+                        S={row.chsh}
+                      </td>
+                      <td>
+                        <span className="mono" style={{ fontSize: '10px', color: row.pqcMode?.includes('Active') ? 'var(--copper)' : 'var(--slate)' }}>
+                          {row.pqcMode || "Standby"}
+                        </span>
+                      </td>
                       <td>
                         <Pill tone={row.verdict === "REJECT" ? "copper" : row.verdict?.includes("PQC") ? "dark" : "good"}>
                           {row.verdict || "ACCEPT"}
                         </Pill>
                       </td>
-                      <td className="mono muted">{row.time || formatIstTime(Date.now(), true)}</td>
+                      <td className="mono muted">{row.time}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : activeTable === 'attack_records' ? (
+              /* Attack Records Table */
+              <table className="data-table db-table">
+                <thead>
+                  <tr>
+                    <th onClick={() => handleSort('id')} className="cursor-pointer">Incident ID</th>
+                    <th onClick={() => handleSort('vector')} className="cursor-pointer">Adversarial Vector</th>
+                    <th>Severity</th>
+                    <th onClick={() => handleSort('qber')} className="cursor-pointer">Observed QBER</th>
+                    <th onClick={() => handleSort('chsh')} className="cursor-pointer">CHSH Score (S)</th>
+                    <th>Defensive Countermeasure</th>
+                    <th>Verdict</th>
+                    <th onClick={() => handleSort('time')} className="cursor-pointer">Detected (IST)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedRecords.map((row: any) => (
+                    <tr
+                      onClick={() => setSelectedRecord(row)}
+                      className={selected?.id === row.id ? "row-selected" : ""}
+                      key={row.id}
+                    >
+                      <td className="mono strong-cell text-copper">{row.id}</td>
+                      <td>
+                        <strong style={{ fontSize: '11px', color: 'var(--ink)' }}>{row.vector}</strong>
+                      </td>
+                      <td>
+                        <Pill tone={row.severity === "CRITICAL" ? "copper" : "dark"}>
+                          {row.severity}
+                        </Pill>
+                      </td>
+                      <td className="mono text-copper font-bold">{row.qber}</td>
+                      <td className="mono text-copper font-bold">S={row.chsh}</td>
+                      <td style={{ fontSize: '10.5px', color: 'var(--slate)' }}>{row.action}</td>
+                      <td>
+                        <Pill tone="copper">REJECT</Pill>
+                      </td>
+                      <td className="mono muted">{row.time}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : activeTable === 'node_metrics' ? (
+              /* Node Metrics Table */
+              <table className="data-table db-table">
+                <thead>
+                  <tr>
+                    <th onClick={() => handleSort('id')} className="cursor-pointer">Node ID</th>
+                    <th>Architecture Role & Optical Hardware</th>
+                    <th>Operational State</th>
+                    <th>Quantum Purity Tr(ρ²)</th>
+                    <th>Dark Count</th>
+                    <th>Attenuation</th>
+                    <th>Bell Fidelity</th>
+                    <th onClick={() => handleSort('time')} className="cursor-pointer">Last Calibrated (IST)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedRecords.map((row: any) => (
+                    <tr
+                      onClick={() => setSelectedRecord(row)}
+                      className={selected?.id === row.id ? "row-selected" : ""}
+                      key={row.id}
+                    >
+                      <td className="mono strong-cell">{row.id}</td>
+                      <td>
+                        <strong style={{ fontSize: '11px' }}>{row.role}</strong>
+                      </td>
+                      <td>
+                        <span className={cn("row-status", row.state.includes("QUARANTINED") ? "row-status-bad" : row.state.includes("DEGRADED") ? "text-copper" : "status-text-good")}>
+                          <StatusDot tone={row.state.includes("QUARANTINED") ? "bad" : row.state.includes("DEGRADED") ? "warn" : "ok"} />
+                          {row.state}
+                        </span>
+                      </td>
+                      <td className="mono">{row.purity}</td>
+                      <td className="mono muted">{row.darkCount}</td>
+                      <td className="mono muted">{row.loss}</td>
+                      <td className={cn("mono", parseFloat(row.fidelity) < 90 ? "text-copper font-bold" : "text-[#2F6F85]")}>
+                        {row.fidelity}
+                      </td>
+                      <td className="mono muted">{row.time}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : activeTable === 'telemetry_logs' ? (
+              /* Telemetry Logs Table */
+              <table className="data-table db-table">
+                <thead>
+                  <tr>
+                    <th onClick={() => handleSort('id')} className="cursor-pointer">Log ID</th>
+                    <th>Level</th>
+                    <th>Subsystem Stage</th>
+                    <th>Audit Narrative / Event Details</th>
+                    <th>Metric Delta</th>
+                    <th>Security Boundary</th>
+                    <th onClick={() => handleSort('time')} className="cursor-pointer">Logged At (IST)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedRecords.map((row: any) => (
+                    <tr
+                      onClick={() => setSelectedRecord(row)}
+                      className={selected?.id === row.id ? "row-selected" : ""}
+                      key={row.id}
+                    >
+                      <td className="mono strong-cell">{row.id}</td>
+                      <td>
+                        <Pill tone={row.level === "CRITICAL" ? "copper" : row.level === "WARN" ? "dark" : "good"}>
+                          {row.level}
+                        </Pill>
+                      </td>
+                      <td className="mono" style={{ fontSize: '10.5px' }}>{row.stage}</td>
+                      <td style={{ maxWidth: '300px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--ink)' }}>{row.text}</span>
+                      </td>
+                      <td className="mono muted">{row.metric}</td>
+                      <td className={cn("mono", row.gate.includes("BREACH") ? "text-copper font-bold" : "text-[#2F6F85]")}>
+                        {row.gate}
+                      </td>
+                      <td className="mono muted">{row.time}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              /* PQC Handovers Table */
+              <table className="data-table db-table">
+                <thead>
+                  <tr>
+                    <th onClick={() => handleSort('id')} className="cursor-pointer">Handover ID</th>
+                    <th>Trigger Reason</th>
+                    <th>Target Document</th>
+                    <th>Post-Quantum Algorithm</th>
+                    <th>NIST Level</th>
+                    <th>Latency</th>
+                    <th>Status</th>
+                    <th onClick={() => handleSort('time')} className="cursor-pointer">Handover (IST)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedRecords.map((row: any) => (
+                    <tr
+                      onClick={() => setSelectedRecord(row)}
+                      className={selected?.id === row.id ? "row-selected" : ""}
+                      key={row.id}
+                    >
+                      <td className="mono strong-cell text-[#2F6F85]">{row.id}</td>
+                      <td style={{ fontSize: '10.5px', color: 'var(--copper)', fontWeight: 500 }}>{row.trigger}</td>
+                      <td>
+                        <strong style={{ fontSize: '11px' }}>{row.doc}</strong>
+                      </td>
+                      <td className="mono" style={{ fontSize: '10.5px' }}>{row.scheme}</td>
+                      <td className="mono muted">{row.nistLevel}</td>
+                      <td className="mono text-[#2F6F85]">{row.latency}</td>
+                      <td>
+                        <Pill tone="good">PQC SEALED</Pill>
+                      </td>
+                      <td className="mono muted">{row.time}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -3255,9 +3669,14 @@ function DatabasePage() {
           </div>
 
           <div className="db-pagination">
-            <span>Showing {filteredRecords.length} records in {activeTable}</span>
-            <div>
-              <button className="icon-button" onClick={exportTableJson} title="Export Table as JSON" style={{ width: "auto", padding: "0 8px", fontSize: "10px", gap: "4px" }}>
+            <span>Showing {sortedRecords.length} of {currentRecords.length} records in <code>{activeTable}</code></span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                className="button button-quiet button-small"
+                onClick={exportTableJson}
+                title="Export Filtered JSON"
+                style={{ fontSize: "10.5px", padding: "4px 10px", gap: "4px" }}
+              >
                 <FileCode size={13} /> Export JSON
               </button>
               <button className="page-current">1</button>
@@ -3269,43 +3688,96 @@ function DatabasePage() {
           <div className="drawer-head">
             <div>
               <span className="eyebrow">Record inspector</span>
-              <h3 style={{ margin: "2px 0 0", fontSize: "15px", fontFamily: "var(--serif)" }}>Record Details</h3>
+              <h3 style={{ margin: "2px 0 0", fontSize: "15px", fontFamily: "var(--serif)" }}>
+                {activeTable === 'quantum_sessions' ? 'Quantum Session Registry' :
+                 activeTable === 'attack_records' ? 'Adversarial Incident Trace' :
+                 activeTable === 'node_metrics' ? 'Hardware Node State' :
+                 activeTable === 'telemetry_logs' ? 'Telemetry Event Digest' :
+                 'PQC Handover Attestation'}
+              </h3>
             </div>
             <button className="icon-button" onClick={() => setSelectedRecord(null)} aria-label="Close inspector">
               <X size={15} />
             </button>
           </div>
-          <Pill tone={selected?.verdict === "REJECT" ? "copper" : selected?.verdict?.includes("PQC") ? "dark" : "good"}>
-            {selected?.verdict || "ACCEPT"} / {selected?.status || "Verified"}
-          </Pill>
-          <div className="record-id">{selected?.id || "QKD-20260828-0001"}</div>
+
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <Pill tone={selected?.verdict === "REJECT" ? "copper" : selected?.verdict?.includes("PQC") ? "dark" : "good"}>
+              {selected?.verdict || "ACCEPT"} / {selected?.status || "Verified"}
+            </Pill>
+            <span className="mono muted" style={{ fontSize: '10px', marginLeft: 'auto' }}>{selected?.time}</span>
+          </div>
+
+          <div className="record-id">
+            <span>{selected?.id || "QKD-20260828-0001"}</span>
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText(selected?.id || "");
+                toast.success("Record ID copied to clipboard");
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', marginLeft: 'auto' }}
+              title="Copy ID"
+            >
+              <Copy size={13} />
+            </button>
+          </div>
           
           <div className="record-block">
-            <span className="eyebrow">Target document / entity</span>
-            <strong>{selected?.doc || selected?.algorithm || "board-resolution.pdf"}</strong>
-            <span className="mono muted" style={{ fontSize: "9px", wordBreak: "break-all" }}>
-              sha256: {selected?.digest || "0x6692d35f98fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
-            </span>
+            <span className="eyebrow">Target entity / descriptor</span>
+            <strong>{selected?.doc || selected?.role || selected?.vector || selected?.text || "board-resolution.pdf"}</strong>
+            {selected?.digest && (
+              <span className="mono muted" style={{ fontSize: "9px", wordBreak: "break-all" }}>
+                sha256: {selected.digest}
+              </span>
+            )}
           </div>
 
           <div className="record-metrics">
             <div>
               <span>Observed QBER</span>
-              <strong className={selected?.verdict === "REJECT" ? "text-copper" : "text-[#2F6F85]"}>
-                {selected?.qber || "1.9%"}
+              <strong className={selected?.qber && parseFloat(selected.qber) > 5.5 ? "text-copper" : "text-[#2F6F85]"}>
+                {selected?.qber || (selected?.purity ? `Purity ${selected.purity}` : "1.9%")}
               </strong>
             </div>
             <div>
               <span>CHSH S-score</span>
               <strong className={selected?.chsh && parseFloat(selected.chsh) < 2.0 ? "text-copper" : "text-[#2F6F85]"}>
-                {selected?.chsh ? `S=${selected.chsh}` : "S=2.76"}
+                {selected?.chsh ? `S=${selected.chsh}` : (selected?.fidelity ? `F=${selected.fidelity}` : "S=2.76")}
               </strong>
+            </div>
+          </div>
+
+          {/* Dynamic Quantum State Breakdown */}
+          <div className="quantum-breakdown-card">
+            <div className="breakdown-head">
+              <Sparkles size={13} />
+              <span>Quantum Registers & Verification Proof</span>
+            </div>
+            <div className="breakdown-grid">
+              <div>
+                <small>Bell State</small>
+                <strong>{selected?.bellState || "|Φ⁺⟩ (Entangled)"}</strong>
+              </div>
+              <div>
+                <small>Hoeffding Bound</small>
+                <strong>{selected?.hoeffding || "τ = 5.50%"}</strong>
+              </div>
+              <div>
+                <small>Security Layer</small>
+                <strong className={selected?.pqcMode?.includes('Active') || selected?.scheme ? "text-copper" : "text-[#2F6F85]"}>
+                  {selected?.scheme || selected?.pqcMode || "Primary QDS"}
+                </strong>
+              </div>
+              <div>
+                <small>Confidence Level</small>
+                <strong>1 - e<sup>-2nε²</sup> &gt; 99.99%</strong>
+              </div>
             </div>
           </div>
 
           <div className="json-block">
             <div>
-              <span>quantum_record.jsonb</span>
+              <span>{activeTable}.jsonb</span>
               <button
                 onClick={() => {
                   navigator.clipboard?.writeText(JSON.stringify(selected, null, 2));
@@ -3318,20 +3790,27 @@ function DatabasePage() {
               </button>
             </div>
             <pre>{JSON.stringify({
-              record_id: selected?.id || "QKD-20260828-0001",
+              table: activeTable,
+              record_id: selected?.id,
+              entity: selected?.doc || selected?.role || selected?.vector,
+              digest: selected?.digest,
               status: selected?.status || "Verified",
               metrics: {
                 qber: selected?.qber || "1.9%",
                 chsh_score: selected?.chsh || "2.76",
-                hoeffding_bound: "5.50%"
+                hoeffding_bound: selected?.hoeffding || "5.50%",
+                state_purity: selected?.purity || "99.4%"
               },
               quantum_registers: {
-                alice_bits: [1, 0, 1, 1, 0, 1, 0, 1],
-                bell_outcomes: ["|Φ⁺⟩", "|Φ⁻⟩", "|Ψ⁺⟩", "|Φ⁺⟩"],
-                bob_measurements: [1, 0, 1, 1, 0, 1],
+                alice_basis: ["X", "Z", "X", "Z", "Z", "X", "Z", "X"],
+                bell_coincidences: ["|Φ⁺⟩", "|Φ⁺⟩", "|Ψ⁻⟩", "|Φ⁺⟩"],
                 pauli_frame: ["I", "σX", "σZ", "σXZ", "I"]
               },
-              pqc_handover_engaged: selected?.verdict === "REJECT" || Boolean(selected?.algorithm)
+              pqc_handover: {
+                engaged: selected?.verdict === "REJECT" || Boolean(selected?.scheme) || selected?.pqcMode?.includes('Active'),
+                algorithm: selected?.scheme || "CRYSTALS-Dilithium3 (ML-DSA-65)"
+              },
+              timestamp_ist: selected?.time || formatIstTime(Date.now(), true)
             }, null, 2)}</pre>
           </div>
 
@@ -3342,7 +3821,7 @@ function DatabasePage() {
               toast.success("Record payload copied to clipboard");
             }}
           >
-            <Clipboard size={14} /> Copy JSON payload
+            <Clipboard size={14} /> Copy Full JSON Payload
           </button>
         </aside>
       </div>
