@@ -237,7 +237,11 @@ function MiniSpark({ direction = "up" }: { direction?: "up" | "flat" | "down" })
 }
 
 function TelemetryChart({ threat = false, range = "15M" }: { threat?: boolean; range?: string }) {
-  const { telemetryLogs, qber: currentQber } = useSentinel();
+  const { telemetryLogs, qber: currentQber, hoeffdingThreshold, thresholdProfile, activeAttack } = useSentinel();
+  const effectiveThreshold = hoeffdingThreshold || 0.055;
+  const thresholdLabel = thresholdProfile?.thresholdPercent || "5.50%";
+  const thresholdCode = thresholdProfile?.code || "CAL";
+
   const count = range === "1M" ? 5 : range === "5M" ? 8 : range === "15M" ? 14 : 30;
   const recentLogs = [...telemetryLogs].slice(0, count).reverse();
   if (recentLogs.length < 2) {
@@ -267,7 +271,7 @@ function TelemetryChart({ threat = false, range = "15M" }: { threat?: boolean; r
     if (isNaN(val)) val = currentQber;
     const clamped = Math.max(0, Math.min(maxQber, val));
     const y = (height - padBottom) - (clamped / maxQber) * (height - padTop - padBottom);
-    return { x, y, val: (val * 100).toFixed(1), time: log.time, isThreat: log.isThreat || val > 0.055 };
+    return { x, y, val: (val * 100).toFixed(1), time: log.time, isThreat: log.isThreat || val > effectiveThreshold };
   });
 
   const pathD = points.reduce((acc, pt, i) => {
@@ -281,7 +285,7 @@ function TelemetryChart({ threat = false, range = "15M" }: { threat?: boolean; r
   }, '');
 
   const areaD = `${pathD} L ${width} ${height - padBottom} L 0 ${height - padBottom} Z`;
-  const hoeffdingY = (height - padBottom) - (0.055 / maxQber) * (height - padTop - padBottom);
+  const hoeffdingY = (height - padBottom) - (effectiveThreshold / maxQber) * (height - padTop - padBottom);
   const latestPt = points[points.length - 1] || { x: width, y: 140, val: '1.9', isThreat: threat };
   const xLabels = points.filter((_, idx) => idx % Math.max(1, Math.floor(points.length / 5)) === 0 || idx === points.length - 1).slice(0, 5);
 
@@ -291,7 +295,7 @@ function TelemetryChart({ threat = false, range = "15M" }: { threat?: boolean; r
         <span>20%</span>
         <span>15%</span>
         <span>10%</span>
-        <span style={{ color: '#C2540A', fontWeight: 600 }}>5.5% (τ)</span>
+        <span style={{ color: '#C2540A', fontWeight: 600 }}>{thresholdLabel} (τ)</span>
         <span>0%</span>
       </div>
       <svg className="telemetry-chart" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-label="Observed QBER dynamic stream">
@@ -307,8 +311,8 @@ function TelemetryChart({ threat = false, range = "15M" }: { threat?: boolean; r
             <line key={i} x1={pt.x} y1={0} x2={pt.x} y2={height - padBottom} stroke="rgba(0,0,0,0.04)" strokeDasharray="3 3" />
           ))}
         </g>
-        <line x1={0} y1={hoeffdingY} x2={width} y2={hoeffdingY} stroke="#C2540A" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.85" />
-        <text x={width - 120} y={hoeffdingY - 5} fill="#C2540A" fontSize="10" fontFamily="monospace" fontWeight="bold">5.5% Hoeffding cutoff</text>
+        <line x1={0} y1={hoeffdingY} x2={width} y2={hoeffdingY} stroke="#C2540A" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.85" style={{ transition: 'y1 0.4s ease, y2 0.4s ease' }} />
+        <text x={width - 195} y={hoeffdingY - 5} fill="#C2540A" fontSize="10" fontFamily="monospace" fontWeight="bold">{thresholdLabel} Hoeffding cutoff [{thresholdCode}]</text>
         <path className="chart-area" d={areaD} fill="url(#area-grad)" style={{ transition: 'd 0.4s ease' }} />
         <path className={cn("signal-line", (threat || latestPt.isThreat) && "signal-line-threat")} d={pathD} style={{ transition: 'd 0.4s ease' }} />
         {points.map((pt, i) => (
@@ -705,12 +709,12 @@ function SandboxPage() {
   }, [expandedNode, isClosingNode]);
 
   const attacks = [
-    { title: "Clean signature", code: "CLEAN", detail: "Authenticated Bell-pair exchange", tone: "good", type: "clean", qber: 0.019, chsh: 2.76 },
-    { title: "MitM attack", code: "MITM", detail: "Intercept / resend eavesdrop", tone: "copper", type: "forgery", qber: 0.142, chsh: 1.76 },
-    { title: "Forgery attack", code: "FORGE", detail: "Tampered feed-forward bits", tone: "copper", type: "forgery", qber: 0.128, chsh: 1.82 },
-    { title: "Replay attack", code: "REPLAY", detail: "Captured nonce retransmit", tone: "copper", type: "replay", qber: 0.086, chsh: 1.91 },
-    { title: "Channel noise", code: "NOISE", detail: "Optical thermal disturbance", tone: "blue", type: "noise", qber: 0.048, chsh: 2.34 },
-    { title: "PNS attack", code: "PNS", detail: "Photon-number splitting probe", tone: "blue", type: "pns", qber: 0.095, chsh: 1.88 }
+    { title: "Clean signature", code: "CLEAN", detail: "Authenticated Bell-pair exchange", tone: "good", type: "clean", qber: 0.019, chsh: 2.76, threshold: 0.055, thresholdPercent: "5.50%", sampleSize: 2048, lossDb: 0.2 },
+    { title: "MitM attack", code: "MITM", detail: "Intercept / resend eavesdrop", tone: "copper", type: "forgery", qber: 0.142, chsh: 1.76, threshold: 0.055, thresholdPercent: "5.50%", sampleSize: 1024, lossDb: 0.5 },
+    { title: "Forgery attack", code: "FORGE", detail: "Tampered feed-forward bits", tone: "copper", type: "forgery", qber: 0.128, chsh: 1.82, threshold: 0.052, thresholdPercent: "5.20%", sampleSize: 1024, lossDb: 0.4 },
+    { title: "Replay attack", code: "REPLAY", detail: "Captured nonce retransmit", tone: "copper", type: "replay", qber: 0.086, chsh: 1.91, threshold: 0.049, thresholdPercent: "4.90%", sampleSize: 1536, lossDb: 0.3 },
+    { title: "Channel noise", code: "NOISE", detail: "Optical thermal disturbance", tone: "blue", type: "noise", qber: 0.048, chsh: 2.34, threshold: 0.068, thresholdPercent: "6.80%", sampleSize: 1024, lossDb: 1.2 },
+    { title: "PNS attack", code: "PNS", detail: "Photon-number splitting probe", tone: "blue", type: "pns", qber: 0.095, chsh: 1.88, threshold: 0.041, thresholdPercent: "4.10%", sampleSize: 1024, lossDb: 4.5 }
   ];
 
   const selected = attacks.find((attack) => attack.title === active) ?? attacks[1];
@@ -773,17 +777,12 @@ function SandboxPage() {
       "> awaiting node registration...",
       threatened ? "> ACK: Alice connected [ID: 0x9F3A] · Bob [ID: 0x1C4B]" : "> ACK: all nodes authenticated (Alice ↔ Bob)",
       "> channel seed established · optical-dark-fiber-01",
-      threatened ? `> WARN: QBER ${(selected.qber * 100).toFixed(1)}% breached Hoeffding bound (τ=5.50%)` : `> QBER ${(selected.qber * 100).toFixed(1)}% within operating bound (τ=5.50%)`,
+      threatened ? `> WARN: QBER ${(selected.qber * 100).toFixed(1)}% breached dynamic Hoeffding bound (τ=${selected.thresholdPercent})` : `> QBER ${(selected.qber * 100).toFixed(1)}% within operating bound (τ=${selected.thresholdPercent})`,
       threatened ? `> ERR: Bell correlation collapsed (S=${selected.chsh.toFixed(2)} < 2.00 classical limit)` : `> Bell test: PASS (CHSH S=${selected.chsh.toFixed(2)} ≥ 2.00 quantum non-locality)`,
       threatened ? `> ABORT: Adversarial anomaly [${selected.code}] flagged by Threat Engine` : "> ACCEPT: physical signature verification sustained",
       threatened ? "> PQC FALLBACK SUCCESS: Session sustained · Payload authenticated with Dilithium3 / ML-KEM-768" : "> QDS ATTESTATION: unforgeable quantum key distilled"
     ],
     alice: [
-      "> seq gen start()",
-      "> basis: [+, ×, ×, +, +, ×, +, ×]",
-      "> bits: [1, 0, 1, 1, 0, 1, 0, 0]",
-      "> transmitting photons (n=1024, λ=1550nm)",
-      "> stream tx: 100% complete across dark fiber",
       "> awaiting classical basis reconciliation...",
       threatened ? `> ERR: sift parity mismatch detected (${(selected.qber * 100).toFixed(1)}% bit divergence)` : "> ACK: basis sift match (512 bits reconciled)",
       threatened ? "> PQC HOT-SWAP COMPLETE: Alice signed document with Dilithium3 lattice keypair · 100% delivered" : "> ACK: signed message payload delivered"
@@ -885,7 +884,7 @@ function SandboxPage() {
               >
                 <i />
                 <span>{attack.title}</span>
-                <small>{attack.code}</small>
+                <small>{attack.code} · τ={attack.thresholdPercent}</small>
               </button>
             ))}
           </div>
@@ -909,17 +908,18 @@ function SandboxPage() {
           <Pane title="EVE INTERCEPT" nodeKey="eve" variant={threatened ? "copper" : "blue"} lines={consoleLines.eve} />
         </main>
 
-
         <aside className="sandbox-v2-telemetry">
           <span className="eyebrow">Telemetry & PQC Status</span>
           <SandboxMetricChart
             title="QBER vs Hoeffding"
             value={`Current: ${(globalQber * 100).toFixed(1)}%`}
-            detail={threatened ? "0.055 threshold breach" : "nominal drift"}
+            detail={threatened ? `${selected.thresholdPercent} threshold breach` : `nominal (τ=${selected.thresholdPercent})`}
             threat={threatened}
             mode="qber"
             targetVal={selected.qber}
             currentVal={globalQber}
+            thresholdVal={selected.threshold}
+            thresholdLabel={`τ ≤ ${selected.thresholdPercent}`}
           />
           <SandboxMetricChart
             title="CHSH Bell violation"
@@ -932,6 +932,7 @@ function SandboxPage() {
           />
           <div className="sandbox-v2-readout">
             <div><span>Active Scenario</span><b className={threatened ? "text-copper" : "status-text-good"}>{selected.title}</b></div>
+            <div><span>Dynamic Hoeffding τ</span><b className={threatened ? "text-copper" : "status-text-good"}>{selected.thresholdPercent} (N={selected.sampleSize})</b></div>
             <div><span>Key rate</span><b>{threatened ? "1.2 kbps" : "4.8 kbps"}</b></div>
             <div><span>Sifting eff.</span><b>{threatened ? "49.6%" : "96.2%"}</b></div>
             <div>
@@ -2296,7 +2297,9 @@ function SandboxMetricChart({
   value,
   detail,
   targetVal,
-  currentVal
+  currentVal,
+  thresholdVal,
+  thresholdLabel
 }: {
   title: string;
   mode: "qber" | "chsh";
@@ -2305,6 +2308,8 @@ function SandboxMetricChart({
   detail: string;
   targetVal?: number;
   currentVal?: number;
+  thresholdVal?: number;
+  thresholdLabel?: string;
 }) {
   const width = 100;
   const height = 60;
@@ -2368,7 +2373,7 @@ function SandboxMetricChart({
 
   const thresholdMin = mode === "qber" ? 0.0 : 1.0;
   const thresholdMax = mode === "qber" ? 0.20 : 3.0;
-  const thresholdValue = mode === "qber" ? 0.055 : 2.0;
+  const thresholdValue = thresholdVal !== undefined ? thresholdVal : (mode === "qber" ? 0.055 : 2.0);
   const thresholdY = (height - padY) - ((thresholdValue - thresholdMin) / (thresholdMax - thresholdMin)) * (height - 2 * padY);
 
   const latest = points[points.length - 1];
@@ -2377,7 +2382,7 @@ function SandboxMetricChart({
     <div className="sandbox-v2-metric">
       <div className="sandbox-v2-metric-head">
         <strong>{title}</strong>
-        <span>{mode === "chsh" ? "Quantum ≥ 2.0" : "τ ≤ 5.5%"}</span>
+        <span>{mode === "chsh" ? "Quantum ≥ 2.0" : (thresholdLabel || `τ ≤ ${(thresholdValue * 100).toFixed(1)}%`)}</span>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true" style={{ overflow: "visible" }}>
         <defs>
