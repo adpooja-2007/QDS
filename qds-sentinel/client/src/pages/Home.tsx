@@ -1457,7 +1457,7 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
 
         <button
           className="button button-copper inspector-action"
-          style={{ marginTop: "12px" }}
+          style={{ marginTop: "12px", width: "100%" }}
           onClick={handleContainmentAction}
           disabled={isExecuting}
         >
@@ -1474,9 +1474,13 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
           )}
         </button>
 
-        <div className="threats-v2-actions">
-          <button className="button button-outline button-small" style={{ width: "100%" }} onClick={handleExportThreatPcap}>Export PCAP</button>
-        </div>
+        <button
+          className="button button-outline inspector-action"
+          style={{ marginTop: "8px", width: "100%" }}
+          onClick={handleExportThreatPcap}
+        >
+          <Download size={14} /> Export PCAP
+        </button>
       </aside>
     </div>
   );
