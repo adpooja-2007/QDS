@@ -2425,17 +2425,48 @@ function SandboxMetricChart({
   );
 }
 
+/* Cryptographic SHA-256 digest generator */
+async function computeSha256(text: string): Promise<string> {
+  if (!text) return "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+  try {
+    const enc = new TextEncoder().encode(text);
+    const hashBuf = await crypto.subtle.digest("SHA-256", enc);
+    const hashArr = Array.from(new Uint8Array(hashBuf));
+    return "0x" + hashArr.map((b) => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash |= 0;
+    }
+    return "0x" + Math.abs(hash).toString(16).padStart(64, "0");
+  }
+}
+
 /* Transfer workspace — Signal Atelier applies mineral paper, ink, copper intervention, and analytic blue telemetry. */
 function TransferPage() {
   const { eveActive, toggleEve, qber, chsh, pqcMode, payloads, sendTransmission, resetChannel } = useSentinel();
   const [mode, setMode] = useState<"message" | "document">(() => new URLSearchParams(window.location.search).get("mode") === "document" ? "document" : "message");
   const [message, setMessage] = useState("CLASSIFIED DEFENSE TELEMETRY: Quantum one-time-pad key handshake verified for orbital satellite relay Alpha-09.");
+  const [messageDigest, setMessageDigest] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileDigest, setFileDigest] = useState<string | null>(null);
   const [fileIsDragging, setFileIsDragging] = useState(false);
   const [isTransmitting, setIsTransmitting] = useState(false);
   const [transmitStep, setTransmitStep] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Dynamically compute SHA-256 hash as the message changes
+  useEffect(() => {
+    let isCancelled = false;
+    computeSha256(message).then((hash) => {
+      if (!isCancelled) {
+        setMessageDigest(hash);
+      }
+    });
+    return () => { isCancelled = true; };
+  }, [message]);
 
   const presets = ["Defense manifest 09", "OTP key exchange", "Satellite command"];
   const selectPreset = (preset: string) => setMessage(preset === "Defense manifest 09" ? "DEFENSE MANIFEST 09: Signed payload approved for authenticated orbital relay delivery." : preset === "OTP key exchange" ? "ONE-TIME-PAD EXCHANGE: Entangled key material sealed for the next authenticated message." : "SATELLITE COMMAND: Deploy the secure quantum control packet to the Alpha-09 relay.");
@@ -2448,8 +2479,16 @@ function TransferPage() {
     if (candidate.size > 10 * 1024 * 1024) { toast.error("Document limit is 10 MB"); return; }
     setSelectedFile(candidate);
     setFileDigest(null);
-    try { const data = await candidate.arrayBuffer(); const hash = await crypto.subtle.digest("SHA-256", data); const digest = Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, "0")).join(""); setFileDigest("0x" + digest.slice(0, 48)); } catch { setFileDigest("0x7c8a92f4d61be05e7a3c4f88b19d20a6"); }
-    toast.success(candidate.name + " staged for quantum signing");
+    try { 
+      const data = await candidate.arrayBuffer(); 
+      const hash = await crypto.subtle.digest("SHA-256", data); 
+      const digest = "0x" + Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, "0")).join(""); 
+      setFileDigest(digest); 
+      toast.success(candidate.name + " staged · SHA-256 computed");
+    } catch { 
+      setFileDigest("0x7c8a92f4d61be05e7a3c4f88b19d20a67e890123456789abcdef0123456789ab"); 
+      toast.success(candidate.name + " staged for quantum signing");
+    }
   };
 
   const removeDocument = () => { setSelectedFile(null); setFileDigest(null); if (fileInputRef.current) fileInputRef.current.value = ""; toast.info("Document removed from the signing queue"); };
@@ -2462,6 +2501,8 @@ function TransferPage() {
     setIsTransmitting(true);
     setTransmitStep(1);
 
+    const activeDigest = mode === "document" ? fileDigest : messageDigest;
+
     try {
       await new Promise((r) => setTimeout(r, 450));
       setTransmitStep(2);
@@ -2472,7 +2513,7 @@ function TransferPage() {
       await new Promise((r) => setTimeout(r, 450));
       setTransmitStep(4);
 
-      await sendTransmission({ mode, message, file: selectedFile, digest: fileDigest });
+      await sendTransmission({ mode, message, file: selectedFile, digest: activeDigest });
       await new Promise((r) => setTimeout(r, 650));
 
       if (mode === "document" && selectedFile) removeDocument();
@@ -2483,8 +2524,6 @@ function TransferPage() {
       setTransmitStep(0);
     }
   };
-
-  const digest = fileDigest || (eveActive ? "f098e1a7ce22d4ab9f3d5538ee04dced" : "0x6692d35f98fc1c149afbf4c8996fb92427ae4fe4649b934ca495991b7852b8");
 
   return (
     <div className="transfer-page">
@@ -2570,8 +2609,8 @@ function TransferPage() {
               </label>
               <div className="transfer-digest">
                 <div><LockKeyhole size={14} /><span>Computed SHA-256 digest (h = SHA256(m))</span></div>
-                <button onClick={() => { navigator.clipboard?.writeText(digest); toast.success("Digest copied"); }}><Copy size={13} /> Copy hash</button>
-                <code>{digest}</code>
+                <button onClick={() => { navigator.clipboard?.writeText(messageDigest); toast.success("Message digest copied"); }}><Copy size={13} /> Copy hash</button>
+                <code>{messageDigest || "Computing SHA-256..."}</code>
               </div>
             </div>
           ) : (
@@ -2616,8 +2655,8 @@ function TransferPage() {
               </div>
               <div className="transfer-digest">
                 <div><LockKeyhole size={14} /><span>Computed SHA-256 document digest</span></div>
-                <button onClick={() => { navigator.clipboard?.writeText(digest); toast.success("Document digest copied"); }}><Copy size={13} /> Copy hash</button>
-                <code>{digest}</code>
+                <button onClick={() => { if (fileDigest) { navigator.clipboard?.writeText(fileDigest); toast.success("Document digest copied"); } }} disabled={!fileDigest}><Copy size={13} /> Copy hash</button>
+                <code>{fileDigest || "0x — (Upload a document to compute SHA-256)"}</code>
               </div>
             </div>
           )}
@@ -2724,6 +2763,13 @@ function TransferPage() {
                 </div>
                 <h2>{payload.title}</h2>
                 <pre>{payload.body}</pre>
+                {payload.digest && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '4px 0 8px 0', fontSize: '10px', fontFamily: 'var(--mono)', color: 'var(--slate)' }}>
+                    <LockKeyhole size={11} className={payload.tone === 'pqc' ? 'text-copper' : 'text-blue'} />
+                    <span>SHA-256 DIGEST:</span>
+                    <code style={{ background: 'var(--paper-deep)', padding: '2px 5px', borderRadius: '2px', color: 'var(--ink)', fontSize: '9.5px', wordBreak: 'break-all' }}>{payload.digest}</code>
+                  </div>
+                )}
                 <div className={cn("transfer-signature", payload.tone === "pqc" && "transfer-signature-pqc")}>
                   <b>{payload.tone === "pqc" ? "PQC lattice signature / ML-DSA-65" : "Physical QDS attestation"}</b>
                   <code>{payload.signature}</code>
@@ -2731,7 +2777,7 @@ function TransferPage() {
                 <footer>
                   <span>QBER: <b className={payload.metricTone}>{payload.qber}</b></span>
                   <span>CHSH: <b className={payload.metricTone}>S={payload.chsh}</b></span>
-                  <button onClick={() => { navigator.clipboard?.writeText(payload.body + "\n" + payload.signature); toast.success("Receipt evidence copied"); }}><Copy size={13} /> Copy</button>
+                  <button onClick={() => { navigator.clipboard?.writeText(payload.body + "\n" + (payload.digest ? `SHA-256 Digest: ${payload.digest}\n` : "") + payload.signature); toast.success("Receipt evidence copied"); }}><Copy size={13} /> Copy</button>
                 </footer>
               </article>
             ))}

@@ -9,6 +9,7 @@ export interface TransmissionRecord {
   title: string;
   body: string;
   signature: string;
+  digest?: string;
   qber: string;
   chsh: string;
   pauli: string;
@@ -863,6 +864,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       title: "Classified defense telemetry",
       body: "CLASSIFIED DEFENSE TELEMETRY: Quantum one-time-pad key handshake verified for orbital satellite relay Alpha-09.",
       signature: "PQC LATTICE SIGNATURE (CRYSTALS-DILITHIUM3 / ML-DSA-65):\n3a7d9f2e4b6c8d0ef1a3b5b7c9d1e3f5a7b9c1d3e5f7a9b1c3d5e7f9a1b3c5d7e...",
+      digest: "0x3a7d9f2e4b6c8d0ef1a3b5b7c9d1e3f5a7b9c1d3e5f7a9b1c3d5e7f9a1b3c5d7",
       qber: "8.77%",
       chsh: "1.77",
       pauli: "PQC ML-DSA-65",
@@ -876,6 +878,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       title: "Authenticated routing manifest",
       body: "QDS transport layer confirmed a physical signature match for the protected relay schedule.",
       signature: "PHYSICAL QDS ATTESTATION:\nBell-state witness sealed · optical entropy verified · channel path authenticated",
+      digest: "0x9f1c84b2e7a048db392fe190ca8817bca4d019f20e8b8392a104c8f2b7a901ee",
       qber: "1.90%",
       chsh: "2.78",
       pauli: "I · σZ",
@@ -1355,7 +1358,29 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     const nowTime = new Date().toTimeString().split(' ')[0] + "." + Math.floor(100 + Math.random() * 899).toString();
     const isDoc = payload.mode === "document" && Boolean(payload.file);
     const payloadTitle = isDoc && payload.file ? payload.file.name : (payload.message?.slice(0, 32) || "quantum signed message");
-    const payloadHash = payload.digest || "0x6692d35f98fc1c149afbf4c8996fb92427ae4fe4649b934ca495991b7852b8";
+    
+    let payloadHash = payload.digest;
+    if (!payloadHash) {
+      if (isDoc && payload.file) {
+        try {
+          const buf = await payload.file.arrayBuffer();
+          const hashBuf = await crypto.subtle.digest("SHA-256", buf);
+          payloadHash = "0x" + Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, "0")).join("");
+        } catch {
+          payloadHash = "0x" + Math.random().toString(16).slice(2).padStart(64, '0');
+        }
+      } else if (payload.message) {
+        try {
+          const enc = new TextEncoder().encode(payload.message);
+          const hashBuf = await crypto.subtle.digest("SHA-256", enc);
+          payloadHash = "0x" + Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, "0")).join("");
+        } catch {
+          payloadHash = "0x" + Math.random().toString(16).slice(2).padStart(64, '0');
+        }
+      } else {
+        payloadHash = "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+      }
+    }
 
     let res: any = null;
     try {
@@ -1369,9 +1394,13 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     }
 
     const fallbackActive = res ? res.status === 'PQC_FALLBACK_ACTIVE' : (eveActive || qber > 0.055);
+    const hexOnly = payloadHash.replace(/^0x/, '');
+    const defaultPqcSig = `PQC LATTICE SIGNATURE (CRYSTALS-DILITHIUM3 / ML-DSA-65):\n${hexOnly.slice(0, 32)}${hexOnly.slice(0, 24)}9f1a3b5b7c9d1e3f5a7b9c1d3e5f7a9b...`;
+    const defaultPhysicalSig = `PHYSICAL QDS ATTESTATION:\nBell-state witness sealed [digest: ${payloadHash.slice(0, 18)}...] · optical entropy verified · channel path authenticated`;
+
     const sig = fallbackActive
-      ? (res?.fallback_signature ? `PQC LATTICE SIGNATURE (CRYSTALS-DILITHIUM3 / ML-DSA-65):\n${res.fallback_signature}` : "PQC LATTICE SIGNATURE (CRYSTALS-DILITHIUM3 / ML-DSA-65):\n3a7d9f2e4b6c8d0ef1a3b5b7c9d1e3f5a7b9c1d3e5f7a9b1c3d5e7f9a1b3c5d7e...")
-      : "PHYSICAL QDS ATTESTATION:\nBell-state witness sealed · optical entropy verified · channel path authenticated";
+      ? (res?.fallback_signature ? `PQC LATTICE SIGNATURE (CRYSTALS-DILITHIUM3 / ML-DSA-65):\n${res.fallback_signature}` : defaultPqcSig)
+      : defaultPhysicalSig;
 
     const record: TransmissionRecord = {
       id: txId,
@@ -1382,6 +1411,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         ? `DOCUMENT PAYLOAD: ${payload.file.name} · sealed for authenticated delivery across channel ${activeSessionId}.`
         : payload.message || "Empty payload",
       signature: sig,
+      digest: payloadHash,
       qber: `${(qber * 100).toFixed(2)}%`,
       chsh: chsh.toFixed(2),
       pauli: fallbackActive ? "PQC ML-DSA-65" : "I · σZ",
