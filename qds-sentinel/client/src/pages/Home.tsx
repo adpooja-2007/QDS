@@ -884,7 +884,6 @@ function SandboxPage() {
               >
                 <i />
                 <span>{attack.title}</span>
-                <small>{attack.code} · τ={attack.thresholdPercent}</small>
               </button>
             ))}
           </div>
