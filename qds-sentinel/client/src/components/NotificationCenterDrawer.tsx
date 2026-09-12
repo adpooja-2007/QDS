@@ -108,6 +108,15 @@ export default function NotificationCenterDrawer() {
   const handleNavigate = (route: string, notifId: string) => {
     markNotificationAsRead(notifId);
     closeNotificationCenter();
+
+    const [path, query] = route.split('?');
+    if (query && typeof window !== 'undefined') {
+      const params = new URLSearchParams(query);
+      const section = params.get('section');
+      if (section) {
+        window.dispatchEvent(new CustomEvent('qds-monitor-tab', { detail: section }));
+      }
+    }
     setLocation(route);
   };
 

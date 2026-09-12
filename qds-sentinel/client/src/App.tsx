@@ -20,25 +20,6 @@ const getBase = () => {
   return "";
 };
 
-function AppRouter() {
-  return (
-    <WouterRouter base={getBase()}>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/home" component={Home} />
-        <Route path="/demonstration" component={Home} />
-        <Route path="/monitoring" component={Home} />
-        <Route path="/attack-sandbox" component={Home} />
-        <Route path="/transfer" component={Home} />
-        <Route path="/database" component={Home} />
-        <Route path="/chat" component={ChatPage} />
-        <Route path="/404" component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
-    </WouterRouter>
-  );
-}
-
 export default function App() {
   return (
     <ErrorBoundary>
@@ -46,8 +27,21 @@ export default function App() {
         <TooltipProvider>
           <SentinelProvider>
             <Toaster />
-            <NotificationCenterDrawer />
-            <AppRouter />
+            <WouterRouter base={getBase()}>
+              <NotificationCenterDrawer />
+              <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/home" component={Home} />
+                <Route path="/demonstration" component={Home} />
+                <Route path="/monitoring" component={Home} />
+                <Route path="/attack-sandbox" component={Home} />
+                <Route path="/transfer" component={Home} />
+                <Route path="/database" component={Home} />
+                <Route path="/chat" component={ChatPage} />
+                <Route path="/404" component={NotFound} />
+                <Route component={NotFound} />
+              </Switch>
+            </WouterRouter>
           </SentinelProvider>
         </TooltipProvider>
       </ThemeProvider>
