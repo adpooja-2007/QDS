@@ -556,19 +556,8 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     let pulseIndex = 0;
     const streamTimer = setInterval(() => {
-      if (eveActive) {
-        addNotification({
-          title: 'LIVE ALERT: Active Interception Disturbance',
-          message: 'Continuous optical monitor detected photon splitting tap on fiber channel 01. QBER at 14.2%, Bell score collapsed to S=1.76.',
-          severity: 'CRITICAL',
-          category: 'security',
-          sourceNode: 'EVE-SENSOR',
-          qber: '14.2%',
-          chsh: '1.76',
-          actionLabel: 'Inspect in SOC Console',
-          actionRoute: '/monitoring'
-        });
-      } else {
+      // Only stream routine background protocol heartbeats if channel is nominal and no duplicate active alert
+      if (!eveActive) {
         const item = liveQuantumEvents[pulseIndex % liveQuantumEvents.length];
         pulseIndex++;
         addNotification({
@@ -576,7 +565,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           timestamp: new Date().toTimeString().split(' ')[0]
         });
       }
-    }, 28000);
+    }, 45000);
 
     return () => clearInterval(streamTimer);
   }, [eveActive]);
@@ -603,7 +592,10 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     setNotifications((prev) => {
-      if (prev.some((n) => n.id === newId)) return prev;
+      // Deduplicate: ignore if an unread notification with the same title already exists
+      const isDuplicate = prev.some((n) => n.title === newNotif.title && (!n.read || (createdAt - (n.createdAt || 0)) < 45000));
+      if (isDuplicate) return prev;
+
       const next = [newNotif, ...prev].slice(0, 50);
       broadcastNotifications(next);
       return next;
