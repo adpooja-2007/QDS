@@ -88,9 +88,9 @@ export function parseTimeToSeconds(timeStr: string): number {
 
 export function sortTelemetryDesc(items: TelemetryItem[]): TelemetryItem[] {
   return [...items].sort((a, b) => {
-    if (a.createdAt && b.createdAt && a.createdAt !== b.createdAt) {
-      return b.createdAt - a.createdAt;
-    }
+    const cA = Number(a.createdAt) || (a.time ? Date.parse(a.time) || 0 : 0);
+    const cB = Number(b.createdAt) || (b.time ? Date.parse(b.time) || 0 : 0);
+    if (cA && cB && cA !== cB) return cB - cA;
     const tA = parseTimeToSeconds(a.time);
     const tB = parseTimeToSeconds(b.time);
     if (tA !== tB) return tB - tA;
@@ -681,7 +681,7 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     ];
 
     let telIndex = 0;
-    const intervalTime = eveActive ? 2800 : 3500;
+    const intervalTime = 1800; // Continuous dynamic heartbeat every 1.8s
 
     const ticker = setInterval(() => {
       const now = Date.now();
@@ -782,26 +782,29 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const [telemetryLogs, setTelemetryLogs] = useState<TelemetryItem[]>(() => {
+    const now = Date.now();
+    const formatRelTime = (offsetMs: number) => formatIstTime(now - offsetMs, true);
     try {
       const stored = localStorage.getItem('qds_telemetry_logs');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const remapped = parsed.map((item: TelemetryItem) => ({
-            ...item,
-            time: item.createdAt ? formatIstTime(item.createdAt, true) : formatIstTime(item.time, true)
-          }));
-          return sortTelemetryDesc(remapped);
+          const freshItems = parsed.filter(item => {
+            if (!item.createdAt || typeof item.createdAt !== 'number') return false;
+            const age = now - item.createdAt;
+            return age >= 0 && age < 900000; // only keep items from last 15 minutes
+          });
+          if (freshItems.length > 0) {
+            return sortTelemetryDesc(freshItems);
+          }
         }
       }
     } catch { }
-    const now = Date.now();
-    const formatRelTime = (offsetMs: number) => formatIstTime(now - offsetMs, true);
     return [
-      { id: 'evt-0', createdAt: now - 1200, time: formatRelTime(1200), source: 'ARB-CORE', text: 'SPDC photon pair routed to Alice & Bob via Dark Fiber Link 1', ms: '12ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'qds_entropy.sig' },
+      { id: 'evt-0', createdAt: now - 1200, time: formatRelTime(1200), source: 'ARB-CORE', text: 'SPDC photon pair routed to Alice & Bob via Dark Fiber Link 1', ms: '12ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'board-resolution.pdf' },
       { id: 'evt-1', createdAt: now - 4800, time: formatRelTime(4800), source: 'QN-ALICE', text: 'Joint Bell State Measurement completed for session QKD-260827-91F4', ms: '18ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'board-resolution.pdf' },
-      { id: 'evt-2', createdAt: now - 11500, time: formatRelTime(11500), source: 'HOEFFDING-GATE', text: 'Hoeffding statistical bound audit passed · QBER <= 5.50%', ms: '20ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'orbital-telemetry.pdf' },
-      { id: 'evt-3', createdAt: now - 24000, time: formatRelTime(24000), source: 'PRIVACY_AMP', text: 'Toeplitz hash distillation: 1024 raw bits -> 256 secure entropy bits', ms: '9ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'DEFENSE-09' },
+      { id: 'evt-2', createdAt: now - 11500, time: formatRelTime(11500), source: 'HOEFFDING-GATE', text: 'Hoeffding statistical bound audit passed · QBER <= 5.50%', ms: '20ms', code: '200 OK', qber: '1.9%', chsh: '2.78', payloadContent: 'board-resolution.pdf' },
+      { id: 'evt-3', createdAt: now - 24000, time: formatRelTime(24000), source: 'PRIVACY_AMP', text: 'Toeplitz hash distillation: 1024 raw bits -> 256 secure entropy bits', ms: '9ms', code: '200 OK', qber: '1.9%', chsh: '2.76', payloadContent: 'board-resolution.pdf' },
     ];
   });
 
@@ -1275,15 +1278,82 @@ AUTOMATED REMEDIATION PLAN EXECUTED
       setPqcMode(true);
       const newEvents: TelemetryItem[] = [
         {
+          id: `evt-${Date.now()}-6`,
+          createdAt: baseNow + 500,
+          time: formatIstTime(baseNow + 500, true),
+          source: 'ARBITRATOR-VERDICT',
+          text: `Protocol Rejected (PQC Fallback) · Optical disturbance flagged on channel`,
+          ms: '4ms',
+          code: 'PQC_OK',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        },
+        {
+          id: `evt-${Date.now()}-5`,
+          createdAt: baseNow + 400,
+          time: formatIstTime(baseNow + 400, true),
+          source: 'PQC-GATEWAY',
+          text: `PQC Fallback Signature Sealed · CRYSTALS-Dilithium3 / ML-DSA-65 active`,
+          ms: '6ms',
+          code: 'PQC_OK',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        },
+        {
+          id: `evt-${Date.now()}-4`,
+          createdAt: baseNow + 300,
+          time: formatIstTime(baseNow + 300, true),
+          source: 'BELL-WITNESS',
+          text: `CHSH Bell test failed: S=${chshFormatted} collapsed to classical limit (S < 2.00)`,
+          ms: '19ms',
+          code: '0xFA BREACH',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: true
+        },
+        {
+          id: `evt-${Date.now()}-3`,
+          createdAt: baseNow + 200,
+          time: formatIstTime(baseNow + 200, true),
+          source: 'HOEFFDING-AUDIT',
+          text: isAdversarialNoise
+            ? `[NOISE DISCRIMINATOR: ATTACK DETECTED] Statistical test failed: Artificial noise density (QBER ${qberFormatted} > limit ${profile.thresholdPercent})`
+            : `Hoeffding Bound Breached: QBER reached ${qberFormatted} (limit ${profile.thresholdPercent})`,
+          ms: '8ms',
+          code: '0xFA BREACH',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: true
+        },
+        {
+          id: `evt-${Date.now()}-2`,
+          createdAt: baseNow + 100,
+          time: formatIstTime(baseNow + 100, true),
+          source: 'EVE-PROBE',
+          text: isAdversarialNoise
+            ? `[ADVERSARIAL NOISE INJECTION] High-power incoherent jamming pulses injected by Eve`
+            : `[ATTACK ACTIVE: ${attackTitle.toUpperCase()}] Intercept-resend / Malformed feed-forward disturbance detected`,
+          ms: '14ms',
+          code: '0xFA BREACH',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: true
+        },
+        {
           id: `evt-${Date.now()}-1`,
           createdAt: baseNow,
           time: formatIstTime(baseNow, true),
-          source: isAdversarialNoise ? 'EVE-PROBE' : 'HOEFFDING-GATE',
-          text: isAdversarialNoise
-            ? `[ADVERSARIAL NOISE INJECTION] High-power incoherent jamming pulses injected by Eve · Optical channel blinded`
-            : `[ATTACK DETECTED: ${attackTitle.toUpperCase()}] QBER elevated to ${qberFormatted} (limit ${profile.thresholdPercent}) · Bell non-locality S=${chshFormatted}`,
-          ms: '14ms',
-          code: '403 FORBIDDEN',
+          source: 'QN-ALICE',
+          text: `Alice Bell Measurement (BSM) · State collapse observed across qubit pairs`,
+          ms: '16ms',
+          code: '0xFA BREACH',
           qber: qberFormatted,
           chsh: chshFormatted,
           payloadContent: 'board-resolution.pdf',
@@ -1299,7 +1369,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
         origin: 'ATTACK SANDBOX / EVE',
         badge: 'ACTIVE ATTACK',
         type: `Live Injection: ${attackTitle}`,
-        time: formatTimeWithOffset(0).slice(0, 8),
+        time: formatTimeWithOffset(500).slice(0, 8),
         baseline: '1.9%',
         current: qberFormatted,
         detail: `Adversarial scenario "${attackTitle}" injected from sandbox. QBER=${qberFormatted}, CHSH S=${chshFormatted}. PQC fallback ready.`,
@@ -1369,12 +1439,38 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 
       const newEvents: TelemetryItem[] = [
         {
-          id: `evt-${Date.now()}-1`,
-          createdAt: baseNow,
-          time: formatIstTime(baseNow, true),
+          id: `evt-${Date.now()}-n3`,
+          createdAt: baseNow + 200,
+          time: formatIstTime(baseNow + 200, true),
           source: 'HOEFFDING-GATE',
           text: `[CHANNEL NOISE STABILIZED] Environmental thermal drift calibrated (QBER ${qberFormatted} <= ${profile.thresholdPercent}, S=${chshFormatted} ≥ 2.00) · Physical QDS attestation active`,
           ms: '12ms',
+          code: '200 OK',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        },
+        {
+          id: `evt-${Date.now()}-n2`,
+          createdAt: baseNow + 100,
+          time: formatIstTime(baseNow + 100, true),
+          source: 'BELL-WITNESS',
+          text: `CHSH Bell test passed: S=${chshFormatted} ≥ 2.00 (Quantum non-locality preserved under thermal noise)`,
+          ms: '14ms',
+          code: '200 OK',
+          qber: qberFormatted,
+          chsh: chshFormatted,
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        },
+        {
+          id: `evt-${Date.now()}-n1`,
+          createdAt: baseNow,
+          time: formatIstTime(baseNow, true),
+          source: 'ARB-CORE',
+          text: `[PHASE STABILIZATION] Dynamic polarization controller compensated optical jitter · QBER nominal at ${qberFormatted}`,
+          ms: '6ms',
           code: '200 OK',
           qber: qberFormatted,
           chsh: chshFormatted,
@@ -1408,11 +1504,37 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     } else {
       const cleanEvents: TelemetryItem[] = [
         {
-          id: `evt-${Date.now()}-clean`,
-          createdAt: baseNow,
-          time: formatIstTime(baseNow, true),
+          id: `evt-${Date.now()}-c3`,
+          createdAt: baseNow + 300,
+          time: formatIstTime(baseNow + 300, true),
+          source: 'PRIVACY_AMP',
+          text: 'Toeplitz Hash Distillation · 1024 raw bits -> 256 unforgeable quantum OTP tokens',
+          ms: '8ms',
+          code: '200 OK',
+          qber: '1.9%',
+          chsh: '2.76',
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        },
+        {
+          id: `evt-${Date.now()}-c2`,
+          createdAt: baseNow + 200,
+          time: formatIstTime(baseNow + 200, true),
+          source: 'QN-ALICE',
+          text: 'Alice Bell Measurement (BSM) · Joint EPR projection verified (zero eavesdropping)',
+          ms: '16ms',
+          code: '200 OK',
+          qber: '1.9%',
+          chsh: '2.76',
+          payloadContent: 'board-resolution.pdf',
+          isThreat: false
+        },
+        {
+          id: `evt-${Date.now()}-c1`,
+          createdAt: baseNow + 100,
+          time: formatIstTime(baseNow + 100, true),
           source: 'ARBITRATOR',
-          text: '[CLEAN SIGNATURE] Authenticated Bell-pair exchange restored · QBER 1.9% · CHSH S=2.76',
+          text: 'Clean Channel Restored · Authenticated Bell-pair exchange online',
           ms: '12ms',
           code: '200 OK',
           qber: '1.9%',
