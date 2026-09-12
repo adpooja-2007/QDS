@@ -1131,7 +1131,7 @@ function formatEventGist(rawText?: string, isAlert?: boolean, activeAttack?: str
   if (text.includes('FORGERY ATTACK')) return 'Malformed Classical Feed-Forward';
   if (text.includes('REPLAY ATTACK')) return 'Captured Nonce Retransmit';
   if (text.includes('PNS ATTACK')) return 'Photon-Number Splitting Probe';
-  if (text.includes('CHANNEL NOISE')) return 'Optical Thermal Phase Drift';
+  if (text.includes('CHANNEL NOISE') || text.includes('NOISE')) return 'Adversarial Channel Noise Jamming';
 
   const clean = text.replace(/^\[[^\]]+\]\s*/, '');
   const firstPhrase = clean.split(/[·:—\n]/)[0].trim();
@@ -1167,24 +1167,24 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
 
   const cards = [
     { label: "Active sessions", value: "3", detail: "Stable", tone: "good" },
-    { label: "Verified signatures", value: threat ? (isQberBreached ? "94.2%" : "98.5%") : "99.9%", detail: threat && isQberBreached ? "PQC Fallback" : "Nominal", tone: threat && isQberBreached ? "copper" : "good" },
-    { label: "Security score", value: threat ? (isQberBreached ? `Degraded (${activeAttack})` : `Protected (${activeAttack})`) : "Secure", detail: threat && isQberBreached ? "Review required" : "Secure", tone: threat && isQberBreached ? "copper" : "good" },
+    { label: "Verified signatures", value: threat ? "94.2%" : "99.9%", detail: threat ? "PQC Fallback" : "Nominal", tone: threat ? "copper" : "good" },
+    { label: "Security score", value: threat ? `Degraded (${activeAttack})` : "Secure", detail: threat ? "Review required" : "Secure", tone: threat ? "copper" : "good" },
     { label: "Total pulses", value: "4.2e9", detail: "+12M/s", tone: "slate" },
     {
       label: "QBER %",
       value: qberStr,
       detail: threat
-        ? (isQberBreached ? `Hoeffding breach (> ${cutoffPct})` : `Within bound (≤ ${cutoffPct})`)
+        ? (isQberBreached ? `Hoeffding breach (> ${cutoffPct})` : `Adversarial disturbance (> ${cutoffPct})`)
         : `Nominal (≤ ${cutoffPct})`,
-      tone: threat && isQberBreached ? "alert" : "good"
+      tone: threat ? "alert" : "good"
     },
     {
       label: "CHSH value",
       value: "S = " + chshStr,
       detail: threat
-        ? (isChshCollapsed ? "Classical bound (S<2.0)" : "S ≥ 2.0 (quantum)")
+        ? (isChshCollapsed ? "Classical bound (S<2.0)" : "Non-locality collapsed")
         : "S ≥ 2.0 (quantum)",
-      tone: threat && isChshCollapsed ? "copper" : "good"
+      tone: threat ? "copper" : "good"
     },
   ];
 

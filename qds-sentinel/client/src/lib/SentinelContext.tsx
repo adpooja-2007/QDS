@@ -377,8 +377,17 @@ const playQuantumChime = (severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'SUCCESS' 
 };
 
 export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [activeAttack, setActiveAttack] = useState<string>(() => {
+    try {
+      const val = localStorage.getItem('qds_active_attack');
+      if (val) return val;
+    } catch { }
+    return 'Clean signature';
+  });
   const [eveActive, setEveActive] = useState<boolean>(() => {
     try {
+      const atk = localStorage.getItem('qds_active_attack');
+      if (atk && atk !== 'Clean signature') return true;
       return localStorage.getItem('qds_eve_active') === 'true';
     } catch {
       return false;
@@ -387,6 +396,8 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [activeSessionId, setActiveSessionId] = useState('QKD-260827-91F4');
   const [qber, setQber] = useState<number>(() => {
     try {
+      const atk = localStorage.getItem('qds_active_attack');
+      if (atk && atk !== 'Clean signature' && atk.toLowerCase().includes('noise')) return 0.108;
       const val = localStorage.getItem('qds_qber');
       if (val) return parseFloat(val);
     } catch { }
@@ -394,6 +405,8 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [chsh, setChsh] = useState<number>(() => {
     try {
+      const atk = localStorage.getItem('qds_active_attack');
+      if (atk && atk !== 'Clean signature' && atk.toLowerCase().includes('noise')) return 1.74;
       const val = localStorage.getItem('qds_chsh');
       if (val) return parseFloat(val);
     } catch { }
@@ -401,18 +414,31 @@ export const SentinelProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [pqcMode, setPqcMode] = useState<boolean>(() => {
     try {
+      const atk = localStorage.getItem('qds_active_attack');
+      if (atk && atk !== 'Clean signature') return true;
       return localStorage.getItem('qds_pqc_mode') === 'true';
     } catch { }
     return false;
   });
   const [remediationReport, setRemediationReport] = useState<string | null>(null);
-  const [activeAttack, setActiveAttack] = useState<string>(() => {
-    try {
-      const val = localStorage.getItem('qds_active_attack');
-      if (val) return val;
-    } catch { }
-    return 'Clean signature';
-  });
+
+  // Self-healing effect: ensure active attacks (like Channel noise) have breached error rates and PQC mode enabled
+  useEffect(() => {
+    if (activeAttack && activeAttack !== 'Clean signature') {
+      if (activeAttack.toLowerCase().includes('noise') && (qber < 0.06 || chsh > 2.0)) {
+        setQber(0.108);
+        setChsh(1.74);
+        setEveActive(true);
+        setPqcMode(true);
+        try {
+          localStorage.setItem('qds_qber', '0.108');
+          localStorage.setItem('qds_chsh', '1.74');
+          localStorage.setItem('qds_eve_active', 'true');
+          localStorage.setItem('qds_pqc_mode', 'true');
+        } catch {}
+      }
+    }
+  }, [activeAttack, qber, chsh]);
 
   const thresholdProfile = useMemo(() => {
     return calculateQuantumThreshold(activeAttack);
