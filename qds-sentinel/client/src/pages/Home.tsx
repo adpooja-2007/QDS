@@ -1445,42 +1445,15 @@ function ThreatsPanel({ threat, onThreat }: { threat: boolean; onThreat: () => v
         </div>
 
         <div className="threat-detail-pills">
-          <div className={cn("threat-pill-item", pulseCount > 0 && "pill-pulsing")} key={`pill-chsh-${pulseCount}`}>
+          <div className="threat-pill-item">
             <span>CHSH BELL SCORE</span>
             <strong className={isCritical ? "text-copper" : "status-text-good"}>S = {chshVal}</strong>
           </div>
-          <div className={cn("threat-pill-item", pulseCount > 0 && "pill-pulsing")} key={`pill-verdict-${pulseCount}`}>
+          <div className="threat-pill-item">
             <span>VERDICT</span>
             <strong className={isCritical ? "text-copper" : "status-text-good"}>{isCritical ? "BREACHED" : "NOMINAL"}</strong>
           </div>
         </div>
-
-        <button
-          className="button button-copper inspector-action"
-          style={{ marginTop: "12px", width: "100%" }}
-          onClick={handleContainmentAction}
-          disabled={isExecuting}
-        >
-          {isExecuting ? (
-            <>
-              <RefreshCw size={14} className="containment-spin" />
-              {isContained ? "Restoring channel baseline..." : "Isolating optical channel..."}
-            </>
-          ) : (
-            <>
-              <ShieldCheck size={14} />
-              {isContained ? "Restore node from quarantine" : "Run containment protocol"}
-            </>
-          )}
-        </button>
-
-        <button
-          className="button button-outline inspector-action"
-          style={{ marginTop: "8px", width: "100%" }}
-          onClick={handleExportThreatPcap}
-        >
-          <Download size={14} /> Export PCAP
-        </button>
       </aside>
     </div>
   );
