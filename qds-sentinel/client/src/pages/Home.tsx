@@ -1271,29 +1271,6 @@ function OverviewPanel({ threat, setThreat, range, setRange, filtered, copyJson,
         <div className="overview-v3-ledger-head">
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
             <span className="eyebrow">Live telemetry stream</span>
-            <span style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "2px 8px",
-              borderRadius: "999px",
-              background: threat ? "rgba(185, 74, 47, 0.12)" : "rgba(47, 111, 133, 0.12)",
-              color: threat ? "#b94a2f" : "#2f6f85",
-              fontSize: "10px",
-              fontFamily: "var(--mono)",
-              fontWeight: 700
-            }}>
-              <span style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: threat ? "#b94a2f" : "#059669",
-                display: "inline-block",
-                boxShadow: threat ? "0 0 6px #b94a2f" : "0 0 6px #059669",
-                animation: "pulse 1.8s infinite"
-              }} />
-              {threat ? `THREAT STREAMING (${activeAttack.toUpperCase()})` : "LIVE OPTICAL STREAM ACTIVE"}
-            </span>
             <small style={{ color: "var(--slate)", fontSize: "11px" }}>{telemetryLogs.length} frames logged · IST timestamped</small>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
