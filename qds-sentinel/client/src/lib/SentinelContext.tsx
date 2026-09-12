@@ -210,6 +210,26 @@ export function calculateQuantumThreshold(attackTitle: string, customSampleSize?
       rationale: "Multiphoton splitting probe; tolerable QBER bound lowered to 4.10% to account for channel loss."
     };
   }
+  if (attackTitle.includes("Noise injection") || attackTitle.includes("Jamming") || attackTitle.includes("Adversarial Noise")) {
+    const N = customSampleSize || 1024;
+    const alpha = 1e-6;
+    const baseline = 0.035;
+    const threshold = 0.0680;
+    return {
+      attackTitle,
+      code: "JAMMING",
+      sampleSize: N,
+      alpha,
+      delta: 0.0330,
+      baselineQber: baseline,
+      threshold,
+      thresholdPercent: "6.80%",
+      chshBound: 2.00,
+      helstromPe: "P_e ≥ 0.0610",
+      lossDb: 2.8,
+      rationale: "Adversarial optical noise injection / jamming; QBER (10.80%) exceeds Hoeffding bound (6.80%) and CHSH (1.74 < 2.00) collapses non-locality."
+    };
+  }
   if (attackTitle.includes("Noise")) {
     const N = customSampleSize || 1024;
     const alpha = 1e-6;
@@ -227,7 +247,7 @@ export function calculateQuantumThreshold(attackTitle: string, customSampleSize?
       chshBound: 2.00,
       helstromPe: "P_e ≥ 0.1420",
       lossDb: 1.2,
-      rationale: "Thermal polarization drift without state collapse; dynamic threshold widened to 6.80% to avoid false alarms."
+      rationale: "Natural thermal polarization drift; QBER (4.80%) within 6.80% cutoff and Bell non-locality (S=2.34 ≥ 2.00) preserved."
     };
   }
   // Default Clean / Nominal
@@ -950,14 +970,30 @@ AUTOMATED REMEDIATION PLAN EXECUTED
 1. Switched source to decoy-state protocol with randomized photon intensities.
 2. Re-routed active traffic to CRYSTALS-Dilithium3 post-quantum lattice channel.`;
     }
-    if (title.includes('Noise')) {
-      return `THREAT DIAGNOSIS [THERMAL FIBER NOISE DRIFT]
-1. Optical Jitter: Thermal drift and polarization mode dispersion on dark fiber link 01.
-2. Margin Metric: QBER elevated to ${(qberVal * 100).toFixed(1)}% (below 5.5% cutoff), CHSH S=${chshVal.toFixed(2)} (quantum boundary maintained).
+    if (title.includes('Noise injection') || title.includes('Jamming') || title.includes('Adversarial Noise') || (title.includes('Noise') && (qberVal > 0.068 || chshVal < 2.0))) {
+      return `THREAT DIAGNOSIS [ADVERSARIAL NOISE INJECTION / EVE JAMMING ATTACK]
+1. Malicious Optical Jamming: Eve actively injected incoherent photon bursts / laser noise to blind Single-Photon Avalanche Diodes (SPADs) and mask eavesdropping.
+2. Noise Discrimination Violation:
+   - Measured QBER: ${(qberVal * 100).toFixed(2)}% (Breached Hoeffding statistical bound cutoff of 6.80%).
+   - CHSH Bell Parameter: S=${chshVal.toFixed(2)} (< 2.00 classical boundary - Entanglement collapsed).
+   - Trace Distance D(ρ,σ) = 0.8120 (Confirms intentional state disturbance, distinguishing from Gaussian thermal drift).
 
 AUTOMATED REMEDIATION PLAN EXECUTED
-1. Dynamic polarization controller recalibrated optical phase.
-2. Quantum channel maintained under high-vigilance monitoring.`;
+1. Flagged Eve as active adversarial noise source; blacklisted compromised optical wavelength.
+2. Quantum link transmission aborted to prevent key compromise / QDoS.
+3. Post-Quantum Cryptographic Fallback engaged: Activated CRYSTALS-Dilithium3 / ML-DSA-65 signatures & ML-KEM-768 key exchange.`;
+    }
+    if (title.includes('Noise')) {
+      return `DIAGNOSIS [BENIGN ENVIRONMENTAL CHANNEL NOISE]
+1. Optical Jitter: Natural fiber thermal expansion and polarization mode dispersion on dark fiber link 01.
+2. Noise Discrimination Verification:
+   - Measured QBER: ${(qberVal * 100).toFixed(2)}% (Within 6.80% Hoeffding noise envelope).
+   - CHSH Bell Parameter: S=${chshVal.toFixed(2)} (≥ 2.00 Quantum non-locality strictly preserved).
+   - Statistical Distribution: Gaussian Poissonian drift, zero adversary correlation.
+
+AUTOMATED REMEDIATION PLAN EXECUTED
+1. Dynamic polarization controller recalibrated optical phase and polarization frame.
+2. Physical QDS quantum channel maintained with zero data leakage.`;
     }
     return `STATUS NOMINAL [QUANTUM SECURE]
 1. Physical QDS teleportation keys verified with zero eavesdropping.
@@ -1076,15 +1112,19 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     setActiveAttack(attackTitle);
     const profile = getQuantumThresholdProfile(attackTitle);
     const isClean = attackTitle === "Clean signature";
-    const isNoise = attackTitle.includes("Noise");
+    const isAdversarialNoise = attackTitle.includes("Noise injection") || attackTitle.includes("Jamming") || attackTitle.includes("Adversarial Noise");
+    const isBenignNoise = !isAdversarialNoise && attackTitle.includes("Noise");
 
-    const targetQber = customQber ?? (isClean ? 0.019 : isNoise ? 0.048 : 0.142);
-    const targetChsh = customChsh ?? (isClean ? 2.76 : isNoise ? 2.34 : 1.76);
+    const defaultQber = isClean ? 0.019 : isAdversarialNoise ? 0.108 : isBenignNoise ? 0.048 : 0.142;
+    const defaultChsh = isClean ? 2.76 : isAdversarialNoise ? 1.74 : isBenignNoise ? 2.34 : 1.76;
+
+    const targetQber = customQber ?? defaultQber;
+    const targetChsh = customChsh ?? defaultChsh;
     setQber(targetQber);
     setChsh(targetChsh);
 
     const isBreached = targetQber > profile.threshold || targetChsh < 2.0;
-    const isThreat = !isClean && !isNoise && isBreached;
+    const isThreat = !isClean && (isAdversarialNoise || (!isBenignNoise && isBreached) || (isBenignNoise && isBreached));
     setEveActive(isThreat);
 
     const nowStr = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(100 + Math.random() * 899);
@@ -1093,7 +1133,7 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     try {
       let attackType: 'forgery' | 'replay' | 'noise' | 'pns' = 'forgery';
       if (attackTitle.includes("Replay")) attackType = 'replay';
-      else if (attackTitle.includes("Noise")) attackType = 'noise';
+      else if (attackTitle.includes("Noise") || attackTitle.includes("Jamming")) attackType = 'noise';
       else if (attackTitle.includes("PNS")) attackType = 'pns';
 
       if (isThreat) {
@@ -1119,10 +1159,12 @@ AUTOMATED REMEDIATION PLAN EXECUTED
     };
 
     if (isThreat) {
-      // Adversarial breach (MitM, Forgery, Replay, PNS)
+      // Adversarial breach (MitM, Forgery, Replay, PNS, Adversarial Noise Injection)
       addNotification({
-        title: `Adversarial Threat Injected: ${attackTitle}`,
-        message: `High-vigilance quantum anomaly detected. QBER ${qberFormatted} breached Hoeffding cutoff ${profile.thresholdPercent}. Bell non-locality collapsed to S=${chshFormatted} (< 2.00). Automated PQC handover initiated.`,
+        title: isAdversarialNoise ? `Adversarial Noise Attack: ${attackTitle}` : `Adversarial Threat Injected: ${attackTitle}`,
+        message: isAdversarialNoise
+          ? `Malicious optical noise injection / jamming detected. QBER ${qberFormatted} breached Hoeffding cutoff ${profile.thresholdPercent}. Bell non-locality collapsed to S=${chshFormatted} (< 2.00). Automated PQC handover initiated.`
+          : `High-vigilance quantum anomaly detected. QBER ${qberFormatted} breached Hoeffding cutoff ${profile.thresholdPercent}. Bell non-locality collapsed to S=${chshFormatted} (< 2.00). Automated PQC handover initiated.`,
         severity: 'CRITICAL',
         category: 'security',
         sourceNode: 'HOEFFDING-GATE',
@@ -1164,9 +1206,11 @@ AUTOMATED REMEDIATION PLAN EXECUTED
           id: `evt-${Date.now()}-2`,
           createdAt: baseNow + 40,
           time: formatTimeWithOffset(40),
-          source: 'HOEFFDING-AUDIT',
-          text: `Hoeffding bound breached: QBER ${qberFormatted} > ${profile.thresholdPercent} cutoff limit`,
-          ms: '8ms',
+          source: 'HOEFFDING-GATE',
+          text: isAdversarialNoise
+            ? `[NOISE DISCRIMINATOR: ATTACK DETECTED] Statistical test failed: Artificial noise density (QBER ${qberFormatted} > limit ${profile.thresholdPercent})`
+            : `Hoeffding bound breach: QBER reached ${qberFormatted} (limit ${profile.thresholdPercent})`,
+          ms: '12ms',
           code: '0xFA BREACH',
           qber: qberFormatted,
           chsh: chshFormatted,
@@ -1178,7 +1222,9 @@ AUTOMATED REMEDIATION PLAN EXECUTED
           createdAt: baseNow,
           time: formatTimeWithOffset(0),
           source: 'EVE-PROBE',
-          text: `[ATTACK ACTIVE: ${attackTitle.toUpperCase()}] Adversarial optical disturbance injected · QBER elevated (${qberFormatted})`,
+          text: isAdversarialNoise
+            ? `[ADVERSARIAL NOISE INJECTION] High-power incoherent jamming pulses injected by Eve · Optical channel blinded`
+            : `[ATTACK ACTIVE: ${attackTitle.toUpperCase()}] Adversarial optical disturbance injected · QBER elevated (${qberFormatted})`,
           ms: '14ms',
           code: '403 FORBIDDEN',
           qber: qberFormatted,

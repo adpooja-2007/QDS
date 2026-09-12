@@ -713,11 +713,12 @@ function SandboxPage() {
     { title: "MitM attack", code: "MITM", detail: "Intercept / resend eavesdrop", tone: "copper", type: "forgery", qber: 0.142, chsh: 1.76, threshold: 0.055, thresholdPercent: "5.50%", sampleSize: 1024, lossDb: 0.5 },
     { title: "Forgery attack", code: "FORGE", detail: "Tampered feed-forward bits", tone: "copper", type: "forgery", qber: 0.128, chsh: 1.82, threshold: 0.052, thresholdPercent: "5.20%", sampleSize: 1024, lossDb: 0.4 },
     { title: "Replay attack", code: "REPLAY", detail: "Captured nonce retransmit", tone: "copper", type: "replay", qber: 0.086, chsh: 1.91, threshold: 0.049, thresholdPercent: "4.90%", sampleSize: 1536, lossDb: 0.3 },
-    { title: "Channel noise", code: "NOISE", detail: "Optical thermal disturbance", tone: "blue", type: "noise", qber: 0.048, chsh: 2.34, threshold: 0.068, thresholdPercent: "6.80%", sampleSize: 1024, lossDb: 1.2 },
-    { title: "PNS attack", code: "PNS", detail: "Photon-number splitting probe", tone: "blue", type: "pns", qber: 0.095, chsh: 1.88, threshold: 0.041, thresholdPercent: "4.10%", sampleSize: 1024, lossDb: 4.5 }
+    { title: "PNS attack", code: "PNS", detail: "Photon-number splitting probe", tone: "copper", type: "pns", qber: 0.095, chsh: 1.88, threshold: 0.041, thresholdPercent: "4.10%", sampleSize: 1024, lossDb: 4.5 },
+    { title: "Channel noise (Benign)", code: "NOISE", detail: "Natural thermal drift (QBER ≤ 6.80%, S ≥ 2.00)", tone: "blue", type: "noise", qber: 0.048, chsh: 2.34, threshold: 0.068, thresholdPercent: "6.80%", sampleSize: 1024, lossDb: 1.2 },
+    { title: "Noise injection attack", code: "JAMMING", detail: "Adversarial optical jamming / Eve masking (QBER > 6.80%)", tone: "copper", type: "noise", qber: 0.108, chsh: 1.74, threshold: 0.068, thresholdPercent: "6.80%", sampleSize: 1024, lossDb: 2.8 }
   ];
 
-  const selected = attacks.find((attack) => attack.title === active) ?? attacks[1];
+  const selected = attacks.find((attack) => attack.title === active || (active === "Channel noise" && attack.code === "NOISE")) ?? attacks[1];
   const threatened = selected.tone === "copper";
 
   const runTerminalStream = (scenarioItem: typeof selected) => {
@@ -739,7 +740,7 @@ function SandboxPage() {
         setVisibleLinesCount(totalLines);
         setIsSimulating(false);
         setSimulationPhase(
-          scenarioItem.tone === "good"
+          scenarioItem.tone === "good" || (!threatened && scenarioItem.code === "NOISE")
             ? "PROTOCOL VERIFIED · ACCEPT · PHYSICAL QDS SEALED"
             : `SECURITY BREACH [${scenarioItem.code}] CONTAINED · PQC FALLBACK (ML-DSA-65 / ML-KEM-768) ENGAGED`
         );
@@ -762,7 +763,7 @@ function SandboxPage() {
 
   const handleSelectScenario = (attackTitle: string) => {
     setActive(attackTitle);
-    const target = attacks.find(a => a.title === attackTitle) ?? selected;
+    const target = attacks.find(a => a.title === attackTitle || (attackTitle === "Channel noise" && a.code === "NOISE")) ?? selected;
     triggerBackendAttack(target);
   };
 
@@ -777,10 +778,20 @@ function SandboxPage() {
       "> awaiting node registration...",
       threatened ? "> ACK: Alice connected [ID: 0x9F3A] · Bob [ID: 0x1C4B]" : "> ACK: all nodes authenticated (Alice ↔ Bob)",
       "> channel seed established · optical-dark-fiber-01",
-      threatened ? `> WARN: QBER ${(selected.qber * 100).toFixed(1)}% breached dynamic Hoeffding bound (τ=${selected.thresholdPercent})` : `> QBER ${(selected.qber * 100).toFixed(1)}% within operating bound (τ=${selected.thresholdPercent})`,
-      threatened ? `> ERR: Bell correlation collapsed (S=${selected.chsh.toFixed(2)} < 2.00 classical limit)` : `> Bell test: PASS (CHSH S=${selected.chsh.toFixed(2)} ≥ 2.00 quantum non-locality)`,
-      threatened ? `> ABORT: Adversarial anomaly [${selected.code}] flagged by Threat Engine` : "> ACCEPT: physical signature verification sustained",
-      threatened ? "> PQC FALLBACK SUCCESS: Session sustained · Payload authenticated with Dilithium3 / ML-KEM-768" : "> QDS ATTESTATION: unforgeable quantum key distilled"
+      threatened
+        ? `> WARN: QBER ${(selected.qber * 100).toFixed(1)}% breached dynamic Hoeffding bound (τ=${selected.thresholdPercent})`
+        : `> [NOISE DISCRIMINATOR] QBER ${(selected.qber * 100).toFixed(1)}% within operating bound (τ=${selected.thresholdPercent})`,
+      threatened
+        ? `> ERR: Bell correlation collapsed (S=${selected.chsh.toFixed(2)} < 2.00 classical limit)`
+        : `> Bell test: PASS (CHSH S=${selected.chsh.toFixed(2)} ≥ 2.00 quantum non-locality)`,
+      threatened
+        ? `> ABORT: Adversarial anomaly [${selected.code}] flagged by Threat Engine`
+        : "> ACCEPT: physical signature verification sustained",
+      threatened
+        ? "> PQC FALLBACK SUCCESS: Session sustained · Payload authenticated with Dilithium3 / ML-KEM-768"
+        : selected.code === "NOISE"
+          ? "> DYNAMIC STABILIZATION: Optical polarization controller aligned phase · Physical QDS active"
+          : "> QDS ATTESTATION: unforgeable quantum key distilled"
     ],
     alice: [
       "> awaiting classical basis reconciliation...",
@@ -799,7 +810,13 @@ function SandboxPage() {
     eve: [
       "> probe standby(target: quantum-link-01)",
       `> attack vector: ${selected.code} [${selected.detail}]`,
-      threatened ? "> INJECT: optical beam splitter engaged on link" : "> standby: optical sniffer below noise floor",
+      selected.code === "JAMMING"
+        ? "> INJECT: high-power incoherent laser jamming pulses pumped into fiber"
+        : threatened
+          ? "> INJECT: optical beam splitter engaged on link"
+          : selected.code === "NOISE"
+            ? "> environmental monitor: thermal Poissonian jitter observed (no eavesdropping)"
+            : "> standby: optical sniffer below noise floor",
       threatened ? `> MEASURE: state collapse on bit sequence (QBER ${(selected.qber * 100).toFixed(1)}%)` : "> zero polarization collapse detected",
       threatened ? "> WARN: basis mismatch detected by arbitrator audit" : "> no adversarial action detected",
       threatened ? "> EVE EXFILTRATION FAILED: Quantum key dropped + PQC lattice barrier impenetrable (0 bytes leaked)" : "> probe idle: 0 bytes exfiltrated"
